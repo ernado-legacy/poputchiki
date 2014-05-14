@@ -254,7 +254,7 @@ func TestMethods(t *testing.T) {
 			})
 		})
 
-		Convey("And dublicate registration should not be possible", func() {
+		Convey("And dublicate registration should be not possible", func() {
 			res := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
 			req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
