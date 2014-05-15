@@ -105,7 +105,7 @@ func (a *Application) InitDatabase() {
 	index := mgo.Index{
 		Key:        []string{"email"},
 		Unique:     true,
-		Background: true, // See notes.
+		Background: false, // See notes.
 		DropDups:   false,
 	}
 	a.session.DB(dbName).C(collection).EnsureIndex(index)
