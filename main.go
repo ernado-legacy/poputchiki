@@ -143,7 +143,7 @@ func (a *Application) InitDatabase() {
 	a.session.DB(dbName).C(collection).EnsureIndex(index)
 
 	index = mgo.Index{
-		Key:        []string{"user", "guest"},
+		Key:        []string{"$hashed:user", "guest"},
 		Unique:     true,
 		Background: true, // See notes.
 		DropDups:   true,
@@ -151,7 +151,7 @@ func (a *Application) InitDatabase() {
 	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
 
 	index = mgo.Index{
-		Key:        []string{"user", "origin", "destination", "time"},
+		Key:        []string{"$hashed:user", "origin", "destination", "time"},
 		Background: true,
 	}
 	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)

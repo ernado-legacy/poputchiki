@@ -22,10 +22,11 @@ func TestRealtime(t *testing.T) {
 	c := realtime.getChannel(id)
 	err := realtime.Push(id, event)
 	eventRec := <-c
-	Convey("Push should succeed", t, func() {
+	Convey("Push ok", t, func() {
 		So(err, ShouldEqual, nil)
 		Convey("And event should be delivered", func() {
 			So(eventRec.Body, ShouldEqual, event)
+			So(eventRec.Type, ShouldEqual, "string")
 		})
 	})
 }
