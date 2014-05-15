@@ -128,3 +128,8 @@ func (db *DB) SendMessage(origin bson.ObjectId, destination bson.ObjectId, text 
 func (db *DB) RemoveMessage(id bson.ObjectId) error {
 	return db.messages.RemoveId(id)
 }
+
+func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
+	messages := []*Message{}
+	return db.messages.Find(bson.M{"user": userReciever, "origin": userOrigin}).All(&messages)
+}
