@@ -93,6 +93,24 @@ func (db *DB) AddGuest(id bson.ObjectId, guest bson.ObjectId) error {
 	return err
 }
 
+func (db *DB) AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error {
+	var u User
+	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"blacklist": blacklisted}}}
+
+	_, err := db.users.FindId(id).Apply(change, &u)
+
+	return err
+}
+
+func (db *DB) RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error {
+	var u User
+	change := mgo.Change{Update: bson.M{"$pull": bson.M{"blacklist": blacklisted}}}
+
+	_, err := db.users.FindId(id).Apply(change, &u)
+
+	return err
+}
+
 func (db *DB) GetAllGuests(id bson.ObjectId) ([]*User, error) {
 	g := []bson.ObjectId{}
 	u := []*User{}

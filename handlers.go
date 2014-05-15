@@ -25,6 +25,8 @@ type UserDB interface {
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
+	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
+	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 }
 
 type TokenStorage interface {
@@ -160,6 +162,86 @@ func AddToFavorites(db UserDB, parms martini.Params, r *http.Request, token Toke
 	}
 
 	return Render("updated")
+}
+
+func AddToBlacklist(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	hexId := parms["id"]
+	if !bson.IsObjectIdHex(hexId) {
+		return Render(ErrorBadId)
+	}
+
+	t, _ := token.Get()
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	id := bson.ObjectIdHex(hexId)
+	if t.Id != id {
+		return Render(ErrorNotAllowed)
+	}
+
+	user := db.Get(id)
+	if user == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	hexId = r.FormValue(FORM_TARGET)
+	if !bson.IsObjectIdHex(hexId) {
+		return Render(ErrorBadId)
+	}
+
+	favId := bson.ObjectIdHex(hexId)
+	friend := db.Get(favId)
+	if friend == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	err := db.AddToBlacklist(user.Id, friend.Id)
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+
+	return Render("added to blacklist")
+}
+
+func RemoveFromBlacklist(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	hexId := parms["id"]
+	if !bson.IsObjectIdHex(hexId) {
+		return Render(ErrorBadId)
+	}
+
+	t, _ := token.Get()
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	id := bson.ObjectIdHex(hexId)
+	if t.Id != id {
+		return Render(ErrorNotAllowed)
+	}
+
+	user := db.Get(id)
+	if user == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	hexId = r.FormValue(FORM_TARGET)
+	if !bson.IsObjectIdHex(hexId) {
+		return Render(ErrorBadId)
+	}
+
+	favId := bson.ObjectIdHex(hexId)
+	friend := db.Get(favId)
+	if friend == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	err := db.RemoveFromBlacklist(user.Id, friend.Id)
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+
+	return Render("removed")
 }
 
 func RemoveFromFavorites(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
