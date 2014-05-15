@@ -410,6 +410,56 @@ func TestMethods(t *testing.T) {
 						So(found, ShouldBeTrue)
 					})
 				})
+				Convey("User should be able to add to blacklist", func() {
+					res = httptest.NewRecorder()
+
+					json.Unmarshal(tokenBody, &token1)
+
+					reqUrl := fmt.Sprintf("/api/user/%s/blacklist/?token=%s", token2.Id.Hex(), token2.Token)
+					req, _ := http.NewRequest("POST", reqUrl, nil)
+					req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
+					a.ServeHTTP(res, req)
+
+					So(res.Code, ShouldEqual, http.StatusOK)
+					Convey("Other user should now be in blacklist", func() {
+						res = httptest.NewRecorder()
+
+						reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token2.Id.Hex(), token2.Token)
+						req, _ := http.NewRequest("GET", reqUrl, nil)
+						a.ServeHTTP(res, req)
+
+						So(res.Code, ShouldEqual, http.StatusOK)
+						u := User{}
+						userBody, _ := ioutil.ReadAll(res.Body)
+						err := json.Unmarshal(userBody, &u)
+
+						So(err, ShouldEqual, nil)
+						So(u.Blacklist, ShouldContain, token1.Id)
+						Convey("Then user should be able to remove other user from blacklist", func() {
+							reqUrl := fmt.Sprintf("/api/user/%s/blacklist/?token=%s", token2.Id.Hex(), token2.Token)
+							req, _ := http.NewRequest("DELETE", reqUrl, nil)
+							req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
+							a.ServeHTTP(res, req)
+							So(res.Code, ShouldEqual, http.StatusOK)
+							Convey("Other user now should not be in blacklist", func() {
+								res = httptest.NewRecorder()
+
+								reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token2.Id.Hex(), token2.Token)
+								req, _ := http.NewRequest("GET", reqUrl, nil)
+								a.ServeHTTP(res, req)
+								a.DropDatabase()
+
+								So(res.Code, ShouldEqual, http.StatusOK)
+								u := User{}
+								userBody, _ := ioutil.ReadAll(res.Body)
+								err := json.Unmarshal(userBody, &u)
+
+								So(err, ShouldEqual, nil)
+								So(u.Blacklist, ShouldNotContain, token1.Id)
+							})
+						})
+					})
+				})
 				Convey("And user should be able to add other user to own favorites", func() {
 					res = httptest.NewRecorder()
 

@@ -79,12 +79,15 @@ func NewApp() *Application {
 	m.Get("/api/user/:id/messages", GetMessagesFromUser)
 	m.Delete("/api/message/:id", RemoveMessage)
 
-	m.Post("/api/user/:id/fav/", AddToFavorites)
-	m.Delete("/api/user/:id/fav/", RemoveFromFavorites)
-	m.Get("/api/user/:id/fav/", GetFavorites)
+	m.Post("/api/user/:id/fav", AddToFavorites)
+	m.Delete("/api/user/:id/fav", RemoveFromFavorites)
+	m.Get("/api/user/:id/fav", GetFavorites)
 
-	m.Post("/api/user/:id/guests/", AddToGuests)
-	m.Get("/api/user/:id/guests/", GetGuests)
+	m.Post("/api/user/:id/blacklist", AddToBlacklist)
+	m.Delete("/api/user/:id/blacklist", RemoveFromBlacklist)
+
+	m.Post("/api/user/:id/guests", AddToGuests)
+	m.Get("/api/user/:id/guests", GetGuests)
 
 	a := Application{session, c, m}
 	a.InitDatabase()
