@@ -14,7 +14,20 @@ import (
 )
 
 func TestRealtime(t *testing.T) {
-
+	redisName = "poputchiki_test_realtime"
+	pool := newPool()
+	realtime := &RealtimeRedis{pool}
+	id := bson.NewObjectId()
+	event := "test"
+	c := realtime.getChannel(id)
+	err := realtime.Push(id, event)
+	eventRec := <-c
+	Convey("Push should succeed", t, func() {
+		So(err, ShouldEqual, nil)
+		Convey("And event should be delivered", func() {
+			So(eventRec.Body, ShouldEqual, event)
+		})
+	})
 }
 
 func TestMethods(t *testing.T) {
