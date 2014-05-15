@@ -124,3 +124,7 @@ func (db *DB) SendMessage(origin bson.ObjectId, destination bson.ObjectId, text 
 
 	return db.messages.Insert(&m2)
 }
+
+func (db *DB) RemoveMessage(id bson.ObjectId) error {
+	return db.messages.RemoveId(id)
+}
