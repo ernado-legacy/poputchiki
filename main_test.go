@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+func TestRealtime(t *testing.T) {
+
+}
+
 func TestMethods(t *testing.T) {
 	username := "test@test.ru"
 	password := "secretsecret"

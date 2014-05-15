@@ -263,7 +263,7 @@ func GetGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInte
 	return Render(guests)
 }
 
-func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
 	hexId := parms["id"]
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)

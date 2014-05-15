@@ -15,7 +15,7 @@ type User struct {
 	Phone      string          `json:"phone,omitempty"     bson:"phone,omitempty"`
 	Password   string          `json:"-"                   bson:"password"`
 	Favorites  []bson.ObjectId `json:"favorites,omitempty" bson:"favorites,omitempty"`
-	Guests     []bson.ObjectId `json:"guests,omitempty"    bson:"guests,omitempty"`
+	Blacklist  []bson.ObjectId `json:"blacklist,omitempty" bson:"blacklist,omitempty"`
 }
 
 const (
@@ -65,7 +65,7 @@ func (u *User) CleanPrivate() {
 	u.Phone = ""
 	u.Email = ""
 	u.Favorites = nil
-	u.Guests = nil
+	u.Blacklist = nil
 }
 
 type Guest struct {
