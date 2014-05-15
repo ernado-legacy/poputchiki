@@ -412,10 +412,6 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 			log.Println(err)
 		}
 	}()
-	err := db.SendMessage(origin, destination, text)
-	if err != nil {
-		return Render(ErrorBackend)
-	}
 
 	return Render("message sent")
 }
