@@ -22,6 +22,8 @@ type UserDB interface {
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
 	SendMessage(origin bson.ObjectId, destination bson.ObjectId, text string) error
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
+	GetMessage(id bson.ObjectId) (message *Message, err error)
+	RemoveMessage(id bson.ObjectId) error
 }
 
 type TokenStorage interface {
@@ -415,6 +417,41 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	}()
 
 	return Render("message sent")
+}
+
+func RemoveMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	idHex := parms["id"]
+
+	if !bson.IsObjectIdHex(idHex) {
+		return Render(ErrorBadId)
+	}
+
+	id := bson.ObjectIdHex(idHex)
+
+	t, _ := token.Get()
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	message, err := db.GetMessage(id)
+
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	if message.User != t.Id {
+		return Render(ErrorNotAllowed)
+	}
+
+	go func() {
+		err := db.RemoveMessage(id)
+
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	return Render("message removed")
 }
 
 func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {

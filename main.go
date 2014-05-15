@@ -74,6 +74,7 @@ func NewApp() *Application {
 
 	m.Put("/api/user/:id/messages", SendMessage)
 	m.Get("/api/user/:id/messages", GetMessagesFromUser)
+	m.Delete("/api/message/:id", RemoveMessage)
 
 	m.Post("/api/user/:id/fav/", AddToFavorites)
 	m.Delete("/api/user/:id/fav/", RemoveFromFavorites)
