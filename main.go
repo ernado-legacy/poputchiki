@@ -50,11 +50,13 @@ func NewApp() *Application {
 	runtime.GOMAXPROCS(processes)
 	var db UserDB
 	var tokenStorage TokenStorage
+	var realtime RealtimeInterface
 	coll := session.DB(dbName).C(collection)
 	gcoll := session.DB(dbName).C(guestsCollection)
 	mcoll := session.DB(dbName).C(messagesCollection)
 	db = &DB{coll, gcoll, mcoll}
 	tokenStorage = &TokenStorageRedis{c}
+	realtime = &RealtimeRedis{c}
 
 	m := martini.Classic()
 
@@ -64,6 +66,7 @@ func NewApp() *Application {
 	m.Map(db)
 	m.Map(c)
 	m.Map(tokenStorage)
+	m.Map(realtime)
 
 	m.Post("/api/auth/login", Login)
 	m.Post("/api/auth/register", Register)

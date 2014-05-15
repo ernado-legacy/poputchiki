@@ -6,6 +6,7 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
+	"time"
 )
 
 type UserDB interface {
@@ -20,7 +21,7 @@ type UserDB interface {
 	// Delete(id bson.ObjectId) error
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
-	SendMessage(origin bson.ObjectId, destination bson.ObjectId, text string) error
+	AddMessage(m *Message) error
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
@@ -392,7 +393,7 @@ func Update(db UserDB, r *http.Request, token TokenInterface, parms martini.Para
 	return Render(user)
 }
 
-func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
 
 	if text == BLANK {
@@ -413,8 +414,28 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	destination := bson.ObjectIdHex(destinationHex)
 	origin := t.Id
 
+	now := time.Now()
+	m1 := Message{bson.NewObjectId(), origin, origin, destination, now, text}
+	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
+
 	go func() {
-		err := db.SendMessage(origin, destination, text)
+		err := realtime.Push(origin, m1)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = realtime.Push(destination, m2)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = db.AddMessage(&m1)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		err = db.AddMessage(&m2)
 		if err != nil {
 			log.Println(err)
 		}
