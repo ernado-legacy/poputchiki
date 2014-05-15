@@ -20,7 +20,7 @@ func TestMethods(t *testing.T) {
 	secondname := "Pupkin"
 	phone := "+79197241488"
 
-	messageText := "hello world"
+	messageText := "hello world русский текст"
 
 	dbName = "poputchiki_dev"
 	redisName = "poputchiki_dev"

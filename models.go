@@ -84,7 +84,7 @@ type Message struct {
 	Text        string        `json:"text"        bson:"text"`
 }
 
-type RealtimeEvelt struct {
+type RealtimeEvent struct {
 	Type string      `json:"type"`
 	Body interface{} `json:"body"`
 	Time time.Time   `json:"time"`
