@@ -111,3 +111,16 @@ func (db *DB) GetAllGuests(id bson.ObjectId) ([]*User, error) {
 
 	return u, nil
 }
+
+func (db *DB) SendMessage(origin bson.ObjectId, destination bson.ObjectId, text string) error {
+	t := time.Now()
+	m1 := Message{bson.NewObjectId(), origin, origin, destination, t, text}
+	m2 := Message{bson.NewObjectId(), destination, origin, destination, t, text}
+
+	err := db.messages.Insert(&m1)
+	if err != nil {
+		return err
+	}
+
+	return db.messages.Insert(&m2)
+}
