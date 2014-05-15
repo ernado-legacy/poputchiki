@@ -93,3 +93,17 @@ type RealtimeEvent struct {
 type MessageSendBlacklisted struct {
 	Id bson.ObjectId `json:"id"`
 }
+
+type Comment struct {
+	User bson.ObjectId `json:"user"        bson:"user"`
+	Text string        `json:"text"        bson:"text"`
+	Time time.Time     `json:"time"        bson:"time"`
+}
+
+type StatusUpdate struct {
+	Id       bson.ObjectId `json:"id"          bson:"_id"`
+	User     bson.ObjectId `json:"user"        bson:"user"`
+	Time     time.Time     `json:"time"        bson:"time"`
+	Text     string        `json:"text"        bson:"text"`
+	Comments []Comment     `json:"comments"    bson:"comments"`
+}

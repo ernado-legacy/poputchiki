@@ -20,6 +20,7 @@ var (
 	collection         = "users"
 	guestsCollection   = "guests"
 	messagesCollection = "messages"
+	statusesCollection = "statuses"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
@@ -73,8 +74,9 @@ func NewApp() *Application {
 	coll := session.DB(dbName).C(collection)
 	gcoll := session.DB(dbName).C(guestsCollection)
 	mcoll := session.DB(dbName).C(messagesCollection)
+	scoll := session.DB(dbName).C(statusesCollection)
 	pool := newPool()
-	db = &DB{coll, gcoll, mcoll}
+	db = &DB{coll, gcoll, mcoll, scoll}
 	tokenStorage = &TokenStorageRedis{c}
 	realtime = &RealtimeRedis{pool}
 

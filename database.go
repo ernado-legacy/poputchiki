@@ -11,6 +11,7 @@ type DB struct {
 	users    *mgo.Collection
 	guests   *mgo.Collection
 	messages *mgo.Collection
+	statuses *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -147,4 +148,24 @@ func (db *DB) GetMessage(id bson.ObjectId) (*Message, error) {
 func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (messages []*Message, err error) {
 	err = db.messages.Find(bson.M{"user": userReciever, "origin": userOrigin}).All(&messages)
 	return messages, err
+}
+
+func (db *DB) AddStatus(u bson.ObjectId, text string) error {
+	p := StatusUpdate{}
+	p.Id = bson.NewObjectId()
+	p.Text = text
+	p.Time = time.Now()
+	p.User = u
+
+	return db.statuses.Insert(&p)
+}
+
+func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) error {
+	c := Comment{user, text, time.Now()}
+	var s StatusUpdate
+	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
+
+	_, err := db.statuses.FindId(status).Apply(change, &s)
+
+	return err
 }

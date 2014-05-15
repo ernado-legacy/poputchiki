@@ -489,16 +489,14 @@ func TestMethods(t *testing.T) {
 									req, _ := http.NewRequest("DELETE", reqUrl, nil)
 									a.ServeHTTP(res, req)
 									So(res.Code, ShouldEqual, http.StatusOK)
-									Convey("And it should not be in messages now", func() {
-										res = httptest.NewRecorder()
+									res = httptest.NewRecorder()
 
-										// we are requesting messages for user1 from user2
-										reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
-										req, _ := http.NewRequest("GET", reqUrl, nil)
-										a.ServeHTTP(res, req)
-										a.DropDatabase()
-										So(res.Code, ShouldEqual, http.StatusNotFound)
-									})
+									// we are requesting messages for user1 from user2
+									reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
+									req, _ = http.NewRequest("GET", reqUrl, nil)
+									a.ServeHTTP(res, req)
+									a.DropDatabase()
+									So(res.Code, ShouldEqual, http.StatusNotFound)
 								})
 							})
 						})
