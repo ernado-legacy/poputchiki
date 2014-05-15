@@ -233,7 +233,7 @@ func TestMethods(t *testing.T) {
 				})
 				Convey("And log out after that", func() {
 					res := httptest.NewRecorder()
-					// trying to log in
+					// trying to log out
 					reqUrl := fmt.Sprintf("/api/auth/logout/?token=%s", token1.Token)
 					req, _ := http.NewRequest("POST", reqUrl, nil)
 					a.ServeHTTP(res, req)
