@@ -20,6 +20,7 @@ type UserDB interface {
 	// Delete(id bson.ObjectId) error
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
+	SendMessage(origin bson.ObjectId, destination bson.ObjectId, text string) error
 }
 
 type TokenStorage interface {
@@ -40,6 +41,7 @@ const (
 	FORM_FIRSTNAME  = "firstname"
 	FORM_SECONDNAME = "secondname"
 	FORM_PHONE      = "phone"
+	FORM_TEXT       = "text"
 )
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
@@ -290,7 +292,7 @@ func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 		return Render(ErrorBadRequest)
 	}
 
-	return Render("guest added")
+	return Render("added to guests")
 }
 
 func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
@@ -379,4 +381,33 @@ func Update(db UserDB, r *http.Request, token TokenInterface, parms martini.Para
 		return Render(ErrorBackend)
 	}
 	return Render(user)
+}
+
+func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	text := r.FormValue(FORM_TEXT)
+
+	if text == BLANK {
+		return Render(ErrorBadRequest)
+	}
+
+	destinationHex := parms["id"]
+
+	if !bson.IsObjectIdHex(destinationHex) {
+		return Render(ErrorBadId)
+	}
+
+	t, _ := token.Get()
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	destination := bson.ObjectIdHex(destinationHex)
+	origin := t.Id
+
+	err := db.SendMessage(origin, destination, text)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	return Render("message sent")
 }
