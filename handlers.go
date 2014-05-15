@@ -406,6 +406,12 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	destination := bson.ObjectIdHex(destinationHex)
 	origin := t.Id
 
+	go func() {
+		err := db.SendMessage(origin, destination, text)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 	err := db.SendMessage(origin, destination, text)
 	if err != nil {
 		return Render(ErrorBackend)
