@@ -26,9 +26,14 @@ type RealtimeRedis struct {
 	pool *redis.Pool
 }
 
+func (realtime *RealtimeRedis) Conn() redis.Conn {
+	return realtime.pool.Get()
+}
+
 func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
-	conn := realtime.pool.Get()
+	conn := realtime.Conn()
 	defer conn.Close()
+
 	t := strings.ToLower(reflect.TypeOf(event).Name())
 	e := RealtimeEvent{t, event, time.Now()}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
@@ -68,45 +73,29 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 
 func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	c := make(chan RealtimeEvent, 100)
-	conn := realtime.pool.Get()
+	conn := realtime.Conn()
 	psc := redis.PubSubConn{conn}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
+
 	psc.Subscribe(key)
 	go func() {
-		log.Println("route started")
+		defer conn.Close()
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
-				log.Printf("%s: message: %s\n", v.Channel, v.Data)
 				e := RealtimeEvent{}
 				err := json.Unmarshal(v.Data, &e)
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				log.Println("sending")
 				c <- e
 			case error:
 				log.Println(v)
 				return
 			}
 		}
-		// for {
-		// 	reply, err := realtime.conn.Receive()
-		// 	log.Println("recieved", string(reply.([]byte)), err)
-		// 	if err != nil {
-		// 		log.Println(err)
-		// 		return
-		// 	}
-		// 	e := RealtimeEvent{}
-		// 	err = json.Unmarshal(reply.([]byte), &e)
-		// 	if err != nil {
-		// 		log.Println(err)
-		// 		return
-		// 	}
-		// 	log.Println("sending")
-		// 	c <- e
 	}()
 	return c
 }
