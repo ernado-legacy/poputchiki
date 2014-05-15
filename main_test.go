@@ -15,11 +15,13 @@ import (
 func TestMethods(t *testing.T) {
 	username := "test@test.ru"
 	password := "secretsecret"
-	dbName = "poputchiki_dev"
 	firstname := "Ivan"
 	secondname := "Pupkin"
 	phone := "+79197241488"
+
+	dbName = "poputchiki_dev"
 	redisName = "poputchiki_dev"
+
 	a := NewApp()
 	defer a.Close()
 	a.DropDatabase()
@@ -207,6 +209,7 @@ func TestMethods(t *testing.T) {
 			a.ServeHTTP(res, req)
 
 			So(res.Code, ShouldEqual, http.StatusOK)
+
 			Convey("Returned token must be valid json object", func() {
 				// parsing json response to token object
 				err := json.Unmarshal(tokenBody, &token1)
@@ -225,8 +228,18 @@ func TestMethods(t *testing.T) {
 					req, _ := http.NewRequest("GET", reqUrl, nil)
 					a.ServeHTTP(res, req)
 
-					So(res.Code, ShouldEqual, http.StatusOK)
 					a.DropDatabase()
+					So(res.Code, ShouldEqual, http.StatusOK)
+				})
+				Convey("And log out after that", func() {
+					res := httptest.NewRecorder()
+					// trying to log in
+					reqUrl := fmt.Sprintf("/api/auth/logout/?token=%s", token1.Token)
+					req, _ := http.NewRequest("POST", reqUrl, nil)
+					a.ServeHTTP(res, req)
+
+					a.DropDatabase()
+					So(res.Code, ShouldEqual, http.StatusOK)
 				})
 			})
 		})

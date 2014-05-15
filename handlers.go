@@ -25,6 +25,7 @@ type UserDB interface {
 type TokenStorage interface {
 	Get(hexToken string) (*Token, error)
 	Generate(user *User) (*Token, error)
+	Remove(token *Token) error
 }
 
 type TokenInterface interface {
@@ -310,6 +311,22 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	}
 
 	return Render(t)
+}
+
+func Logout(db UserDB, r *http.Request, tokens TokenStorage, token TokenInterface) (int, []byte) {
+	t, _ := token.Get()
+
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	err := tokens.Remove(t)
+
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	return Render("logged out")
 }
 
 func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {

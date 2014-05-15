@@ -78,6 +78,13 @@ func (storage *TokenStorageRedis) Generate(user *User) (*Token, error) {
 	return &t, nil
 }
 
+func (storage *TokenStorageRedis) Remove(token *Token) error {
+	key := strings.Join([]string{redisName, TOKEN_REDIS_KEY, token.Token}, REDIS_SEPARATOR)
+	_, err := storage.conn.Do("DEL", key)
+
+	return err
+}
+
 type TokenHanlder struct {
 	e     error
 	token *Token

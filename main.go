@@ -65,6 +65,7 @@ func NewApp() *Application {
 
 	m.Post("/api/auth/login", Login)
 	m.Post("/api/auth/register", Register)
+	m.Post("/api/auth/logout", Logout)
 
 	m.Get("/api/user/:id", GetUser)
 	m.Patch("/api/user/:id", Update)
@@ -101,7 +102,7 @@ func (a *Application) InitDatabase() {
 		Key:        []string{"email"},
 		Unique:     true,
 		Background: true, // See notes.
-		DropDups:   true,
+		DropDups:   false,
 	}
 	a.session.DB(dbName).C(collection).EnsureIndex(index)
 
