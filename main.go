@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"time"
 )
 
 var (
@@ -36,6 +37,24 @@ type Application struct {
 	m       *martini.ClassicMartini
 }
 
+func newPool() *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", ":6379")
+			if err != nil {
+				return nil, err
+			}
+			return c, err
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+	}
+}
+
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
 	if err != nil {
@@ -54,9 +73,10 @@ func NewApp() *Application {
 	coll := session.DB(dbName).C(collection)
 	gcoll := session.DB(dbName).C(guestsCollection)
 	mcoll := session.DB(dbName).C(messagesCollection)
+	pool := newPool()
 	db = &DB{coll, gcoll, mcoll}
 	tokenStorage = &TokenStorageRedis{c}
-	realtime = &RealtimeRedis{c}
+	realtime = &RealtimeRedis{pool}
 
 	m := martini.Classic()
 
@@ -88,6 +108,8 @@ func NewApp() *Application {
 
 	m.Post("/api/user/:id/guests", AddToGuests)
 	m.Get("/api/user/:id/guests", GetGuests)
+
+	m.Get("/api/realtime", realtime.RealtimeHandler)
 
 	a := Application{session, c, m}
 	a.InitDatabase()

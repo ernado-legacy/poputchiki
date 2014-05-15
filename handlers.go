@@ -41,6 +41,7 @@ type TokenInterface interface {
 
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
+	RealtimeHandler(w http.ResponseWriter, r *http.Request, token TokenInterface) (int, []byte)
 }
 
 const (
