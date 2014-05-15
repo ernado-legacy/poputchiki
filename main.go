@@ -95,6 +95,8 @@ func (a *Application) Run() {
 
 func (a *Application) DropDatabase() {
 	a.session.DB(dbName).C(collection).DropCollection()
+	a.session.DB(dbName).C(messagesCollection).DropCollection()
+	a.session.DB(dbName).C(guestsCollection).DropCollection()
 	a.InitDatabase()
 
 }
@@ -115,6 +117,12 @@ func (a *Application) InitDatabase() {
 		DropDups:   true,
 	}
 	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
+
+	index = mgo.Index{
+		Key:        []string{"user", "origin", "destination", "time"},
+		Background: true,
+	}
+	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)
 }
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
