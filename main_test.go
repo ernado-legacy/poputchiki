@@ -330,6 +330,7 @@ func TestMethods(t *testing.T) {
 					req.PostForm = url.Values{FORM_TEXT: {messageText}}
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
+					var foundMessage Message
 					Convey("And that message should be in messages", func() {
 						res = httptest.NewRecorder()
 
@@ -338,13 +339,11 @@ func TestMethods(t *testing.T) {
 						req, _ := http.NewRequest("GET", reqUrl, nil)
 						time.Sleep(time.Millisecond * 5) // waiting for async message send
 						a.ServeHTTP(res, req)
-						a.DropDatabase()
 						messagesBody, _ := ioutil.ReadAll(res.Body)
 						m := []Message{}
 						So(res.Code, ShouldEqual, http.StatusOK)
 						err := json.Unmarshal(messagesBody, &m)
 						So(err, ShouldEqual, nil)
-						foundMessage := Message{}
 						for _, value := range m {
 							if value.Text == messageText {
 								foundMessage = value
@@ -353,6 +352,24 @@ func TestMethods(t *testing.T) {
 						So(foundMessage.Destination, ShouldEqual, token1.Id)
 						So(foundMessage.Origin, ShouldEqual, token2.Id)
 						So(foundMessage.Text, ShouldEqual, messageText)
+
+						Convey("So user could remove it", func() {
+							res = httptest.NewRecorder()
+							reqUrl := fmt.Sprintf("/api/message/%s/?token=%s", foundMessage.Id.Hex(), token1.Token)
+							req, _ := http.NewRequest("DELETE", reqUrl, nil)
+							a.ServeHTTP(res, req)
+							So(res.Code, ShouldEqual, http.StatusOK)
+							Convey("And it should not be in messages now", func() {
+								res = httptest.NewRecorder()
+
+								// we are requesting messages for user1 from user2
+								reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
+								req, _ := http.NewRequest("GET", reqUrl, nil)
+								a.ServeHTTP(res, req)
+								a.DropDatabase()
+								So(res.Code, ShouldEqual, http.StatusNotFound)
+							})
+						})
 					})
 				})
 				Convey("User should be able to add guests", func() {

@@ -129,9 +129,10 @@ func (db *DB) RemoveMessage(id bson.ObjectId) error {
 	return db.messages.RemoveId(id)
 }
 
-func (db *DB) GetMessage(id bson.ObjectId) (message *Message, err error) {
-	err = db.messages.FindId(id).One(message)
-	return message, err
+func (db *DB) GetMessage(id bson.ObjectId) (*Message, error) {
+	message := Message{}
+	err := db.messages.FindId(id).One(&message)
+	return &message, err
 }
 
 func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (messages []*Message, err error) {

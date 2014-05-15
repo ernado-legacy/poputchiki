@@ -436,6 +436,7 @@ func RemoveMessage(db UserDB, parms martini.Params, r *http.Request, token Token
 	message, err := db.GetMessage(id)
 
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 
