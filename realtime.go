@@ -20,10 +20,12 @@ var upgrader = websocket.Upgrader{
 const (
 	REALTIME_REDIS_KEY   = "realtime"
 	REALTIME_CHANNEL_KEY = "channel"
+	REALTIME_BUFFER_SIZE = 100
 )
 
 type RealtimeRedis struct {
-	pool *redis.Pool
+	pool  *redis.Pool
+	chans map[bson.ObjectId](chan RealtimeEvent)
 }
 
 func (realtime *RealtimeRedis) Conn() redis.Conn {
@@ -72,7 +74,16 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
-	c := make(chan RealtimeEvent, 100)
+	// channel is already created and updates are handled
+	val, ok := realtime.chans[id]
+	if ok {
+		return val
+	}
+
+	// creating new channel
+	c := make(chan RealtimeEvent, REALTIME_BUFFER_SIZE)
+	realtime.chans[id] = c
+
 	conn := realtime.Conn()
 	psc := redis.PubSubConn{conn}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
@@ -81,6 +92,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	psc.Subscribe(key)
 	go func() {
 		defer conn.Close()
+		defer delete(realtime.chans, id)
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
