@@ -287,10 +287,12 @@ func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 		return Render(ErrorUserNotFound)
 	}
 
-	err := db.AddGuest(user.Id, guest.Id)
-	if err != nil {
-		return Render(ErrorBadRequest)
-	}
+	go func() {
+		err := db.AddGuest(user.Id, guest.Id)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return Render("added to guests")
 }
