@@ -507,7 +507,7 @@ func TestMethods(t *testing.T) {
 
 							json.Unmarshal(tokenBody, &token1)
 
-							// we are sending message from user2 to user1
+							// we are sending message from user1 to user2
 							reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
 							req, _ := http.NewRequest("PUT", reqUrl, nil)
 							req.PostForm = url.Values{FORM_TEXT: {messageText}}
@@ -518,7 +518,7 @@ func TestMethods(t *testing.T) {
 								time.Sleep(5 * time.Millisecond)
 								res = httptest.NewRecorder()
 
-								// we are requesting messages for user1 from user2
+								// we are requesting messages for user2 from user1
 								reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
 								req, _ := http.NewRequest("GET", reqUrl, nil)
 								time.Sleep(time.Millisecond * 5) // waiting for async message send
