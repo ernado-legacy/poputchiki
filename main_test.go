@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 )
 
 func TestMethods(t *testing.T) {
@@ -18,6 +19,8 @@ func TestMethods(t *testing.T) {
 	firstname := "Ivan"
 	secondname := "Pupkin"
 	phone := "+79197241488"
+
+	messageText := "hello world"
 
 	dbName = "poputchiki_dev"
 	redisName = "poputchiki_dev"
@@ -315,6 +318,42 @@ func TestMethods(t *testing.T) {
 
 					So(res.Code, ShouldEqual, http.StatusOK)
 					a.DropDatabase()
+				})
+				Convey("User should be able to send message", func() {
+					res = httptest.NewRecorder()
+
+					json.Unmarshal(tokenBody, &token1)
+
+					// we are sending message from user2 to user1
+					reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
+					req, _ := http.NewRequest("PUT", reqUrl, nil)
+					req.PostForm = url.Values{FORM_TEXT: {messageText}}
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+					Convey("And that message should be in messages", func() {
+						res = httptest.NewRecorder()
+
+						// we are requesting messages for user1 from user2
+						reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
+						req, _ := http.NewRequest("GET", reqUrl, nil)
+						time.Sleep(time.Millisecond * 5) // waiting for async message send
+						a.ServeHTTP(res, req)
+						a.DropDatabase()
+						messagesBody, _ := ioutil.ReadAll(res.Body)
+						m := []Message{}
+						So(res.Code, ShouldEqual, http.StatusOK)
+						err := json.Unmarshal(messagesBody, &m)
+						So(err, ShouldEqual, nil)
+						foundMessage := Message{}
+						for _, value := range m {
+							if value.Text == messageText {
+								foundMessage = value
+							}
+						}
+						So(foundMessage.Destination, ShouldEqual, token1.Id)
+						So(foundMessage.Origin, ShouldEqual, token2.Id)
+						So(foundMessage.Text, ShouldEqual, messageText)
+					})
 				})
 				Convey("User should be able to add guests", func() {
 					res = httptest.NewRecorder()

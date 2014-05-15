@@ -21,6 +21,7 @@ type UserDB interface {
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
 	SendMessage(origin bson.ObjectId, destination bson.ObjectId, text string) error
+	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
 }
 
 type TokenStorage interface {
@@ -414,4 +415,31 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	}()
 
 	return Render("message sent")
+}
+
+func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	originHex := parms["id"]
+	if !bson.IsObjectIdHex(originHex) {
+		return Render(ErrorBadId)
+	}
+
+	t, _ := token.Get()
+	if t == nil {
+		return Render(ErrorAuth)
+	}
+
+	origin := bson.ObjectIdHex(originHex)
+	destination := t.Id
+
+	messages, err := db.GetMessagesFromUser(destination, origin)
+
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	if messages == nil {
+		return Render(ErrorUserNotFound) // todo: rename error
+	}
+
+	return Render(messages)
 }
