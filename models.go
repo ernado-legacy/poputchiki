@@ -85,7 +85,7 @@ type Message struct {
 }
 
 type RealtimeEvelt struct {
-	Type string
-	Body interface{}
-	Time time.Time `json:"time"`
+	Type string      `json:"type"`
+	Body interface{} `json:"body"`
+	Time time.Time   `json:"time"`
 }
