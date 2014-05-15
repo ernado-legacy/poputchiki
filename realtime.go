@@ -24,8 +24,7 @@ const (
 )
 
 type RealtimeRedis struct {
-	pool  *redis.Pool
-	chans map[bson.ObjectId](chan RealtimeEvent)
+	pool *redis.Pool
 }
 
 func (realtime *RealtimeRedis) Conn() redis.Conn {
@@ -42,9 +41,13 @@ func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
 	key := strings.Join(args, REDIS_SEPARATOR)
 	eJson, err := json.Marshal(e)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	_, err = conn.Do("PUBLISH", key, eJson)
+	if err != nil {
+		log.Println(err)
+	}
 	return err
 }
 
@@ -74,25 +77,17 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
-	// channel is already created and updates are handled
-	val, ok := realtime.chans[id]
-	if ok {
-		return val
-	}
-
 	// creating new channel
 	c := make(chan RealtimeEvent, REALTIME_BUFFER_SIZE)
-	realtime.chans[id] = c
 
 	conn := realtime.Conn()
 	psc := redis.PubSubConn{conn}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
-
 	psc.Subscribe(key)
+
 	go func() {
 		defer conn.Close()
-		defer delete(realtime.chans, id)
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
