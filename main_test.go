@@ -238,8 +238,18 @@ func TestMethods(t *testing.T) {
 					req, _ := http.NewRequest("POST", reqUrl, nil)
 					a.ServeHTTP(res, req)
 
-					a.DropDatabase()
 					So(res.Code, ShouldEqual, http.StatusOK)
+					Convey("And user must not be able to use deleted token anymore", func() {
+						res := httptest.NewRecorder()
+
+						// trying to get user information with scope
+						reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", id.Hex(), token1.Token)
+						req, _ := http.NewRequest("GET", reqUrl, nil)
+						a.ServeHTTP(res, req)
+
+						a.DropDatabase()
+						So(res.Code, ShouldEqual, http.StatusUnauthorized)
+					})
 				})
 			})
 		})
