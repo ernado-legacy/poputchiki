@@ -47,6 +47,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	if t == nil {
 		return Render(ErrorAuth)
 	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -56,7 +57,6 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	id := bson.NewObjectId()
 	c := realtime.getChannel(id)
 	for event := range c {
-		log.Println(event)
 		err := conn.WriteJSON(event)
 		if err != nil {
 			log.Println(err)
