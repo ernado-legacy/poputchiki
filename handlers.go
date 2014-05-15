@@ -116,6 +116,17 @@ func GetUser(db UserDB, parms martini.Params, token TokenInterface) (int, []byte
 		return Render(ErrorUserNotFound)
 	}
 
+	blacklisted := false
+	for _, u := range user.Blacklist {
+		if u == t.Id {
+			blacklisted = true
+		}
+	}
+
+	if blacklisted {
+		return Render(ErrorBlacklisted)
+	}
+
 	// hiding private fields for non-owner
 	if t == nil || t.Id != id {
 		user.CleanPrivate()

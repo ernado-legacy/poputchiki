@@ -435,6 +435,16 @@ func TestMethods(t *testing.T) {
 
 						So(err, ShouldEqual, nil)
 						So(u.Blacklist, ShouldContain, token1.Id)
+						Convey("Other user now should not be able to get information", func() {
+							res = httptest.NewRecorder()
+
+							reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token2.Id.Hex(), token1.Token)
+							req, _ := http.NewRequest("GET", reqUrl, nil)
+							a.ServeHTTP(res, req)
+
+							a.DropDatabase()
+							So(res.Code, ShouldEqual, http.StatusMethodNotAllowed)
+						})
 						Convey("Then user should be able to remove other user from blacklist", func() {
 							reqUrl := fmt.Sprintf("/api/user/%s/blacklist/?token=%s", token2.Id.Hex(), token2.Token)
 							req, _ := http.NewRequest("DELETE", reqUrl, nil)
@@ -447,7 +457,6 @@ func TestMethods(t *testing.T) {
 								reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token2.Id.Hex(), token2.Token)
 								req, _ := http.NewRequest("GET", reqUrl, nil)
 								a.ServeHTTP(res, req)
-								a.DropDatabase()
 
 								So(res.Code, ShouldEqual, http.StatusOK)
 								u := User{}
@@ -456,6 +465,16 @@ func TestMethods(t *testing.T) {
 
 								So(err, ShouldEqual, nil)
 								So(u.Blacklist, ShouldNotContain, token1.Id)
+								Convey("Other user now should be able to get information", func() {
+									res = httptest.NewRecorder()
+
+									reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token2.Id.Hex(), token1.Token)
+									req, _ := http.NewRequest("GET", reqUrl, nil)
+									a.ServeHTTP(res, req)
+
+									a.DropDatabase()
+									So(res.Code, ShouldEqual, http.StatusOK)
+								})
 							})
 						})
 					})
