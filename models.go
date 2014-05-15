@@ -74,3 +74,12 @@ type Guest struct {
 	Guest bson.ObjectId `json:"guest" bson:"guest"`
 	Time  time.Time     `json:"time"  bson:"time"`
 }
+
+type Message struct {
+	Id          bson.ObjectId `json:"id"          bson:"_id"`
+	User        bson.ObjectId `json:"user"        bson:"user"`
+	Origin      bson.ObjectId `json:"origin"      bson:"origin"`
+	Destination bson.ObjectId `json:"destination" bson:"destination"`
+	Time        time.Time     `json:"time"        bson:"time"`
+	Text        string        `json:"text"        bson:"text"`
+}

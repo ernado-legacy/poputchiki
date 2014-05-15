@@ -13,14 +13,15 @@ import (
 )
 
 var (
-	salt             = "salt"
-	projectName      = "poputchiki"
-	dbName           = projectName
-	collection       = "users"
-	guestsCollection = "guests"
-	mongoHost        = "localhost"
-	processes        = runtime.NumCPU()
-	redisName        = projectName
+	salt               = "salt"
+	projectName        = "poputchiki"
+	dbName             = projectName
+	collection         = "users"
+	guestsCollection   = "guests"
+	messagesCollection = "messages"
+	mongoHost          = "localhost"
+	processes          = runtime.NumCPU()
+	redisName          = projectName
 )
 
 func getHash(password string) string {
@@ -51,7 +52,8 @@ func NewApp() *Application {
 	var tokenStorage TokenStorage
 	coll := session.DB(dbName).C(collection)
 	gcoll := session.DB(dbName).C(guestsCollection)
-	db = &DB{coll, gcoll}
+	mcoll := session.DB(dbName).C(messagesCollection)
+	db = &DB{coll, gcoll, mcoll}
 	tokenStorage = &TokenStorageRedis{c}
 
 	m := martini.Classic()

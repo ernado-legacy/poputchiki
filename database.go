@@ -8,8 +8,9 @@ import (
 )
 
 type DB struct {
-	users  *mgo.Collection
-	guests *mgo.Collection
+	users    *mgo.Collection
+	guests   *mgo.Collection
+	messages *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
