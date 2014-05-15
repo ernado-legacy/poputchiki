@@ -36,6 +36,10 @@ type TokenInterface interface {
 	Get() (*Token, error)
 }
 
+type RealtimeInterface interface {
+	Push(id bson.ObjectId, event interface{}) error
+}
+
 const (
 	JSON_HEADER     = "application/json; charset=utf-8"
 	FORM_TARGET     = "target"
