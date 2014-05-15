@@ -89,3 +89,7 @@ type RealtimeEvent struct {
 	Body interface{} `json:"body"`
 	Time time.Time   `json:"time"`
 }
+
+type MessageSendBlacklisted struct {
+	Id bson.ObjectId `json:"id"`
+}

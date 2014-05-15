@@ -513,6 +513,22 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
 
 	go func() {
+
+		u := db.Get(destination)
+		blacklisted := false
+		for _, id := range u.Blacklist {
+			if id == origin {
+				blacklisted = true
+			}
+		}
+
+		if blacklisted {
+			err := realtime.Push(origin, MessageSendBlacklisted{m1.Id})
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
 		err := realtime.Push(origin, m1)
 		if err != nil {
 			log.Println(err)
