@@ -95,6 +95,7 @@ type MessageSendBlacklisted struct {
 }
 
 type Comment struct {
+	Id   bson.ObjectId `json:"id"          bson:"_id"`
 	User bson.ObjectId `json:"user"        bson:"user"`
 	Text string        `json:"text"        bson:"text"`
 	Time time.Time     `json:"time"        bson:"time"`

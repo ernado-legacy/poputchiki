@@ -161,7 +161,7 @@ func (db *DB) AddStatus(u bson.ObjectId, text string) error {
 }
 
 func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) error {
-	c := Comment{user, text, time.Now()}
+	c := Comment{bson.NewObjectId(), user, text, time.Now()}
 	var s StatusUpdate
 	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
 
