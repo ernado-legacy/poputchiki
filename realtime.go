@@ -67,8 +67,10 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	id := bson.NewObjectId()
-	c := realtime.getChannel(id)
-	for event := range c {
+	c := realtime.GetWSChannel(id)
+	defer realtime.CloseWs(c)
+
+	for event := range c.channel {
 		err := conn.WriteJSON(event)
 		if err != nil {
 			log.Println(err)
@@ -132,11 +134,16 @@ func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
 	}
 	wsid := bson.NewObjectId()
 	realtime.chans[id].chans[wsid] = c
-	return ReltWSChannel{id: wsid, channel: c}
+	return ReltWSChannel{id: wsid, user: id, channel: c}
+}
+
+func (realtime *RealtimeRedis) CloseWs(c ReltWSChannel) {
+	delete(realtime.chans[c.user].chans, c.id)
 }
 
 type ReltWSChannel struct {
 	id            bson.ObjectId
+	user          bson.ObjectId
 	channel       chan RealtimeEvent
 	subscriptions []bson.ObjectId
 }
