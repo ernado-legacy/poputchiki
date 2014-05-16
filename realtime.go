@@ -20,11 +20,13 @@ var upgrader = websocket.Upgrader{
 const (
 	REALTIME_REDIS_KEY   = "realtime"
 	REALTIME_CHANNEL_KEY = "channel"
-	REALTIME_BUFFER_SIZE = 100
+	RELT_BUFF_SIZE       = 100
+	RELT_WS_BUFF_SIZE    = 10
 )
 
 type RealtimeRedis struct {
-	pool *redis.Pool
+	pool  *redis.Pool
+	chans map[bson.ObjectId]ReltChannel
 }
 
 func (realtime *RealtimeRedis) Conn() redis.Conn {
@@ -78,7 +80,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 
 func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	// creating new channel
-	c := make(chan RealtimeEvent, REALTIME_BUFFER_SIZE)
+	c := make(chan RealtimeEvent, RELT_BUFF_SIZE)
 
 	conn := realtime.Conn()
 	psc := redis.PubSubConn{conn}
@@ -105,4 +107,41 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 		}
 	}()
 	return c
+}
+
+func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
+	c := ReltChannel{make(map[bson.ObjectId](chan RealtimeEvent)), realtime.getChannel(id)}
+	c.events = realtime.getChannel(id)
+	go func() {
+		for event := range c.events {
+			go func() {
+				for _, channel := range c.chans {
+					channel <- event
+				}
+			}()
+		}
+	}()
+	return c
+}
+
+func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
+	c := make(chan RealtimeEvent, RELT_WS_BUFF_SIZE)
+	_, ok := realtime.chans[id]
+	if !ok {
+		realtime.chans[id] = realtime.GetReltChannel(id)
+	}
+	wsid := bson.NewObjectId()
+	realtime.chans[id].chans[wsid] = c
+	return ReltWSChannel{id: wsid, channel: c}
+}
+
+type ReltWSChannel struct {
+	id            bson.ObjectId
+	channel       chan RealtimeEvent
+	subscriptions []bson.ObjectId
+}
+
+type ReltChannel struct {
+	chans  map[bson.ObjectId](chan RealtimeEvent)
+	events chan RealtimeEvent
 }

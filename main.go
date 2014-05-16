@@ -7,6 +7,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/gzip"
 	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
 	"runtime"
@@ -75,10 +76,9 @@ func NewApp() *Application {
 	gcoll := session.DB(dbName).C(guestsCollection)
 	mcoll := session.DB(dbName).C(messagesCollection)
 	scoll := session.DB(dbName).C(statusesCollection)
-	pool := newPool()
 	db = &DB{coll, gcoll, mcoll, scoll}
 	tokenStorage = &TokenStorageRedis{c}
-	realtime = &RealtimeRedis{pool}
+	realtime = &RealtimeRedis{newPool(), make(map[bson.ObjectId]ReltChannel)}
 
 	m := martini.Classic()
 

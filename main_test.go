@@ -16,12 +16,12 @@ import (
 func TestRealtime(t *testing.T) {
 	redisName = "poputchiki_test_realtime"
 	pool := newPool()
-	realtime := &RealtimeRedis{pool}
+	realtime := &RealtimeRedis{pool, make(map[bson.ObjectId]ReltChannel)}
 	id := bson.NewObjectId()
 	event := "test"
-	c := realtime.getChannel(id)
+	c := realtime.GetWSChannel(id)
 	err := realtime.Push(id, event)
-	eventRec := <-c
+	eventRec := <-c.channel
 	Convey("Push ok", t, func() {
 		So(err, ShouldEqual, nil)
 		Convey("And event should be delivered", func() {
