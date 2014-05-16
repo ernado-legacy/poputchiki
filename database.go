@@ -169,3 +169,23 @@ func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text 
 
 	return err
 }
+
+func (db *DB) RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
+	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
+	query := bson.M{"comments.id": id}
+	_, err := db.statuses.Find(query).Apply(change, nil)
+	return err
+}
+
+func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
+	query := bson.M{"_id": id, "user": user}
+	_, err := db.statuses.Find(query).Apply(change, nil)
+	return err
+}
+
+func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
+	query := bson.M{"_id": id, "user": user}
+	err := db.statuses.Remove(query)
+	return err
+}
