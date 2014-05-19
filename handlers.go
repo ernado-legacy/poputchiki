@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/go-martini/martini"
+	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -83,9 +86,21 @@ func Render(value interface{}) (int, []byte) {
 
 func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter) {
 	var t TokenAbstract
-
+	var hexToken string
 	q := r.URL.Query()
-	hexToken := q.Get(TOKEN_URL_PARM)
+
+	tStr := q.Get(TOKEN_URL_PARM)
+
+	if tStr != BLANK {
+		hexToken = tStr
+	}
+
+	tCookie, err := r.Cookie("token")
+
+	if err == nil {
+		hexToken = tCookie.Value
+	}
+
 	token, err := tokens.Get(hexToken)
 	if err != nil {
 		log.Println(err)
@@ -615,4 +630,52 @@ func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token
 	}
 
 	return Render(messages)
+}
+
+func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+	client := &http.Client{}
+	f, h, err := r.FormFile("file")
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", h.Filename)
+	_, err = io.Copy(part, f)
+	err = writer.Close()
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	urlStr := "http://localhost:9333/dir/assign"
+	req, err := http.NewRequest("GET", urlStr, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	rbody := &bytes.Buffer{}
+	_, err = rbody.ReadFrom(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	resp.Body.Close()
+	assign := WeedAssign{}
+	err = json.Unmarshal(rbody.Bytes(), &assign)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	urlStr = "http://" + assign.Url + "/" + assign.Fid
+	req, err = http.NewRequest("POST", urlStr, body)
+	req.Header.Add("Content-type", writer.FormDataContentType())
+	resp, err = client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	im := Image{bson.NewObjectId(), assign.Fid, urlStr}
+	return Render(im)
 }

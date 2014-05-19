@@ -16,6 +16,7 @@ type User struct {
 	Password   string          `json:"-"                   bson:"password"`
 	Favorites  []bson.ObjectId `json:"favorites,omitempty" bson:"favorites,omitempty"`
 	Blacklist  []bson.ObjectId `json:"blacklist,omitempty" bson:"blacklist,omitempty"`
+	Countries  []string        `json:"countries,omitempty" bson:"countries,omitempty"`
 }
 
 const (
@@ -107,4 +108,25 @@ type StatusUpdate struct {
 	Time     time.Time     `json:"time"        bson:"time"`
 	Text     string        `json:"text"        bson:"text"`
 	Comments []Comment     `json:"comments"    bson:"comments"`
+}
+
+type StripeItem struct {
+	Id        bson.ObjectId `json:"id"                  bson:"_id"`
+	User      bson.ObjectId `json:"user"                bson:"user"`
+	Countries []string      `json:"countries,omitempty" bson:"countries,omitempty"`
+	Time      time.Time     `json:"time"                bson:"time"`
+}
+
+type Image struct {
+	Id  bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Fid string        `json:"fid"          bson:"fid"`
+	Url string        `json:"url"          bson:"url,omitempty"`
+}
+
+//{"count":1,"fid":"3,01637037d6","url":"127.0.0.1:8080","publicUrl":"localhost:8080"}
+type WeedAssign struct {
+	Count     int    `json:"count"`
+	Fid       string `json:"fid"`
+	Url       string `json:"url"`
+	PublicUrl string `json:"publicUrl"`
 }

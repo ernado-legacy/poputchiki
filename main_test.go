@@ -1,17 +1,64 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
+	"io"
 	"io/ioutil"
 	"labix.org/v2/mgo/bson"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
+
+func TestUpload(t *testing.T) {
+	redisName = "poputchiki_test_upload"
+	dbName = "poputchiki_dev_upload"
+	path := "test/image.jpg"
+	file, err := os.Open(path)
+	a := NewApp()
+	defer a.Close()
+	a.DropDatabase()
+
+	Convey("Request should completed", t, func() {
+		So(err, ShouldBeNil)
+		defer file.Close()
+		res := httptest.NewRecorder()
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("file", filepath.Base(path))
+		a.DropDatabase()
+		So(err, ShouldBeNil)
+		_, err = io.Copy(part, file)
+		So(err, ShouldBeNil)
+		So(writer.Close(), ShouldBeNil)
+		req, err := http.NewRequest("POST", "/api/image", body)
+		So(err, ShouldBeNil)
+		req.Header.Add("Content-type", writer.FormDataContentType())
+		a.ServeHTTP(res, req)
+		So(res.Code, ShouldEqual, http.StatusOK)
+		imageBody, _ := ioutil.ReadAll(res.Body)
+		image := &Image{}
+		So(json.Unmarshal(imageBody, image), ShouldBeNil)
+
+		Convey("File must be able to download", func() {
+			log.Println(image.Url)
+			req, _ = http.NewRequest("GET", image.Url, nil)
+			client := &http.Client{}
+			res, err := client.Do(req)
+			So(err, ShouldBeNil)
+			So(res.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	})
+}
 
 func TestRealtime(t *testing.T) {
 	redisName = "poputchiki_test_realtime"

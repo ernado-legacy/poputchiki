@@ -82,6 +82,7 @@ func NewApp() *Application {
 
 	m := martini.Classic()
 
+	m.Use(martini.Static("static", martini.StaticOptions{Prefix: "/"}))
 	m.Use(JsonEncoder)
 	m.Use(TokenWrapper)
 	m.Use(gzip.All())
@@ -110,6 +111,8 @@ func NewApp() *Application {
 
 	m.Post("/api/user/:id/guests", AddToGuests)
 	m.Get("/api/user/:id/guests", GetGuests)
+
+	m.Post("/api/image", UploadImage)
 
 	m.Get("/api/realtime", realtime.RealtimeHandler)
 
