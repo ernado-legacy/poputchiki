@@ -14,10 +14,9 @@
 <div class="container">
     <div class="header">
         <ul class="nav nav-pills pull-right">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="#">Log out</a></li>
+            <li><a href="#">Дома</a></li>
+            <li><a href="#">Контакт</a></li>
+            <li><a href="#" id="button-logout" style="display: none">Уйти</a></li>
         </ul>
         <h3 class="text-muted">Попутчики</h3>
     </div>
@@ -86,16 +85,15 @@
     </div>
 
     <!-- /.modal -->
-    <div class="jumbotron">
-        <h1>Jumbotron heading</h1>
+    <div class="jumbotron" id="block-login">
+        <h1>Всегда прошу</h1>
 
-        <p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus
-            commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+        <p class="lead">К нашему шалашу</p>
 
-        <p><a class="btn btn-lg btn-success" href="#" data-toggle="modal" data-target="#myModal" role="button">Sign up
-            today</a></p>
+        <p><a class="btn btn-lg btn-success" href="#" data-toggle="modal" data-target="#myModal" role="button">Зарегиться</a>
+        </p>
 
-        <p><a class="btn btn-lg btn-primary" href="#" data-toggle="modal" data-target="#loginModal" role="button">Login
+        <p><a class="btn btn-lg btn-primary" href="#" data-toggle="modal" data-target="#loginModal" role="button">Войти
         </a></p>
     </div>
 
@@ -132,7 +130,7 @@
     </div>
 
     <div class="footer">
-        <p>© Company 2014</p>
+        <p>© Попутчики 2014</p>
     </div>
 
 </div>
@@ -168,8 +166,8 @@
 
     var user;
     var Users = Backbone.Collection.extend({
-      model : User,
-      url : '/api/user/'
+        model: User,
+        url: '/api/user/'
     });
 
     var users = new Users;
@@ -177,6 +175,66 @@
     var token, userId;
 
     token = $.cookie('token');
+    userId = $.cookie('userId');
+
+    var connection;
+
+    function hideLogin() {
+        $('#block-login').hide();
+        $('#button-logout').show();
+    }
+
+    function logout() {
+        $.removeCookie('token');
+        $.removeCookie('userId');
+        $('#button-logout').hide();
+        token = null;
+        user = null;
+        userId = null;
+    }
+
+    $('#button-logout').click(function(e){
+        e.preventDefault();
+        logout();
+        $('#block-login').show();
+    });
+
+    function connect() {
+        hideLogin();
+        connection = new WebSocket('ws://localhost:3000/api/realtime');
+        connection.onopen = function () {
+            console.log('ws connected')
+        };
+
+        connection.onmessage = function(event) {
+            console.log("got message", JSON.parse(event.data))
+        };
+
+        connection.onclose = function() {
+            console.log('ws closed')
+        }
+    }
+
+    if (token != null && userId != null) {
+        console.log(token, userId);
+        user = new User({id: userId});
+        user.fetch();
+        connect();
+        console.log("auth ok")
+    }
+
+    function login(data) {
+        token = data.token;
+        userId = data.id;
+        $.cookie('token', token);
+        $.cookie('userId', userId);
+        console.log(token, userId);
+        console.log($.cookie('token'));
+        user = new User({id: userId});
+        user.fetch();
+        connect();
+        console.log(user)
+    }
 
     $("#form-register-submit").click(function (e) {
         e.preventDefault();
@@ -187,15 +245,8 @@
             url: url,
             data: $("#form-register").serialize(), // serializes the form's elements.
             success: function (data) {
-                token = data.token;
-                userId = data.id;
-                $.cookie('token', token);
-                console.log(token, userId);
-                console.log($.cookie('token'));
-                user = new User({id: userId});
-                user.fetch();
+                login(data);
                 $('#myModal').modal('hide');
-                console.log(user)
             }
         });
     });
@@ -208,18 +259,25 @@
             url: url,
             data: $("#form-login").serialize(), // serializes the form's elements.
             success: function (data) {
-                token = data.token;
-                userId = data.id;
-                $.cookie('token', token);
-                console.log(token, userId);
-                console.log($.cookie('token'));
-                user = new User({id: userId});
-                user.fetch();
+                login(data);
                 $('#loginModal').modal('hide');
-                console.log(user)
             }
         });
     });
+            var MyController = Backbone.Router.extend({
+      routes : {
+        "say/:something" : "say"
+      },
+
+      say : function(something) {
+        alert(something);
+      }
+    });
+
+    var yC = new MyController;
+
+    Backbone.history.start();
+
 </script>
 </body>
 </html>

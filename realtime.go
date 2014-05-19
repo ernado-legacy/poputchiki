@@ -69,7 +69,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	id := bson.NewObjectId()
 	c := realtime.GetWSChannel(id)
 	defer realtime.CloseWs(c)
-
+	conn.WriteJSON(t)
 	for event := range c.channel {
 		err := conn.WriteJSON(event)
 		if err != nil {
@@ -138,6 +138,7 @@ func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
 }
 
 func (realtime *RealtimeRedis) CloseWs(c ReltWSChannel) {
+	log.Println("closing", c)
 	delete(realtime.chans[c.user].chans, c.id)
 }
 
