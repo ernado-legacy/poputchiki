@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap 101 Template</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <ul class="nav nav-pills pull-right">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Log out</a></li>
+        </ul>
+        <h3 class="text-muted">Попутчики</h3>
+    </div>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Register</h4>
+                </div>
+
+                <div class="modal-body">
+                    <form role="form" id="form-register">
+                        <div class="form-group">
+                            <label>Email address</label>
+                            <input type="email" name="email" class="form-control" id="exampleInputEmail1"
+                                   placeholder="Enter email">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" id="exampleInputPassword1"
+                                   placeholder="Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="form-register-submit">Зарегестрироваться</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Войти</h4>
+                </div>
+
+                <div class="modal-body">
+                    <form role="form" id="form-login">
+                        <div class="form-group">
+                            <label>Email address</label>
+                            <input type="email" name="email" class="form-control" id="exampleInputEmail2"
+                                   placeholder="Enter email">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" id="exampleInputPassword2"
+                                   placeholder="Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="form-login-submit">Войти</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+    <!-- /.modal -->
+    <div class="jumbotron">
+        <h1>Jumbotron heading</h1>
+
+        <p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus
+            commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+
+        <p><a class="btn btn-lg btn-success" href="#" data-toggle="modal" data-target="#myModal" role="button">Sign up
+            today</a></p>
+
+        <p><a class="btn btn-lg btn-primary" href="#" data-toggle="modal" data-target="#loginModal" role="button">Login
+        </a></p>
+    </div>
+
+    <div class="row marketing">
+        <div class="col-lg-6">
+            <h4>Subheading</h4>
+
+            <p>Donec id elit non mi porta gravida at eget metus. Maecenas faucibus mollis interdum.</p>
+
+            <h4>Subheading</h4>
+
+            <p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet
+                fermentum.</p>
+
+            <h4>Subheading</h4>
+
+            <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
+        </div>
+
+        <div class="col-lg-6">
+            <h4>Subheading</h4>
+
+            <p>Donec id elit non mi porta gravida at eget metus. Maecenas faucibus mollis interdum.</p>
+
+            <h4>Subheading</h4>
+
+            <p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet
+                fermentum.</p>
+
+            <h4>Subheading</h4>
+
+            <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© Company 2014</p>
+    </div>
+
+</div>
+<!-- /container -->
+
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="js/jquery-2.1.1.min.js"></script>
+<script src="js/jquery.cookie.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/backbone-min.js"></script>
+<script type="text/javascript">
+    User = Backbone.Model.extend({
+        urlRoot: '/api/user/',
+        defaults: {
+            id: null,
+            email: null,
+            firstname: null,
+            secondname: null,
+            favorites: [],
+            blacklist: [],
+            phone: null,
+            token: null
+        },
+        initialize: function () {
+            console.log("hello");
+            this.set({urlRoot: '/api/user/' + this.get('id')});
+            console.log(this)
+        }
+    });
+
+    var user;
+    var Users = Backbone.Collection.extend({
+      model : User,
+      url : '/api/user/'
+    });
+
+    var users = new Users;
+
+    var token, userId;
+
+    token = $.cookie('token');
+
+    $("#form-register-submit").click(function (e) {
+        e.preventDefault();
+        var url = "/api/auth/register"; // the script where you handle the form input.
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: $("#form-register").serialize(), // serializes the form's elements.
+            success: function (data) {
+                token = data.token;
+                userId = data.id;
+                $.cookie('token', token);
+                console.log(token, userId);
+                console.log($.cookie('token'));
+                user = new User({id: userId});
+                user.fetch();
+                $('#myModal').modal('hide');
+                console.log(user)
+            }
+        });
+    });
+    $("#form-login-submit").click(function (e) {
+        e.preventDefault();
+        var url = "/api/auth/login"; // the script where you handle the form input.
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: $("#form-login").serialize(), // serializes the form's elements.
+            success: function (data) {
+                token = data.token;
+                userId = data.id;
+                $.cookie('token', token);
+                console.log(token, userId);
+                console.log($.cookie('token'));
+                user = new User({id: userId});
+                user.fetch();
+                $('#loginModal').modal('hide');
+                console.log(user)
+            }
+        });
+    });
+</script>
+</body>
+</html>
