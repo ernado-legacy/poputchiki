@@ -244,8 +244,15 @@ func TestMethods(t *testing.T) {
 			So(err, ShouldEqual, nil)
 
 			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
-			req, _ := http.NewRequest("PATCH", reqUrl, nil)
-			req.PostForm = url.Values{FORM_FIRSTNAME: {firstname}, FORM_SECONDNAME: {secondname}, FORM_PHONE: {phone}}
+			u := User{}
+			u.Id = token1.Id
+			u.FirstName = firstname
+			u.SecondName = secondname
+			u.Phone = phone
+			uJson, err := json.Marshal(u)
+			uReader := bytes.NewReader(uJson)
+			So(err, ShouldBeNil)
+			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
 			a.ServeHTTP(res, req)
 
 			So(res.Code, ShouldEqual, http.StatusOK)

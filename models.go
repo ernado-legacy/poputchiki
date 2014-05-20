@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"labix.org/v2/mgo/bson"
 	"net/http"
@@ -14,6 +15,10 @@ type User struct {
 	Email      string          `json:"email,omitempty"     bson:"email,omitempty"`
 	Phone      string          `json:"phone,omitempty"     bson:"phone,omitempty"`
 	Password   string          `json:"-"                   bson:"password"`
+	Online     bool            `json:"online,omitempty"    bson:"online,omitempty"`
+	Photo      Image           `json:"photo,omitempty"     bson:"photo",omitempty"`
+	Balance    uint            `json:"balance,omitempty"   bson:"balance,omitempty"`
+	LastAction time.Time       `json:"lastaction,omitempty"bson:"lastaction",omitempty"`
 	Favorites  []bson.ObjectId `json:"favorites,omitempty" bson:"favorites,omitempty"`
 	Blacklist  []bson.ObjectId `json:"blacklist,omitempty" bson:"blacklist,omitempty"`
 	Countries  []string        `json:"countries,omitempty" bson:"countries,omitempty"`
@@ -35,6 +40,13 @@ func UserFromForm(r *http.Request) *User {
 }
 
 func UpdateUserFromForm(r *http.Request, u *User) {
+	r.ParseForm()
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(u)
+	if err == nil {
+		return
+	}
+
 	email := r.FormValue(FORM_EMAIL)
 	if email != BLANK {
 		u.Email = email
@@ -89,6 +101,10 @@ type RealtimeEvent struct {
 	Type string      `json:"type"`
 	Body interface{} `json:"body"`
 	Time time.Time   `json:"time"`
+}
+
+type ProgressMessage struct {
+	Progress float32 `json:"progress"`
 }
 
 type MessageSendBlacklisted struct {

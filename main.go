@@ -97,6 +97,7 @@ func NewApp() *Application {
 
 	m.Get("/api/user/:id", GetUser)
 	m.Patch("/api/user/:id", Update)
+	m.Put("/api/user/:id", Update)
 
 	m.Put("/api/user/:id/messages", SendMessage)
 	m.Get("/api/user/:id/messages", GetMessagesFromUser)

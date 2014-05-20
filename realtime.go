@@ -46,6 +46,7 @@ func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
 		log.Println(err)
 		return err
 	}
+	log.Println("pushing event", string(eJson), key)
 	_, err = conn.Do("PUBLISH", key, eJson)
 	if err != nil {
 		log.Println(err)
@@ -66,8 +67,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 		return Render(ErrorBackend)
 	}
 
-	id := bson.NewObjectId()
-	c := realtime.GetWSChannel(id)
+	c := realtime.GetWSChannel(t.Id)
 	defer realtime.CloseWs(c)
 	conn.WriteJSON(t)
 	for event := range c.channel {
@@ -88,6 +88,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	psc := redis.PubSubConn{conn}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
+	log.Println("starting listeting", key)
 	psc.Subscribe(key)
 
 	go func() {
@@ -112,6 +113,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 }
 
 func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
+	log.Println("getting realtime channel")
 	c := ReltChannel{make(map[bson.ObjectId](chan RealtimeEvent)), realtime.getChannel(id)}
 	c.events = realtime.getChannel(id)
 	go func() {
@@ -127,9 +129,11 @@ func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 }
 
 func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
+	log.Println("getting websocket channel for", id.Hex())
 	c := make(chan RealtimeEvent, RELT_WS_BUFF_SIZE)
 	_, ok := realtime.chans[id]
 	if !ok {
+		log.Println("realtime channel not found, creating")
 		realtime.chans[id] = realtime.GetReltChannel(id)
 	}
 	wsid := bson.NewObjectId()

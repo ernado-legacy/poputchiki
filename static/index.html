@@ -14,8 +14,7 @@
 <div class="container">
     <div class="header">
         <ul class="nav nav-pills pull-right">
-            <li><a href="#">Дома</a></li>
-            <li><a href="#">Контакт</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#videoModal" role="button">Загрузить видео</a></li>
             <li><a href="#" id="button-logout" style="display: none">Уйти</a></li>
         </ul>
         <h3 class="text-muted">Попутчики</h3>
@@ -51,17 +50,65 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
-    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
+    <div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
+         aria-hidden="true">
+        <!-- /.modal-dialog -->
+    </div>
+    <div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">Войти</h4>
+                    <h4 class="modal-title">Загрузить видос</h4>
+                </div>
+
+                <div class="modal-body">
+                    <form role="form" id="form-video" enctype='multipart/form-data'>
+                        <div class="form-group">
+                            <input type="text" name="firstname" class="form-control" id="userFistNameInput"
+                                   placeholder="Имя">
+                        </div>
+                        <div class="form-group">
+                            <label>Видео</label> <br>
+                            <input type="file" id="form-video-file" name="file">
+                            <div class="video-round">
+                                <video width="560" height="300" id="form-video-video">
+                                    <source src="" id="form-video-src" type="video/webm">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            <div class="progress progress-striped active" style="display: none"
+                                 id="form-video-file-progress">
+                                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                                     aria-valuemax="100" style="width: 45%">
+                                </div>
+                            </div>
+                            <p class="help-block">Не более 10 гб</p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+    </div>
+
+    <!-- /.modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModal"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Редактировать</h4>
                 </div>
 
                 <div class="modal-body">
                     <form role="form" id="form-login">
+
                         <div class="form-group">
                             <label>Email address</label>
                             <input type="email" name="email" class="form-control" id="exampleInputEmail2"
@@ -83,7 +130,16 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
+    <div class="jumbotron" id="block-user" style="display: none">
+        <h1>Добро пожаловать, юзернейму</h1>
 
+        <p class="lead">К нашему шалашу</p>
+
+        <p><a class="btn btn-lg btn-success" href="#" data-toggle="modal" data-target="#userModal" role="button">Изменить
+            инфу</a>
+        </p>
+
+    </div>
     <!-- /.modal -->
     <div class="jumbotron" id="block-login">
         <h1>Всегда прошу</h1>
@@ -144,6 +200,71 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/underscore-min.js"></script>
 <script src="js/backbone-min.js"></script>
+
+<script type="text/template" id="block-user-template">
+    <h1>Добро пожаловать, <%= user.get('firstname') %></h1>
+
+    <p class="lead">К нашему шалашу</p>
+
+    <p><a class="btn btn-lg btn-success" href="#" data-toggle="modal" data-target="#userModal" role="button">Изменить
+        инфу</a>
+    </p>
+</script>
+<script type="text/template" id="form-user-template">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Изменить</h4>
+            </div>
+
+            <div class="modal-body">
+                <form role="form" id="form-user" enctype='multipart/form-data'>
+                    <div class="form-group">
+                        <input type="text" name="firstname" class="form-control" id="userFistNameInput"
+                               placeholder="Имя" value="<%= user.get('firstname') %>">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="secondname" class="form-control" id="userSecondNameInput"
+                               placeholder="Фамилия" value="<%= user.get('secondname') %>">
+                    </div>
+                    <div class="form-group">
+                        <label>Email address</label>
+
+                        <input type="email" name="email" class="form-control" id="exampleInputEmail2"
+                               placeholder="Enter email" value="<%= user.get('email') %>">
+                    </div>
+                    <div class="form-group">
+                        <label>Аватара</label> <br>
+                        <%= user.get('image') %>
+                        <input type="hidden" name="photo" class="form-control" id="form-user-image-hidden"
+                               value='<%= JSON.stringify(user.get("photo")) %>'>
+                        <img src="<%= user.get('photo').url %>" id="form-user-image" width="300">
+                        <input type="file" id="form-user-file" name="file">
+
+                        <div class="progress progress-striped active" style="display: none"
+                             id="form-user-file-progress">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                                 aria-valuemax="100" style="width: 45%">
+                            </div>
+                        </div>
+                        <p class="help-block">Не более 10 гб</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" class="form-control" id="exampleInputPassword2"
+                               placeholder="Password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="form-user-save">Сохранить</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+</script>
 <script type="text/javascript">
     User = Backbone.Model.extend({
         urlRoot: '/api/user/',
@@ -180,37 +301,138 @@
     var connection;
 
     function hideLogin() {
+        console.log(user.get('firstname'));
+        var template = _.template($('#form-user-template').html(), {user: user});
+        $("#userModal").html(template);
+        template = _.template($('#block-user-template').html(), {user: user});
+        var block_user = $('#block-user');
+        block_user.html(template);
         $('#block-login').hide();
         $('#button-logout').show();
+        block_user.show();
     }
 
     function logout() {
         $.removeCookie('token');
         $.removeCookie('userId');
         $('#button-logout').hide();
+        $('#block-user').hide();
         token = null;
         user = null;
         userId = null;
     }
 
-    $('#button-logout').click(function(e){
+    $('#button-logout').click(function (e) {
         e.preventDefault();
         logout();
         $('#block-login').show();
     });
-
+    function setup_user_form() {
+        $('#form-user-file').on('change', function (e) {
+            e.preventDefault();
+            var form = document.getElementById('form-user');
+            var bar = $('#form-user-file-progress');
+            bar.show();
+            bar.find('.progress-bar').attr('aria-valuenow', 0);
+            bar.find('.progress-bar').css('width', 0 + '%');
+            console.log(form);
+            var data = new FormData(form);
+            console.log(data);
+            $.ajax({
+                url: '/api/image',
+                type: 'POST',
+                data: data,
+                processData: false, // Don't process the files
+                contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+                success: function (data, textStatus, jqXHR) {
+                    if (typeof data.error === 'undefined') {
+                        // Success so call function to process the form
+                        console.log(data);
+                        $('#form-user-image').attr('src', data.url);
+                        $('#form-user-image-hidden').attr('value', JSON.stringify(data));
+                        user.set('photo', data);
+                        user.save();
+                        bar.find('.progress-bar').css('width', 100 + '%');
+                        setTimeout(function () {
+                            bar.hide()
+                        }, 500);
+                    }
+                    else {
+                        // Handle errors here
+                        console.log('ERRORS: ' + data.error);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // Handle errors here
+                    console.log('ERRORS: ' + textStatus);
+                    // STOP LOADING SPINNER
+                }
+            });
+        });
+    }
+    $('#form-video-file').on('change', function (e) {
+            e.preventDefault();
+            var form = document.getElementById('form-video');
+            var bar = $('#form-video-file-progress');
+            bar.show();
+            bar.find('.progress-bar').attr('aria-valuenow', 0);
+            bar.find('.progress-bar').css('width', 50 + '%');
+            console.log(form);
+            var data = new FormData(form);
+            console.log(data);
+            $.ajax({
+                url: '/api/image',
+                type: 'POST',
+                data: data,
+                processData: false, // Don't process the files
+                contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+                success: function (data, textStatus, jqXHR) {
+                    if (typeof data.error === 'undefined') {
+                        // Success so call function to process the form
+                        console.log(data);
+                        $('#form-video-src').attr('src', data.url);
+                        bar.find('.progress-bar').css('width', 100 + '%');
+                        setTimeout(function () {
+                            bar.hide()
+                        }, 500);
+                        var v = document.getElementById('form-video-video');
+                        v.load();
+                        v.play();
+                    }
+                    else {
+                        // Handle errors here
+                        console.log('ERRORS: ' + data.error);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // Handle errors here
+                    console.log('ERRORS: ' + textStatus);
+                    // STOP LOADING SPINNER
+                }
+            });
+        });
     function connect() {
         hideLogin();
+        setup_user_form();
         connection = new WebSocket('ws://localhost:3000/api/realtime');
         connection.onopen = function () {
             console.log('ws connected')
         };
 
-        connection.onmessage = function(event) {
-            console.log("got message", JSON.parse(event.data))
+        connection.onmessage = function (event) {
+            data = JSON.parse(event.data);
+            console.log("got message", data);
+
+            if (data.type == 'progressmessage') {
+                console.log('progress ', data.body.progress);
+                var bar = $('#form-user-file-progress').find('.progress-bar');
+                bar.attr('aria-valuenow', data.body.progress);
+                bar.css('width', data.body.progress + '%')
+
+            }
         };
 
-        connection.onclose = function() {
+        connection.onclose = function () {
             console.log('ws closed')
         }
     }
@@ -218,8 +440,9 @@
     if (token != null && userId != null) {
         console.log(token, userId);
         user = new User({id: userId});
-        user.fetch();
-        connect();
+        user.fetch({success: function () {
+            connect();
+        }});
         console.log("auth ok")
     }
 
@@ -231,9 +454,9 @@
         console.log(token, userId);
         console.log($.cookie('token'));
         user = new User({id: userId});
-        user.fetch();
-        connect();
-        console.log(user)
+        user.fetch({success: function () {
+            connect();
+        }});
     }
 
     $("#form-register-submit").click(function (e) {
@@ -264,14 +487,16 @@
             }
         });
     });
-            var MyController = Backbone.Router.extend({
-      routes : {
-        "say/:something" : "say"
-      },
 
-      say : function(something) {
-        alert(something);
-      }
+
+    var MyController = Backbone.Router.extend({
+        routes: {
+            "say/:something": "say"
+        },
+
+        say: function (something) {
+            alert(something);
+        }
     });
 
     var yC = new MyController;

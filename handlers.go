@@ -56,6 +56,7 @@ const (
 	FORM_SECONDNAME = "secondname"
 	FORM_PHONE      = "phone"
 	FORM_TEXT       = "text"
+	FORM_FILE       = "file"
 )
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
@@ -632,17 +633,44 @@ func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token
 	return Render(messages)
 }
 
-func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
+func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	t, _ := token.Get()
 	client := &http.Client{}
-	f, h, err := r.FormFile("file")
+	f, h, err := r.FormFile(FORM_FILE)
 	if err != nil {
-		log.Println(err)
+		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", h.Filename)
-	_, err = io.Copy(part, f)
+	part, err := writer.CreateFormFile(FORM_FILE, h.Filename)
+	length := r.ContentLength
+
+	// 10 Mb
+	if length > 1024*1024*100 {
+		return Render(ErrorBadRequest)
+	}
+
+	var p float32
+	var read int64
+	bufLen := length / 50
+	for {
+		buffer := make([]byte, bufLen)
+		cBytes, err := f.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		read = read + int64(cBytes)
+		//fmt.Printf("read: %v \n",read )
+		p = float32(read) / float32(length) * 100
+		log.Printf("progress: %v \n", p)
+		if t != nil {
+			realtime.Push(t.Id, ProgressMessage{p})
+		}
+
+		part.Write(buffer[0:cBytes])
+	}
+	// _, err = io.Copy(part, f)
 	err = writer.Close()
 	if err != nil {
 		return Render(ErrorBackend)
