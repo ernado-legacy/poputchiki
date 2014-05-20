@@ -57,6 +57,14 @@ func newPool() *redis.Pool {
 	}
 }
 
+func NewDatabase(session *mgo.Session) UserDB {
+	coll := session.DB(dbName).C(collection)
+	gcoll := session.DB(dbName).C(guestsCollection)
+	mcoll := session.DB(dbName).C(messagesCollection)
+	scoll := session.DB(dbName).C(statusesCollection)
+	return &DB{coll, gcoll, mcoll, scoll}
+}
+
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
 	if err != nil {
@@ -72,11 +80,7 @@ func NewApp() *Application {
 	var db UserDB
 	var tokenStorage TokenStorage
 	var realtime RealtimeInterface
-	coll := session.DB(dbName).C(collection)
-	gcoll := session.DB(dbName).C(guestsCollection)
-	mcoll := session.DB(dbName).C(messagesCollection)
-	scoll := session.DB(dbName).C(statusesCollection)
-	db = &DB{coll, gcoll, mcoll, scoll}
+	db = NewDatabase(session)
 	tokenStorage = &TokenStorageRedis{c}
 	realtime = &RealtimeRedis{newPool(), make(map[bson.ObjectId]ReltChannel)}
 

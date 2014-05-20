@@ -19,6 +19,41 @@ import (
 	"time"
 )
 
+func TestDBMethods(t *testing.T) {
+	dbName = "poputchiki_dev_db"
+	var err error
+	a := NewApp()
+	session := a.session
+	u := User{}
+	Convey("Database init", t, func() {
+		db := NewDatabase(session)
+		Convey("User should be created", func() {
+			u.Password = "test"
+			u.Id = bson.NewObjectId()
+			id := u.Id
+			u.Email = "test@test.te"
+			err = db.Add(&u)
+			So(err, ShouldBeNil)
+			Convey("Balance update", func() {
+				db.IncBalance(id, 100)
+				db.DecBalance(id, 50)
+				newU := db.Get(id)
+				a.DropDatabase()
+				So(newU.Balance, ShouldEqual, 50)
+			})
+			Convey("Status update", func() {
+				db.SetOnline(id)
+				newU1 := db.Get(id)
+				db.SetOffline(id)
+				newU2 := db.Get(id)
+				a.DropDatabase()
+				So(newU1.Online, ShouldEqual, true)
+				So(newU2.Online, ShouldEqual, false)
+			})
+		})
+	})
+}
+
 func TestUpload(t *testing.T) {
 	redisName = "poputchiki_test_upload"
 	dbName = "poputchiki_dev_upload"

@@ -30,6 +30,10 @@ type UserDB interface {
 	RemoveMessage(id bson.ObjectId) error
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
+	IncBalance(id bson.ObjectId, amount int) error
+	DecBalance(id bson.ObjectId, amount int) error
+	SetOnline(id bson.ObjectId) error
+	SetOffline(id bson.ObjectId) error
 }
 
 type TokenStorage interface {
@@ -646,8 +650,7 @@ func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	part, err := writer.CreateFormFile(FORM_FILE, h.Filename)
 	length := r.ContentLength
 
-	// 10 Mb
-	if length > 1024*1024*100 {
+	if length > 1024*1024*10 {
 		return Render(ErrorBadRequest)
 	}
 

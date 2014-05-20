@@ -145,6 +145,40 @@ func (db *DB) GetMessage(id bson.ObjectId) (*Message, error) {
 	return &message, err
 }
 
+func (db *DB) SetOnlineStatus(id bson.ObjectId, status bool) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"online": status}}}
+	_, err := db.users.FindId(id).Apply(change, nil)
+	return err
+}
+
+func (db *DB) SetOnline(id bson.ObjectId) error {
+	return db.SetOnlineStatus(id, true)
+}
+
+func (db *DB) SetOffline(id bson.ObjectId) error {
+	return db.SetOnlineStatus(id, false)
+}
+
+func (db *DB) ChangeBalance(id bson.ObjectId, delta int) error {
+	change := mgo.Change{Update: bson.M{"$inc": bson.M{"balance": delta}}}
+	_, err := db.users.FindId(id).Apply(change, nil)
+	return err
+}
+
+func (db *DB) IncBalance(id bson.ObjectId, amount int) error {
+	return db.ChangeBalance(id, amount)
+}
+
+func (db *DB) DecBalance(id bson.ObjectId, amount int) error {
+	return db.ChangeBalance(id, (-1)*amount)
+}
+
+func (db *DB) SetLastActionNow(id bson.ObjectId) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"lastaction": time.Now()}}}
+	_, err := db.users.FindId(id).Apply(change, nil)
+	return err
+}
+
 func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (messages []*Message, err error) {
 	err = db.messages.Find(bson.M{"user": userReciever, "origin": userOrigin}).All(&messages)
 	return messages, err

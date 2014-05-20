@@ -9,19 +9,19 @@ import (
 )
 
 type User struct {
-	Id         bson.ObjectId   `json:"id"                  bson:"_id"`
-	FirstName  string          `json:"firstname"           bson:"firstname,omitempty"`
-	SecondName string          `json:"secondname" 	       bson:"secondname,omitempty"`
-	Email      string          `json:"email,omitempty"     bson:"email,omitempty"`
-	Phone      string          `json:"phone,omitempty"     bson:"phone,omitempty"`
-	Password   string          `json:"-"                   bson:"password"`
-	Online     bool            `json:"online,omitempty"    bson:"online,omitempty"`
-	Photo      Image           `json:"photo,omitempty"     bson:"photo",omitempty"`
-	Balance    uint            `json:"balance,omitempty"   bson:"balance,omitempty"`
-	LastAction time.Time       `json:"lastaction,omitempty"bson:"lastaction",omitempty"`
-	Favorites  []bson.ObjectId `json:"favorites,omitempty" bson:"favorites,omitempty"`
-	Blacklist  []bson.ObjectId `json:"blacklist,omitempty" bson:"blacklist,omitempty"`
-	Countries  []string        `json:"countries,omitempty" bson:"countries,omitempty"`
+	Id         bson.ObjectId   `json:"id"                   bson:"_id"`
+	FirstName  string          `json:"firstname"            bson:"firstname,omitempty"`
+	SecondName string          `json:"secondname" 	        bson:"secondname,omitempty"`
+	Email      string          `json:"email,omitempty"      bson:"email,omitempty"`
+	Phone      string          `json:"phone,omitempty"      bson:"phone,omitempty"`
+	Password   string          `json:"-"                    bson:"password"`
+	Online     bool            `json:"online,omitempty"     bson:"online,omitempty"`
+	Photo      Image           `json:"photo,omitempty"      bson:"photo",omitempty"`
+	Balance    uint            `json:"balance,omitempty"    bson:"balance,omitempty"`
+	LastAction time.Time       `json:"lastaction,omitempty" bson:"lastaction",omitempty"`
+	Favorites  []bson.ObjectId `json:"favorites,omitempty"  bson:"favorites,omitempty"`
+	Blacklist  []bson.ObjectId `json:"blacklist,omitempty"  bson:"blacklist,omitempty"`
+	Countries  []string        `json:"countries,omitempty"  bson:"countries,omitempty"`
 }
 
 const (
@@ -129,6 +129,7 @@ type StatusUpdate struct {
 type StripeItem struct {
 	Id        bson.ObjectId `json:"id"                  bson:"_id"`
 	User      bson.ObjectId `json:"user"                bson:"user"`
+	Image     Image         `json:"image"               bson:"image"`
 	Countries []string      `json:"countries,omitempty" bson:"countries,omitempty"`
 	Time      time.Time     `json:"time"                bson:"time"`
 }
