@@ -42,6 +42,7 @@ type UserDB interface {
 
 	GetStatus(id bson.ObjectId) (status *StatusUpdate, err error)
 	GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error)
+	GetLastStatuses(count int) (status []*StatusUpdate, err error)
 	AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error)
 	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
 	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
@@ -552,7 +553,6 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
 
 	go func() {
-
 		u := db.Get(destination)
 		blacklisted := false
 		for _, id := range u.Blacklist {
@@ -685,7 +685,6 @@ func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 		read = read + int64(cBytes)
 		//fmt.Printf("read: %v \n",read )
 		p = float32(read) / float32(length) * 100
-		log.Printf("progress: %v \n", p)
 		if t != nil {
 			realtime.Push(t.Id, ProgressMessage{p})
 		}

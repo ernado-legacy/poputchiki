@@ -110,7 +110,6 @@ type ProgressMessage struct {
 type MessageSendBlacklisted struct {
 	Id bson.ObjectId `json:"id"`
 }
-
 type Comment struct {
 	Id   bson.ObjectId `json:"id"   bson:"_id"`
 	User bson.ObjectId `json:"user" bson:"user"`
@@ -149,9 +148,17 @@ type WeedAssign struct {
 }
 
 type Photo struct {
-	Id       bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	User     bson.ObjectId `json:"user"         bson:"user"`
-	Image    Image         `json:"image"        bson:"image"`
-	Comments []Comment     `json:"comments"     bson:"comments"`
-	Time     time.Time     `json:"time"         bson:"time"`
+	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
+	User        bson.ObjectId `json:"user"                  bson:"user"`
+	Image       Image         `json:"image"                 bson:"image"`
+	Description string        `json:"description,omitempty" bson:"description,omitempty"`
+	Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
+	Time        time.Time     `json:"time"         		    bson:"time"`
+}
+
+type Album struct {
+	Id    bson.ObjectId   `json:"id,omitempty"    bson:"_id,omitempty"`
+	Photo []bson.ObjectId `json:"photo,omitempty" bson:"photo,omitempty"`
+	Image Image           `json:"image"           bson:"image"`
+	Time  time.Time       `json:"time"         	  bson:"time"`
 }

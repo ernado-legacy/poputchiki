@@ -91,6 +91,9 @@ func TestDBMethods(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(s2.Text, ShouldEqual, newText)
 
+					statuses, err := db.GetLastStatuses(10)
+					So(err, ShouldBeNil)
+					So(statuses[0].Text, ShouldEqual, newText)
 				})
 				Convey("Add comment", func() {
 					commentText := "comment text"

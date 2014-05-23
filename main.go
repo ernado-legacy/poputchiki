@@ -22,6 +22,7 @@ var (
 	messagesCollection = "messages"
 	statusesCollection = "statuses"
 	photoCollection    = "photo"
+	albumsCollection   = "albums"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
@@ -64,7 +65,8 @@ func NewDatabase(session *mgo.Session) UserDB {
 	mcoll := session.DB(dbName).C(messagesCollection)
 	scoll := session.DB(dbName).C(statusesCollection)
 	pcoll := session.DB(dbName).C(photoCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll}
+	acoll := session.DB(dbName).C(albumsCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll}
 }
 
 func NewApp() *Application {
@@ -91,8 +93,8 @@ func NewApp() *Application {
 	m.Map(tokenStorage)
 	m.Map(realtime)
 
-	m.Post("/api/auth/login", Login)
 	m.Post("/api/auth/register", Register)
+	m.Post("/api/auth/login", Login)
 	m.Post("/api/auth/logout", Logout)
 
 	m.Get("/api/user/:id", GetUser)
@@ -136,7 +138,6 @@ func (a *Application) DropDatabase() {
 	a.session.DB(dbName).C(messagesCollection).DropCollection()
 	a.session.DB(dbName).C(guestsCollection).DropCollection()
 	a.InitDatabase()
-
 }
 
 func (a *Application) InitDatabase() {

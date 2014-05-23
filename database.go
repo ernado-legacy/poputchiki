@@ -13,6 +13,7 @@ type DB struct {
 	messages *mgo.Collection
 	statuses *mgo.Collection
 	photo    *mgo.Collection
+	albums   *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -240,15 +241,30 @@ func (db *DB) GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err er
 	return status, err
 }
 
+func (db *DB) GetLastStatuses(count int) (status []*StatusUpdate, err error) {
+	status = []*StatusUpdate{}
+	err = db.statuses.Find(nil).Sort("-time").Limit(count).All(&status)
+	return status, err
+}
+
 func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	query := bson.M{"_id": id, "user": user}
 	err := db.statuses.Remove(query)
 	return err
 }
 
-func (db *DB) AddPhoto(user bson.ObjectId, image Image) (*Photo, error) {
+func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image) (*Photo, error) {
 	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now()}
-	return p, db.photo.Insert(p)
+	err := db.photo.Insert(p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	a := &Album{}
+	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": p.Id}}}
+	_, err = db.albums.FindId(album).Apply(change, a)
+	return p, err
 }
 
 func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, text string) (*Comment, error) {
