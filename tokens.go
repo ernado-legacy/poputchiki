@@ -33,13 +33,14 @@ type Token struct {
 }
 
 type TokenStorageRedis struct {
-	conn redis.Conn
+	pool *redis.Pool
 }
 
 func (storage *TokenStorageRedis) Get(hexToken string) (*Token, error) {
 	// checking token
+	conn := storage.pool.Get()
 	key := strings.Join([]string{redisName, TOKEN_REDIS_KEY, hexToken}, REDIS_SEPARATOR)
-	reply, err := storage.conn.Do("GET", key)
+	reply, err := conn.Do("GET", key)
 
 	if err != nil {
 		return nil, err
@@ -61,6 +62,7 @@ func (storage *TokenStorageRedis) Get(hexToken string) (*Token, error) {
 }
 
 func (storage *TokenStorageRedis) Generate(user *User) (*Token, error) {
+	conn := storage.pool.Get()
 	t := user.GenerateToken()
 	tJson, err := json.Marshal(t)
 
@@ -69,7 +71,7 @@ func (storage *TokenStorageRedis) Generate(user *User) (*Token, error) {
 	}
 
 	key := strings.Join([]string{redisName, TOKEN_REDIS_KEY, t.Token}, REDIS_SEPARATOR)
-	_, err = storage.conn.Do("SET", key, tJson)
+	_, err = conn.Do("SET", key, tJson)
 
 	if err != nil {
 		return nil, err
@@ -79,8 +81,9 @@ func (storage *TokenStorageRedis) Generate(user *User) (*Token, error) {
 }
 
 func (storage *TokenStorageRedis) Remove(token *Token) error {
+	conn := storage.pool.Get()
 	key := strings.Join([]string{redisName, TOKEN_REDIS_KEY, token.Token}, REDIS_SEPARATOR)
-	_, err := storage.conn.Do("DEL", key)
+	_, err := conn.Do("DEL", key)
 
 	return err
 }

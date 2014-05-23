@@ -414,7 +414,7 @@
     function connect() {
         hideLogin();
         setup_user_form();
-        connection = new WebSocket('ws://localhost:3000/api/realtime');
+        connection = new WebSocket('ws://poputchiki.ru/api/realtime');
         connection.onopen = function () {
             console.log('ws connected')
         };

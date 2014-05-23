@@ -25,8 +25,12 @@ func TestDBMethods(t *testing.T) {
 	a := NewApp()
 	session := a.session
 	u := User{}
+
 	Convey("Database init", t, func() {
 		db := NewDatabase(session)
+		Reset(func() {
+			a.DropDatabase()
+		})
 		Convey("User should be created", func() {
 			u.Password = "test"
 			u.Id = bson.NewObjectId()
@@ -38,7 +42,6 @@ func TestDBMethods(t *testing.T) {
 				db.IncBalance(id, 100)
 				db.DecBalance(id, 50)
 				newU := db.Get(id)
-				a.DropDatabase()
 				So(newU.Balance, ShouldEqual, 50)
 			})
 			Convey("Status update", func() {
@@ -46,9 +49,76 @@ func TestDBMethods(t *testing.T) {
 				newU1 := db.Get(id)
 				db.SetOffline(id)
 				newU2 := db.Get(id)
-				a.DropDatabase()
 				So(newU1.Online, ShouldEqual, true)
 				So(newU2.Online, ShouldEqual, false)
+			})
+
+			Convey("Status add", func() {
+				text := "status hello world"
+				s, err := db.AddStatus(id, text)
+				So(err, ShouldBeNil)
+				So(s.Text, ShouldEqual, text)
+				Convey("Remove", func() {
+					err = db.RemoveStatusSecure(id, s.Id)
+					So(err, ShouldBeNil)
+				})
+				Convey("Remove is secure", func() {
+					err = db.RemoveStatusSecure(bson.NewObjectId(), s.Id)
+					So(err, ShouldNotBeNil)
+				})
+				Convey("Update", func() {
+					newText := "status2"
+					s1, err := db.UpdateStatusSecure(id, s.Id, newText)
+					So(err, ShouldBeNil)
+					s2, err := db.GetStatus(s.Id)
+					So(err, ShouldBeNil)
+					So(s1.Text, ShouldEqual, newText)
+					So(s2.Text, ShouldEqual, newText)
+					So(s1.Id, ShouldEqual, s.Id)
+					So(s2.Id, ShouldEqual, s.Id)
+					So(s1.Text, ShouldNotEqual, s.Text)
+				})
+				Convey("Exists", func() {
+					s1, err := db.GetCurrentStatus(id)
+					So(err, ShouldBeNil)
+					So(s1.Text, ShouldEqual, text)
+				})
+				Convey("Actual", func() {
+					newText := "status actual"
+					_, err := db.AddStatus(id, newText)
+					So(err, ShouldBeNil)
+					s2, err := db.GetCurrentStatus(id)
+					So(err, ShouldBeNil)
+					So(s2.Text, ShouldEqual, newText)
+
+				})
+				Convey("Add comment", func() {
+					commentText := "comment text"
+					comment, err := db.AddCommentToStatus(id, s.Id, commentText)
+					So(err, ShouldBeNil)
+					So(comment.Text, ShouldEqual, commentText)
+					Convey("Remove", func() {
+						err := db.RemoveCommentFromStatusSecure(id, comment.Id)
+						So(err, ShouldBeNil)
+					})
+					Convey("Update", func() {
+						commentText2 := "batman"
+						err := db.UpdateCommentToStatusSecure(id, comment.Id, commentText2)
+						So(err, ShouldBeNil)
+						s, err := db.GetStatus(s.Id)
+						So(err, ShouldBeNil)
+						correct := false
+						for _, c := range s.Comments {
+							if c.Id != comment.Id {
+								continue
+							}
+							if c.Text == commentText2 {
+								correct = true
+							}
+						}
+						So(correct, ShouldBeTrue)
+					})
+				})
 			})
 		})
 	})

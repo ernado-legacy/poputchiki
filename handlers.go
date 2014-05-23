@@ -13,27 +13,41 @@ import (
 )
 
 type UserDB interface {
-	Get(id bson.ObjectId) *User
-	GetUsername(username string) *User
 	// GetAll() []*User
-	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
-	RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error
+	GetUsername(username string) *User
+	Get(id bson.ObjectId) *User
 	Add(u *User) error
-	GetFavorites(id bson.ObjectId) []*User
 	Update(u *User) error
 	// Delete(id bson.ObjectId) error
+	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
+	RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error
+	GetFavorites(id bson.ObjectId) []*User
+
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
+
 	AddMessage(m *Message) error
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
+
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
+
 	IncBalance(id bson.ObjectId, amount int) error
 	DecBalance(id bson.ObjectId, amount int) error
+
 	SetOnline(id bson.ObjectId) error
 	SetOffline(id bson.ObjectId) error
+
+	GetStatus(id bson.ObjectId) (status *StatusUpdate, err error)
+	GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error)
+	AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error)
+	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
+	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
+	AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error)
+	RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error
+	UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error
 }
 
 type TokenStorage interface {
@@ -64,6 +78,11 @@ const (
 )
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Upgrade") != "" {
+		log.Println("not setting header")
+		return
+	}
+
 	w.Header().Set("Content-Type", JSON_HEADER)
 }
 

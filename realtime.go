@@ -54,14 +54,31 @@ func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
 	return err
 }
 
+func chackOrigin(r *http.Request) bool {
+	return true
+}
+
+func GetRealtimeHandler(realtime RealtimeInterface, token TokenInterface) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		code, resp := realtime.RealtimeHandler(w, r, token)
+		w.WriteHeader(code)
+		w.Write(resp)
+	}
+}
+
 func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, token TokenInterface) (int, []byte) {
 	t, _ := token.Get()
 
 	if t == nil {
 		return Render(ErrorAuth)
 	}
+	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
+	_, ok := w.(http.Hijacker)
+	if !ok {
+		log.Println("not ok")
+	}
+	conn, err := u.Upgrade(w, r, nil)
 
-	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)

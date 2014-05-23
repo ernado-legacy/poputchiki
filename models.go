@@ -112,18 +112,18 @@ type MessageSendBlacklisted struct {
 }
 
 type Comment struct {
-	Id   bson.ObjectId `json:"id"          bson:"_id"`
-	User bson.ObjectId `json:"user"        bson:"user"`
-	Text string        `json:"text"        bson:"text"`
-	Time time.Time     `json:"time"        bson:"time"`
+	Id   bson.ObjectId `json:"id"   bson:"_id"`
+	User bson.ObjectId `json:"user" bson:"user"`
+	Text string        `json:"text" bson:"text"`
+	Time time.Time     `json:"time" bson:"time"`
 }
 
 type StatusUpdate struct {
-	Id       bson.ObjectId `json:"id"          bson:"_id"`
-	User     bson.ObjectId `json:"user"        bson:"user"`
-	Time     time.Time     `json:"time"        bson:"time"`
-	Text     string        `json:"text"        bson:"text"`
-	Comments []Comment     `json:"comments"    bson:"comments"`
+	Id       bson.ObjectId `json:"id"       bson:"_id"`
+	User     bson.ObjectId `json:"user"     bson:"user"`
+	Time     time.Time     `json:"time"     bson:"time"`
+	Text     string        `json:"text"     bson:"text"`
+	Comments []Comment     `json:"comments" bson:"comments"`
 }
 
 type StripeItem struct {
@@ -146,4 +146,12 @@ type WeedAssign struct {
 	Fid       string `json:"fid"`
 	Url       string `json:"url"`
 	PublicUrl string `json:"publicUrl"`
+}
+
+type Photo struct {
+	Id       bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	User     bson.ObjectId `json:"user"         bson:"user"`
+	Image    Image         `json:"image"        bson:"image"`
+	Comments []Comment     `json:"comments"     bson:"comments"`
+	Time     time.Time     `json:"time"         bson:"time"`
 }

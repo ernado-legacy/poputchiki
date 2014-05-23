@@ -12,6 +12,7 @@ type DB struct {
 	guests   *mgo.Collection
 	messages *mgo.Collection
 	statuses *mgo.Collection
+	photo    *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -184,42 +185,86 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 	return messages, err
 }
 
-func (db *DB) AddStatus(u bson.ObjectId, text string) error {
+func (db *DB) AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error) {
 	p := StatusUpdate{}
 	p.Id = bson.NewObjectId()
 	p.Text = text
 	p.Time = time.Now()
 	p.User = u
 
-	return db.statuses.Insert(&p)
+	return &p, db.statuses.Insert(&p)
 }
 
-func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) error {
-	c := Comment{bson.NewObjectId(), user, text, time.Now()}
-	var s StatusUpdate
+func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error) {
+	c := &Comment{bson.NewObjectId(), user, text, time.Now()}
 	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
-
-	_, err := db.statuses.FindId(status).Apply(change, &s)
-
-	return err
+	u := &StatusUpdate{}
+	_, err := db.statuses.FindId(status).Apply(change, u)
+	return c, err
 }
 
 func (db *DB) RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
-	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
-	query := bson.M{"comments.id": id}
-	_, err := db.statuses.Find(query).Apply(change, nil)
+	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"_id": id}}}}
+	query := bson.M{"comments._id": id, "user": user}
+	u := &StatusUpdate{}
+	_, err := db.statuses.Find(query).Apply(change, u)
 	return err
 }
 
-func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error {
+func (db *DB) UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"comments.$.text": text}}}
+	query := bson.M{"comments._id": id, "user": user}
+	u := &StatusUpdate{}
+	_, err := db.statuses.Find(query).Apply(change, u)
+	return err
+}
+
+func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error) {
+	s := &StatusUpdate{}
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
 	query := bson.M{"_id": id, "user": user}
-	_, err := db.statuses.Find(query).Apply(change, nil)
-	return err
+	_, err := db.statuses.Find(query).Apply(change, s)
+	s.Text = text
+	return s, err
+}
+
+func (db *DB) GetStatus(id bson.ObjectId) (status *StatusUpdate, err error) {
+	status = &StatusUpdate{}
+	err = db.statuses.FindId(id).One(status)
+	return status, err
+}
+
+func (db *DB) GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error) {
+	status = &StatusUpdate{}
+	err = db.statuses.Find(bson.M{"user": user}).Sort("-time").Limit(1).One(status)
+	return status, err
 }
 
 func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	query := bson.M{"_id": id, "user": user}
 	err := db.statuses.Remove(query)
 	return err
+}
+
+func (db *DB) AddPhoto(user bson.ObjectId, image Image) (*Photo, error) {
+	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now()}
+	return p, db.photo.Insert(p)
+}
+
+func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, text string) (*Comment, error) {
+	c := &Comment{bson.NewObjectId(), user, text, time.Now()}
+	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
+	_, err := db.photo.FindId(photo).Apply(change, &c)
+	return c, err
+}
+
+func (db *DB) RemoveCommentFromPhotoSecure(user bson.ObjectId, id bson.ObjectId) error {
+	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
+	query := bson.M{"comments._id": id, "user": user}
+	_, err := db.photo.Find(query).Apply(change, nil)
+	return err
+}
+
+func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {
+	return db.photo.Remove(bson.M{"_id": id, "user": user})
 }

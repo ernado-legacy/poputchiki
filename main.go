@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
-	"github.com/martini-contrib/gzip"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -22,9 +21,11 @@ var (
 	guestsCollection   = "guests"
 	messagesCollection = "messages"
 	statusesCollection = "statuses"
+	photoCollection    = "photo"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
+	redisAddr          = ":6379"
 )
 
 func getHash(password string) string {
@@ -35,16 +36,16 @@ func getHash(password string) string {
 
 type Application struct {
 	session *mgo.Session
-	c       redis.Conn
+	p       *redis.Pool
 	m       *martini.ClassicMartini
 }
 
 func newPool() *redis.Pool {
 	return &redis.Pool{
-		MaxIdle:     3,
+		MaxIdle:     5,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", ":6379")
+			c, err := redis.Dial("tcp", redisAddr)
 			if err != nil {
 				return nil, err
 			}
@@ -62,16 +63,12 @@ func NewDatabase(session *mgo.Session) UserDB {
 	gcoll := session.DB(dbName).C(guestsCollection)
 	mcoll := session.DB(dbName).C(messagesCollection)
 	scoll := session.DB(dbName).C(statusesCollection)
-	return &DB{coll, gcoll, mcoll, scoll}
+	pcoll := session.DB(dbName).C(photoCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll}
 }
 
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	c, err := redis.Dial("tcp", ":6379")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,17 +78,16 @@ func NewApp() *Application {
 	var tokenStorage TokenStorage
 	var realtime RealtimeInterface
 	db = NewDatabase(session)
-	tokenStorage = &TokenStorageRedis{c}
-	realtime = &RealtimeRedis{newPool(), make(map[bson.ObjectId]ReltChannel)}
+	p := newPool()
+	tokenStorage = &TokenStorageRedis{p}
+	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
 
 	m := martini.Classic()
 
 	m.Use(martini.Static("static", martini.StaticOptions{Prefix: "/"}))
 	m.Use(JsonEncoder)
 	m.Use(TokenWrapper)
-	m.Use(gzip.All())
 	m.Map(db)
-	m.Map(c)
 	m.Map(tokenStorage)
 	m.Map(realtime)
 
@@ -121,14 +117,14 @@ func NewApp() *Application {
 
 	m.Get("/api/realtime", realtime.RealtimeHandler)
 
-	a := Application{session, c, m}
+	a := Application{session, p, m}
 	a.InitDatabase()
 	return &a
 }
 
 func (a *Application) Close() {
 	a.session.Close()
-	a.c.Close()
+	a.p.Close()
 }
 
 func (a *Application) Run() {
@@ -146,48 +142,36 @@ func (a *Application) DropDatabase() {
 func (a *Application) InitDatabase() {
 	index := mgo.Index{
 		Key:        []string{"email"},
-		Unique:     true,
-		Background: false, // See notes.
-		DropDups:   false,
+		Background: true, // See notes.
 	}
-	a.session.DB(dbName).C(collection).EnsureIndex(index)
+	db := a.session.DB(dbName)
+	db.C(collection).EnsureIndex(index)
+
 	index = mgo.Index{Key: []string{"$hashed:_id"}}
-	a.session.DB(dbName).C(collection).EnsureIndex(index)
-	index = mgo.Index{
-		Key:      []string{"$hashed:user"},
-		Unique:   true,
-		DropDups: true,
-	}
-	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
+	db.C(collection).EnsureIndex(index)
+
 	index = mgo.Index{
 		Key:        []string{"guest"},
-		Unique:     true,
 		Background: true, // See notes.
-		DropDups:   true,
 	}
-	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
+	db.C(guestsCollection).EnsureIndex(index)
+
+	// photo, guest, messages: hashed user index
 	index = mgo.Index{
 		Key: []string{"$hashed:user"},
 	}
-	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)
-	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
-	index = mgo.Index{
-		Key:        []string{"origin"},
-		Background: true,
-	}
-	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)
-	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
-	index = mgo.Index{
-		Key:        []string{"destination"},
-		Background: true,
-	}
-	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)
-	a.session.DB(dbName).C(guestsCollection).EnsureIndex(index)
+	db.C(messagesCollection).EnsureIndex(index)
+	db.C(guestsCollection).EnsureIndex(index)
+	db.C(photoCollection).EnsureIndex(index)
+	db.C(statusesCollection).EnsureIndex(index)
+	db.C(guestsCollection).EnsureIndex(index)
+
 	index = mgo.Index{
 		Key:        []string{"time"},
 		Background: true,
 	}
-	a.session.DB(dbName).C(messagesCollection).EnsureIndex(index)
+	db.C(messagesCollection).EnsureIndex(index)
+	db.C(statusesCollection).EnsureIndex(index)
 }
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
