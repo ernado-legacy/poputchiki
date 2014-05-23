@@ -253,14 +253,16 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	return err
 }
 
-func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image) (*Photo, error) {
-	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now()}
+func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image, desctiption string) (*Photo, error) {
+	// creating photo
+	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now(), Description: desctiption}
 	err := db.photo.Insert(p)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// adding to album
 	a := &Album{}
 	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": p.Id}}}
 	_, err = db.albums.FindId(album).Apply(change, a)
@@ -274,6 +276,25 @@ func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, text st
 	return c, err
 }
 
+func (db *DB) GetAlbums(user bson.ObjectId) ([]*Album, error) {
+	a := []*Album{}
+	err := db.albums.Find(bson.M{"user": user}).All(&a)
+	return a, err
+}
+
+func (db *DB) GetAlbum(id bson.ObjectId) ([]*Photo, error) {
+	p := []*Photo{}
+	pIds := []bson.ObjectId{}
+	err := db.albums.FindId(id).Distinct("photo", &pIds)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.photo.Find(bson.M{"$in": pIds}).All(p)
+
+	return p, err
+}
+
 func (db *DB) RemoveCommentFromPhotoSecure(user bson.ObjectId, id bson.ObjectId) error {
 	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
 	query := bson.M{"comments._id": id, "user": user}
@@ -283,4 +304,13 @@ func (db *DB) RemoveCommentFromPhotoSecure(user bson.ObjectId, id bson.ObjectId)
 
 func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {
 	return db.photo.Remove(bson.M{"_id": id, "user": user})
+}
+
+// Updates photo description and return updated object; TODO: test; TODO: check photo.id != id
+func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"description": photo.Description}}}
+	p := &Photo{}
+	_, err := db.photo.Find(bson.M{"_id": id, "user": user}).Apply(change, p)
+	p.Description = photo.Description
+	return p, err
 }

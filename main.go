@@ -60,12 +60,13 @@ func newPool() *redis.Pool {
 }
 
 func NewDatabase(session *mgo.Session) UserDB {
-	coll := session.DB(dbName).C(collection)
-	gcoll := session.DB(dbName).C(guestsCollection)
-	mcoll := session.DB(dbName).C(messagesCollection)
-	scoll := session.DB(dbName).C(statusesCollection)
-	pcoll := session.DB(dbName).C(photoCollection)
-	acoll := session.DB(dbName).C(albumsCollection)
+	db := session.DB(dbName)
+	coll := db.C(collection)
+	gcoll := db.C(guestsCollection)
+	mcoll := db.C(messagesCollection)
+	scoll := db.C(statusesCollection)
+	pcoll := db.C(photoCollection)
+	acoll := db.C(albumsCollection)
 	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll}
 }
 
