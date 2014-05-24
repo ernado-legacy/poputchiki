@@ -122,6 +122,54 @@ func TestDBMethods(t *testing.T) {
 						So(correct, ShouldBeTrue)
 					})
 				})
+
+			})
+			Convey("Album add", func() {
+				a := &Album{User: id}
+				a, err := db.AddAlbum(id, a)
+				So(err, ShouldBeNil)
+				So(a.User, ShouldEqual, id)
+
+				albums, err := db.GetAlbums(id)
+				So(err, ShouldBeNil)
+				found := false
+				for _, album := range albums {
+					if album.Id == a.Id {
+						found = true
+					}
+				}
+				So(found, ShouldBeTrue)
+				Convey("Add photo", func() {
+					i := Image{}
+					p, err := db.AddPhoto(id, a.Id, i, "test")
+					So(err, ShouldBeNil)
+					photos, err := db.GetAlbum(a.Id)
+					found := false
+					for _, photo := range photos {
+						if photo.Id == p.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					Convey("Add comment", func() {
+						c := &Comment{}
+						c.Text = "hello"
+						err := db.AddCommentToPhoto(id, p.Id, c)
+						So(err, ShouldBeNil)
+
+						p2, err := db.GetPhoto(p.Id)
+						So(err, ShouldBeNil)
+
+						found := false
+						for _, comment := range p2.Comments {
+							if comment.Id == c.Id {
+								found = true
+							}
+						}
+						So(found, ShouldBeTrue)
+					})
+					
+				})
 			})
 		})
 	})

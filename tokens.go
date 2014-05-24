@@ -93,10 +93,18 @@ type TokenHanlder struct {
 	token *Token
 }
 
-func (t TokenHanlder) Get() (*Token, error) {
+func (t TokenHanlder) Get() *Token {
 	if t.e != nil {
-		return nil, t.e
+		return nil
 	}
 
-	return t.token, nil
+	return t.token
+}
+
+type IdHandler struct {
+	id bson.ObjectId
+}
+
+func (id IdHandler) Get() bson.ObjectId {
+	return id.id
 }

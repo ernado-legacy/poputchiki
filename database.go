@@ -269,11 +269,19 @@ func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image, des
 	return p, err
 }
 
-func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, text string) (*Comment, error) {
-	c := &Comment{bson.NewObjectId(), user, text, time.Now()}
+func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, c *Comment) error {
+	c.User = user
+	c.Id = bson.NewObjectId()
+	c.Time = time.Now()
 	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
-	_, err := db.photo.FindId(photo).Apply(change, &c)
-	return c, err
+	p := &Photo{}
+	_, err := db.photo.FindId(photo).Apply(change, p)
+	return err
+}
+
+func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
+	p := &Photo{}
+	return p, db.photo.FindId(photo).One(p)
 }
 
 func (db *DB) GetAlbums(user bson.ObjectId) ([]*Album, error) {
@@ -290,15 +298,31 @@ func (db *DB) GetAlbum(id bson.ObjectId) ([]*Photo, error) {
 		return nil, err
 	}
 
-	err = db.photo.Find(bson.M{"$in": pIds}).All(p)
+	err = db.photo.Find(bson.M{"_id": bson.M{"$in": pIds}}).All(&p)
 
 	return p, err
+}
+
+func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
+	album.Id = bson.NewObjectId()
+	album.User = user
+	album.Time = time.Now()
+	err := db.albums.Insert(album)
+	return album, err
 }
 
 func (db *DB) RemoveCommentFromPhotoSecure(user bson.ObjectId, id bson.ObjectId) error {
 	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
 	query := bson.M{"comments._id": id, "user": user}
 	_, err := db.photo.Find(query).Apply(change, nil)
+	return err
+}
+
+func (db *DB) UpdateCommentToPhotoSecure(user bson.ObjectId, comment *Comment) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"comments.$.text": comment.Text}}}
+	query := bson.M{"comments._id": comment.Id, "user": user}
+	u := &StatusUpdate{}
+	_, err := db.statuses.Find(query).Apply(change, u)
 	return err
 }
 

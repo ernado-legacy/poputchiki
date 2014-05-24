@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 	"time"
@@ -40,37 +39,8 @@ func UserFromForm(r *http.Request) *User {
 }
 
 func UpdateUserFromForm(r *http.Request, u *User) {
-	r.ParseForm()
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(u)
-	if err == nil {
-		return
-	}
-
-	email := r.FormValue(FORM_EMAIL)
-	if email != BLANK {
-		u.Email = email
-	}
-	password := r.FormValue(FORM_PASSWORD)
-	if password != BLANK {
-		u.Password = getHash(password)
-	}
-	phone := r.FormValue(FORM_PHONE)
-	if phone != BLANK {
-		u.Phone = phone
-	}
-	firstname := r.FormValue(FORM_FIRSTNAME)
-	if firstname != BLANK {
-		u.FirstName = firstname
-	}
-	secondname := r.FormValue(FORM_SECONDNAME)
-	if secondname != BLANK {
-		u.SecondName = secondname
-	}
-}
-
-func (u *User) String() string {
-	return fmt.Sprintf("%s %s", u.FirstName, u.SecondName)
+	decoder.Decode(u)
 }
 
 func (u *User) CleanPrivate() {
@@ -79,6 +49,7 @@ func (u *User) CleanPrivate() {
 	u.Email = ""
 	u.Favorites = nil
 	u.Blacklist = nil
+	u.Balance = 0
 }
 
 type Guest struct {
@@ -158,6 +129,7 @@ type Photo struct {
 
 type Album struct {
 	Id    bson.ObjectId   `json:"id,omitempty"    bson:"_id,omitempty"`
+	User  bson.ObjectId   `json:"user"            bson:"user"`
 	Photo []bson.ObjectId `json:"photo,omitempty" bson:"photo,omitempty"`
 	Image Image           `json:"image"           bson:"image"`
 	Time  time.Time       `json:"time"         	  bson:"time"`

@@ -12,60 +12,6 @@ import (
 	"time"
 )
 
-type UserDB interface {
-	// GetAll() []*User
-	GetUsername(username string) *User
-	Get(id bson.ObjectId) *User
-	Add(u *User) error
-	Update(u *User) error
-	// Delete(id bson.ObjectId) error
-	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
-	RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error
-	GetFavorites(id bson.ObjectId) []*User
-
-	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
-	GetAllGuests(id bson.ObjectId) ([]*User, error)
-
-	AddMessage(m *Message) error
-	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
-	GetMessage(id bson.ObjectId) (message *Message, err error)
-	RemoveMessage(id bson.ObjectId) error
-
-	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
-	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
-
-	IncBalance(id bson.ObjectId, amount int) error
-	DecBalance(id bson.ObjectId, amount int) error
-
-	SetOnline(id bson.ObjectId) error
-	SetOffline(id bson.ObjectId) error
-
-	GetStatus(id bson.ObjectId) (status *StatusUpdate, err error)
-	GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error)
-	GetLastStatuses(count int) (status []*StatusUpdate, err error)
-	AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error)
-	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
-	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
-	AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error)
-	RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error
-	UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error
-}
-
-type TokenStorage interface {
-	Get(hexToken string) (*Token, error)
-	Generate(user *User) (*Token, error)
-	Remove(token *Token) error
-}
-
-type TokenInterface interface {
-	Get() (*Token, error)
-}
-
-type RealtimeInterface interface {
-	Push(id bson.ObjectId, event interface{}) error
-	RealtimeHandler(w http.ResponseWriter, r *http.Request, token TokenInterface) (int, []byte)
-}
-
 const (
 	JSON_HEADER     = "application/json; charset=utf-8"
 	FORM_TARGET     = "target"
@@ -78,81 +24,11 @@ const (
 	FORM_FILE       = "file"
 )
 
-func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Upgrade") != "" {
-		log.Println("not setting header")
-		return
-	}
-
-	w.Header().Set("Content-Type", JSON_HEADER)
-}
-
-func Render(value interface{}) (int, []byte) {
-	// trying to marshal to json
-	j, err := json.Marshal(value)
-	if err != nil {
-		j, err = json.Marshal(ErrorMarshal)
-		if err != nil {
-			log.Println(err)
-			panic(err)
-		}
-		return ErrorMarshal.Code, j
-	}
-	switch v := value.(type) {
-	case Error:
-		if v.Code == http.StatusInternalServerError {
-			log.Println(v)
-		}
-		return v.Code, j
-	default:
-		return http.StatusOK, j
-	}
-}
-
-func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter) {
-	var t TokenAbstract
-	var hexToken string
-	q := r.URL.Query()
-
-	tStr := q.Get(TOKEN_URL_PARM)
-
-	if tStr != BLANK {
-		hexToken = tStr
-	}
-
-	tCookie, err := r.Cookie("token")
-
-	if err == nil {
-		hexToken = tCookie.Value
-	}
-
-	token, err := tokens.Get(hexToken)
-	if err != nil {
-		log.Println(err)
-		code, data := Render(ErrorBackend)
-		http.Error(w, string(data), code) // todo: set content-type
-	}
-
-	t = TokenHanlder{err, token}
-	c.Map(t)
-}
-
-func GetUser(db UserDB, parms martini.Params, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
-
+func GetUser(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
+	t := token.Get()
+	id := uid.Get()
 	user := db.Get(id)
+
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
@@ -176,18 +52,10 @@ func GetUser(db UserDB, parms martini.Params, token TokenInterface) (int, []byte
 	return Render(user)
 }
 
-func AddToFavorites(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
+func AddToFavorites(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -197,7 +65,7 @@ func AddToFavorites(db UserDB, parms martini.Params, r *http.Request, token Toke
 		return Render(ErrorUserNotFound)
 	}
 
-	hexId = r.FormValue(FORM_TARGET)
+	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
@@ -216,18 +84,9 @@ func AddToFavorites(db UserDB, parms martini.Params, r *http.Request, token Toke
 	return Render("updated")
 }
 
-func AddToBlacklist(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func AddToBlacklist(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -237,7 +96,7 @@ func AddToBlacklist(db UserDB, parms martini.Params, r *http.Request, token Toke
 		return Render(ErrorUserNotFound)
 	}
 
-	hexId = r.FormValue(FORM_TARGET)
+	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
@@ -256,18 +115,9 @@ func AddToBlacklist(db UserDB, parms martini.Params, r *http.Request, token Toke
 	return Render("added to blacklist")
 }
 
-func RemoveFromBlacklist(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func RemoveFromBlacklist(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -277,7 +127,7 @@ func RemoveFromBlacklist(db UserDB, parms martini.Params, r *http.Request, token
 		return Render(ErrorUserNotFound)
 	}
 
-	hexId = r.FormValue(FORM_TARGET)
+	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
@@ -296,18 +146,9 @@ func RemoveFromBlacklist(db UserDB, parms martini.Params, r *http.Request, token
 	return Render("removed")
 }
 
-func RemoveFromFavorites(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func RemoveFromFavorites(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -317,7 +158,7 @@ func RemoveFromFavorites(db UserDB, parms martini.Params, r *http.Request, token
 		return Render(ErrorUserNotFound)
 	}
 
-	hexId = r.FormValue(FORM_TARGET)
+	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
@@ -336,18 +177,9 @@ func RemoveFromFavorites(db UserDB, parms martini.Params, r *http.Request, token
 	return Render("removed")
 }
 
-func GetFavorites(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func GetFavorites(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -364,18 +196,9 @@ func GetFavorites(db UserDB, parms martini.Params, r *http.Request, token TokenI
 	return Render(favorites)
 }
 
-func GetGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func GetGuests(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -397,18 +220,9 @@ func GetGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInte
 	return Render(guests)
 }
 
-func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func AddToGuests(db UserDB, uid IdInterface, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	t := token.Get()
+	id := uid.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -418,7 +232,7 @@ func AddToGuests(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 		return Render(ErrorUserNotFound)
 	}
 
-	hexId = r.FormValue(FORM_TARGET)
+	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
@@ -460,12 +274,7 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 }
 
 func Logout(db UserDB, r *http.Request, tokens TokenStorage, token TokenInterface) (int, []byte) {
-	t, _ := token.Get()
-
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
+	t := token.Get()
 	err := tokens.Remove(t)
 
 	if err != nil {
@@ -497,18 +306,9 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	return Render(t)
 }
 
-func Update(db UserDB, r *http.Request, token TokenInterface, parms martini.Params) (int, []byte) {
-	hexId := parms["id"]
-	if !bson.IsObjectIdHex(hexId) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	id := bson.ObjectIdHex(hexId)
+func Update(db UserDB, r *http.Request, token TokenInterface, uid IdInterface) (int, []byte) {
+	id := uid.Get()
+	t := token.Get()
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -527,25 +327,15 @@ func Update(db UserDB, r *http.Request, token TokenInterface, parms martini.Para
 	return Render(user)
 }
 
-func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+func SendMessage(db UserDB, uid IdInterface, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
 
 	if text == BLANK {
 		return Render(ErrorBadRequest)
 	}
 
-	destinationHex := parms["id"]
-
-	if !bson.IsObjectIdHex(destinationHex) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	destination := bson.ObjectIdHex(destinationHex)
+	destination := uid.Get()
+	t := token.Get()
 	origin := t.Id
 
 	now := time.Now()
@@ -593,20 +383,8 @@ func SendMessage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	return Render("message sent")
 }
 
-func RemoveMessage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	idHex := parms["id"]
-
-	if !bson.IsObjectIdHex(idHex) {
-		return Render(ErrorBadId)
-	}
-
-	id := bson.ObjectIdHex(idHex)
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
+func RemoveMessage(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	id := uid.Get()
 	message, err := db.GetMessage(id)
 
 	if err != nil {
@@ -614,6 +392,7 @@ func RemoveMessage(db UserDB, parms martini.Params, r *http.Request, token Token
 		return Render(ErrorBackend)
 	}
 
+	t := token.Get()
 	if message.User != t.Id {
 		return Render(ErrorNotAllowed)
 	}
@@ -629,18 +408,9 @@ func RemoveMessage(db UserDB, parms martini.Params, r *http.Request, token Token
 	return Render("message removed")
 }
 
-func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token TokenInterface) (int, []byte) {
-	originHex := parms["id"]
-	if !bson.IsObjectIdHex(originHex) {
-		return Render(ErrorBadId)
-	}
-
-	t, _ := token.Get()
-	if t == nil {
-		return Render(ErrorAuth)
-	}
-
-	origin := bson.ObjectIdHex(originHex)
+func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	origin := uid.Get()
+	t := token.Get()
 	destination := t.Id
 
 	messages, err := db.GetMessagesFromUser(destination, origin)
@@ -657,7 +427,7 @@ func GetMessagesFromUser(db UserDB, parms martini.Params, r *http.Request, token
 }
 
 func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	t, _ := token.Get()
+	t := token.Get()
 	client := &http.Client{}
 	f, h, err := r.FormFile(FORM_FILE)
 	if err != nil {
@@ -727,4 +497,60 @@ func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	}
 	im := Image{bson.NewObjectId(), assign.Fid, urlStr}
 	return Render(im)
+}
+
+func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	text := r.FormValue(FORM_TEXT)
+
+	if text == BLANK {
+		return Render(ErrorBadRequest)
+	}
+
+	t := token.Get()
+	destination := uid.Get()
+	origin := t.Id
+
+	now := time.Now()
+	m1 := Message{bson.NewObjectId(), origin, origin, destination, now, text}
+	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
+
+	go func() {
+		u := db.Get(destination)
+		blacklisted := false
+		for _, id := range u.Blacklist {
+			if id == origin {
+				blacklisted = true
+			}
+		}
+
+		if blacklisted {
+			err := realtime.Push(origin, MessageSendBlacklisted{m1.Id})
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+		err := realtime.Push(origin, m1)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = realtime.Push(destination, m2)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = db.AddMessage(&m1)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		err = db.AddMessage(&m2)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	return Render("message sent")
 }

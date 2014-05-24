@@ -98,27 +98,27 @@ func NewApp() *Application {
 	m.Post("/api/auth/login", Login)
 	m.Post("/api/auth/logout", Logout)
 
-	m.Get("/api/user/:id", GetUser)
-	m.Patch("/api/user/:id", Update)
-	m.Put("/api/user/:id", Update)
+	m.Get("/api/user/:id", NeedAuth, IdWrapper, GetUser)
+	m.Patch("/api/user/:id", NeedAuth, IdWrapper, Update)
+	m.Put("/api/user/:id", NeedAuth, IdWrapper, Update)
 
-	m.Put("/api/user/:id/messages", SendMessage)
-	m.Get("/api/user/:id/messages", GetMessagesFromUser)
-	m.Delete("/api/message/:id", RemoveMessage)
+	m.Put("/api/user/:id/messages", NeedAuth, IdWrapper, SendMessage)
+	m.Get("/api/user/:id/messages", NeedAuth, IdWrapper, GetMessagesFromUser)
+	m.Delete("/api/message/:id", NeedAuth, IdWrapper, RemoveMessage)
 
-	m.Post("/api/user/:id/fav", AddToFavorites)
-	m.Delete("/api/user/:id/fav", RemoveFromFavorites)
-	m.Get("/api/user/:id/fav", GetFavorites)
+	m.Post("/api/user/:id/fav", NeedAuth, IdWrapper, AddToFavorites)
+	m.Delete("/api/user/:id/fav", NeedAuth, IdWrapper, RemoveFromFavorites)
+	m.Get("/api/user/:id/fav", NeedAuth, IdWrapper, GetFavorites)
 
-	m.Post("/api/user/:id/blacklist", AddToBlacklist)
-	m.Delete("/api/user/:id/blacklist", RemoveFromBlacklist)
+	m.Post("/api/user/:id/blacklist", NeedAuth, IdWrapper, AddToBlacklist)
+	m.Delete("/api/user/:id/blacklist", NeedAuth, IdWrapper, RemoveFromBlacklist)
 
-	m.Post("/api/user/:id/guests", AddToGuests)
-	m.Get("/api/user/:id/guests", GetGuests)
+	m.Post("/api/user/:id/guests", NeedAuth, IdWrapper, AddToGuests)
+	m.Get("/api/user/:id/guests", NeedAuth, IdWrapper, GetGuests)
 
 	m.Post("/api/image", UploadImage)
 
-	m.Get("/api/realtime", realtime.RealtimeHandler)
+	m.Get("/api/realtime", NeedAuth, realtime.RealtimeHandler)
 
 	a := Application{session, p, m}
 	a.InitDatabase()
