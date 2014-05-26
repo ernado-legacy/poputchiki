@@ -96,7 +96,7 @@ func NewApp() *Application {
 
 	m.Post("/api/auth/register", Register)
 	m.Post("/api/auth/login", Login)
-	m.Post("/api/auth/logout", Logout)
+	m.Post("/api/auth/logout", NeedAuth, Logout)
 
 	m.Get("/api/user/:id", NeedAuth, IdWrapper, GetUser)
 	m.Patch("/api/user/:id", NeedAuth, IdWrapper, Update)
@@ -120,9 +120,9 @@ func NewApp() *Application {
 
 	m.Get("/api/realtime", NeedAuth, realtime.RealtimeHandler)
 
-	a := Application{session, p, m}
+	a := &Application{session, p, m}
 	a.InitDatabase()
-	return &a
+	return a
 }
 
 func (a *Application) Close() {
