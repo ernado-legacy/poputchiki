@@ -24,6 +24,11 @@ const (
 	FORM_FILE       = "file"
 )
 
+func ReadJson(r *http.Request, i *interface{}) {
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(i)
+}
+
 func GetUser(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
 	t := token.Get()
 	id := uid.Get()
@@ -261,7 +266,6 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	}
 
 	if user.Password != getHash(password) {
-		log.Printf("%s != %s", user.Password, getHash(password))
 		return Render(ErrorAuth)
 	}
 
@@ -499,58 +503,61 @@ func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenIn
 	return Render(im)
 }
 
-func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	text := r.FormValue(FORM_TEXT)
+func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	status := &StatusUpdate{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(status)
 
-	if text == BLANK {
+	if err != nil {
 		return Render(ErrorBadRequest)
 	}
 
 	t := token.Get()
-	destination := uid.Get()
-	origin := t.Id
+	status, err = db.AddStatus(t.Id, status.Text)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(status)
+}
 
-	now := time.Now()
-	m1 := Message{bson.NewObjectId(), origin, origin, destination, now, text}
-	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
+func GetStatus(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
+	status, err := db.GetStatus(uid.Get())
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(status)
+}
 
-	go func() {
-		u := db.Get(destination)
-		blacklisted := false
-		for _, id := range u.Blacklist {
-			if id == origin {
-				blacklisted = true
-			}
-		}
+func RemoveStatus(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
+	err := db.RemoveStatusSecure(token.Get().Id, uid.Get())
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
+}
 
-		if blacklisted {
-			err := realtime.Push(origin, MessageSendBlacklisted{m1.Id})
-			if err != nil {
-				log.Println(err)
-			}
-		}
+func GetCurrentStatus(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
+	status, err := db.GetCurrentStatus(uid.Get())
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(status)
+}
 
-		err := realtime.Push(origin, m1)
-		if err != nil {
-			log.Println(err)
-		}
+func UpdateStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
+	status := &StatusUpdate{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(status)
+	id := uid.Get()
 
-		err = realtime.Push(destination, m2)
-		if err != nil {
-			log.Println(err)
-		}
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
 
-		err = db.AddMessage(&m1)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		err = db.AddMessage(&m2)
-		if err != nil {
-			log.Println(err)
-		}
-	}()
-
-	return Render("message sent")
+	t := token.Get()
+	status, err = db.UpdateStatusSecure(t.Id, id, status.Text)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(status)
 }

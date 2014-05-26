@@ -101,6 +101,8 @@ func NewApp() *Application {
 	m.Get("/api/user/:id", NeedAuth, IdWrapper, GetUser)
 	m.Patch("/api/user/:id", NeedAuth, IdWrapper, Update)
 	m.Put("/api/user/:id", NeedAuth, IdWrapper, Update)
+	// todo: test
+	m.Get("/api/user/:id/status", NeedAuth, IdWrapper, GetCurrentStatus)
 
 	m.Put("/api/user/:id/messages", NeedAuth, IdWrapper, SendMessage)
 	m.Get("/api/user/:id/messages", NeedAuth, IdWrapper, GetMessagesFromUser)
@@ -110,11 +112,17 @@ func NewApp() *Application {
 	m.Delete("/api/user/:id/fav", NeedAuth, IdWrapper, RemoveFromFavorites)
 	m.Get("/api/user/:id/fav", NeedAuth, IdWrapper, GetFavorites)
 
-	m.Post("/api/user/:id/blacklist", NeedAuth, IdWrapper, AddToBlacklist)
+	m.Post("/api/user/:id/blacklist", NeedAuth, IdWrappeТr, AddToBlacklist)
 	m.Delete("/api/user/:id/blacklist", NeedAuth, IdWrapper, RemoveFromBlacklist)
 
 	m.Post("/api/user/:id/guests", NeedAuth, IdWrapper, AddToGuests)
 	m.Get("/api/user/:id/guests", NeedAuth, IdWrapper, GetGuests)
+
+	// todo: test
+	m.Put("/api/status/", NeedAuth, AddStatus)
+	m.Get("/api/status/:id", NeedAuth, IdWrapper, GetStatus)
+	m.Put("/api/status/:id", NeedAuth, IdWrapper, UpdateStatus)
+	m.Delete("/api/status/:id", NeedAuth, IdWrapper, RemoveStatus)
 
 	m.Post("/api/image", UploadImage)
 
