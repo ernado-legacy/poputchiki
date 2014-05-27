@@ -93,40 +93,44 @@ func NewApp() *Application {
 	m.Map(db)
 	m.Map(tokenStorage)
 	m.Map(realtime)
+	m.Group("/api/auth", func(r martini.Router) {
+		r.Post("/register", Register)
+		r.Post("/login", Login)
+		r.Post("/logout", NeedAuth, Logout)
+	})
+	m.Group("/api", func(r martini.Router) {
+		r.Group("/user", func(r martini.Router) {
+			r.Get("/:id", GetUser)
+			r.Patch("/:id", Update)
+			r.Put("/:id", Update)
+			// todo: test
+			r.Get("/:id/status", GetCurrentStatus)
 
-	m.Post("/api/auth/register", Register)
-	m.Post("/api/auth/login", Login)
-	m.Post("/api/auth/logout", NeedAuth, Logout)
+			r.Put("/:id/messages", SendMessage)
+			r.Get("/:id/messages", GetMessagesFromUser)
 
-	m.Get("/api/user/:id", NeedAuth, IdWrapper, GetUser)
-	m.Patch("/api/user/:id", NeedAuth, IdWrapper, Update)
-	m.Put("/api/user/:id", NeedAuth, IdWrapper, Update)
-	// todo: test
-	m.Get("/api/user/:id/status", NeedAuth, IdWrapper, GetCurrentStatus)
+			r.Post("/:id/fav", AddToFavorites)
+			r.Delete("/:id/fav", RemoveFromFavorites)
+			r.Get("/:id/fav", GetFavorites)
 
-	m.Put("/api/user/:id/messages", NeedAuth, IdWrapper, SendMessage)
-	m.Get("/api/user/:id/messages", NeedAuth, IdWrapper, GetMessagesFromUser)
-	m.Delete("/api/message/:id", NeedAuth, IdWrapper, RemoveMessage)
+			r.Post("/:id/blacklist", AddToBlacklist)
+			r.Delete("/:id/blacklist", RemoveFromBlacklist)
 
-	m.Post("/api/user/:id/fav", NeedAuth, IdWrapper, AddToFavorites)
-	m.Delete("/api/user/:id/fav", NeedAuth, IdWrapper, RemoveFromFavorites)
-	m.Get("/api/user/:id/fav", NeedAuth, IdWrapper, GetFavorites)
+			r.Post("/:id/guests", AddToGuests)
+			r.Get("/:id/guests", GetGuests)
+		}, IdWrapper)
 
-	m.Post("/api/user/:id/blacklist", NeedAuth, IdWrappeТr, AddToBlacklist)
-	m.Delete("/api/user/:id/blacklist", NeedAuth, IdWrapper, RemoveFromBlacklist)
+		r.Put("/status", AddStatus)
+		r.Group("/status", func(r martini.Router) {
+			r.Get("/status/:id", GetStatus)
+			r.Put("/status/:id", UpdateStatus)
+			r.Delete("/status/:id", RemoveStatus)
+		}, IdWrapper)
 
-	m.Post("/api/user/:id/guests", NeedAuth, IdWrapper, AddToGuests)
-	m.Get("/api/user/:id/guests", NeedAuth, IdWrapper, GetGuests)
-
-	// todo: test
-	m.Put("/api/status/", NeedAuth, AddStatus)
-	m.Get("/api/status/:id", NeedAuth, IdWrapper, GetStatus)
-	m.Put("/api/status/:id", NeedAuth, IdWrapper, UpdateStatus)
-	m.Delete("/api/status/:id", NeedAuth, IdWrapper, RemoveStatus)
-
-	m.Post("/api/image", UploadImage)
-
-	m.Get("/api/realtime", NeedAuth, realtime.RealtimeHandler)
+		r.Delete("/message/:id", IdWrapper, RemoveMessage)
+		r.Post("/image", UploadImage)
+		r.Get("/realtime", realtime.RealtimeHandler)
+	}, NeedAuth)
 
 	a := &Application{session, p, m}
 	a.InitDatabase()

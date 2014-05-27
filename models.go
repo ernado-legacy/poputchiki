@@ -123,14 +123,6 @@ type Photo struct {
 	User        bson.ObjectId `json:"user"                  bson:"user"`
 	Image       Image         `json:"image"                 bson:"image"`
 	Description string        `json:"description,omitempty" bson:"description,omitempty"`
-	Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 	Time        time.Time     `json:"time"         		    bson:"time"`
-}
-
-type Album struct {
-	Id    bson.ObjectId   `json:"id,omitempty"    bson:"_id,omitempty"`
-	User  bson.ObjectId   `json:"user"            bson:"user"`
-	Photo []bson.ObjectId `json:"photo,omitempty" bson:"photo,omitempty"`
-	Image Image           `json:"image"           bson:"image"`
-	Time  time.Time       `json:"time"         	  bson:"time"`
+	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }

@@ -253,7 +253,7 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	return err
 }
 
-func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image, desctiption string) (*Photo, error) {
+func (db *DB) AddPhoto(user bson.ObjectId, image Image, desctiption string) (*Photo, error) {
 	// creating photo
 	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now(), Description: desctiption}
 	err := db.photo.Insert(p)
@@ -262,10 +262,6 @@ func (db *DB) AddPhoto(user bson.ObjectId, album bson.ObjectId, image Image, des
 		return nil, err
 	}
 
-	// adding to album
-	a := &Album{}
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": p.Id}}}
-	_, err = db.albums.FindId(album).Apply(change, a)
 	return p, err
 }
 
@@ -284,46 +280,13 @@ func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 	return p, db.photo.FindId(photo).One(p)
 }
 
-func (db *DB) GetAlbums(user bson.ObjectId) ([]*Album, error) {
-	a := []*Album{}
-	err := db.albums.Find(bson.M{"user": user}).All(&a)
-	return a, err
-}
-
-func (db *DB) GetAlbum(id bson.ObjectId) ([]*Photo, error) {
+func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 	p := []*Photo{}
-	pIds := []bson.ObjectId{}
-	err := db.albums.FindId(id).Distinct("photo", &pIds)
+	err := db.photo.Find(bson.M{"user": user}).All(p)
 	if err != nil {
 		return nil, err
 	}
-
-	err = db.photo.Find(bson.M{"_id": bson.M{"$in": pIds}}).All(&p)
-
 	return p, err
-}
-
-func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
-	album.Id = bson.NewObjectId()
-	album.User = user
-	album.Time = time.Now()
-	err := db.albums.Insert(album)
-	return album, err
-}
-
-func (db *DB) RemoveCommentFromPhotoSecure(user bson.ObjectId, id bson.ObjectId) error {
-	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"id": id}}}}
-	query := bson.M{"comments._id": id, "user": user}
-	_, err := db.photo.Find(query).Apply(change, nil)
-	return err
-}
-
-func (db *DB) UpdateCommentToPhotoSecure(user bson.ObjectId, comment *Comment) error {
-	change := mgo.Change{Update: bson.M{"$set": bson.M{"comments.$.text": comment.Text}}}
-	query := bson.M{"comments._id": comment.Id, "user": user}
-	u := &StatusUpdate{}
-	_, err := db.statuses.Find(query).Apply(change, u)
-	return err
 }
 
 func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {

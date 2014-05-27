@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap 101 Template</title>
+    <title>Попутчики</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -184,11 +184,8 @@
             <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
         </div>
     </div>
-
-    <div class="footer">
-        <p>© Попутчики 2014</p>
-    </div>
-
+    <div id="#user-info"></div>
+    <div class="footer"><p>© Попутчики 2014</p></div>
 </div>
 <!-- /container -->
 
@@ -200,7 +197,13 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/underscore-min.js"></script>
 <script src="js/backbone-min.js"></script>
-
+<script src="js/backbone.marionette.min.js"></script>
+<script src="js/app.js"></script>
+<script type="text/template" id="user-info-template">
+    <div class="well-sm">
+        <p><%= user.get('firstname') %> <%= user.get('secondname') %></p>
+    </div>
+</script>
 <script type="text/template" id="block-user-template">
     <h1>Добро пожаловать, <%= user.get('firstname') %></h1>
 
@@ -264,245 +267,6 @@
         </div>
         <!-- /.modal-content -->
     </div>
-</script>
-<script type="text/javascript">
-    User = Backbone.Model.extend({
-        urlRoot: '/api/user/',
-        defaults: {
-            id: null,
-            email: null,
-            firstname: null,
-            secondname: null,
-            favorites: [],
-            blacklist: [],
-            phone: null,
-            token: null
-        },
-        initialize: function () {
-            console.log("hello");
-            this.set({urlRoot: '/api/user/' + this.get('id')});
-            console.log(this)
-        }
-    });
-
-    var user;
-    var Users = Backbone.Collection.extend({
-        model: User,
-        url: '/api/user/'
-    });
-
-    var users = new Users;
-
-    var token, userId;
-
-    token = $.cookie('token');
-    userId = $.cookie('userId');
-
-    var connection;
-
-    function hideLogin() {
-        console.log(user.get('firstname'));
-        var template = _.template($('#form-user-template').html(), {user: user});
-        $("#userModal").html(template);
-        template = _.template($('#block-user-template').html(), {user: user});
-        var block_user = $('#block-user');
-        block_user.html(template);
-        $('#block-login').hide();
-        $('#button-logout').show();
-        block_user.show();
-    }
-
-    function logout() {
-        $.removeCookie('token');
-        $.removeCookie('userId');
-        $('#button-logout').hide();
-        $('#block-user').hide();
-        token = null;
-        user = null;
-        userId = null;
-    }
-
-    $('#button-logout').click(function (e) {
-        e.preventDefault();
-        logout();
-        $('#block-login').show();
-    });
-    function setup_user_form() {
-        $('#form-user-file').on('change', function (e) {
-            e.preventDefault();
-            var form = document.getElementById('form-user');
-            var bar = $('#form-user-file-progress');
-            bar.show();
-            bar.find('.progress-bar').attr('aria-valuenow', 0);
-            bar.find('.progress-bar').css('width', 0 + '%');
-            console.log(form);
-            var data = new FormData(form);
-            console.log(data);
-            $.ajax({
-                url: '/api/image',
-                type: 'POST',
-                data: data,
-                processData: false, // Don't process the files
-                contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-                success: function (data, textStatus, jqXHR) {
-                    if (typeof data.error === 'undefined') {
-                        // Success so call function to process the form
-                        console.log(data);
-                        $('#form-user-image').attr('src', data.url);
-                        $('#form-user-image-hidden').attr('value', JSON.stringify(data));
-                        user.set('photo', data);
-                        user.save();
-                        bar.find('.progress-bar').css('width', 100 + '%');
-                        setTimeout(function () {
-                            bar.hide()
-                        }, 500);
-                    }
-                    else {
-                        // Handle errors here
-                        console.log('ERRORS: ' + data.error);
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    // Handle errors here
-                    console.log('ERRORS: ' + textStatus);
-                    // STOP LOADING SPINNER
-                }
-            });
-        });
-    }
-    $('#form-video-file').on('change', function (e) {
-            e.preventDefault();
-            var form = document.getElementById('form-video');
-            var bar = $('#form-video-file-progress');
-            bar.show();
-            bar.find('.progress-bar').attr('aria-valuenow', 0);
-            bar.find('.progress-bar').css('width', 50 + '%');
-            console.log(form);
-            var data = new FormData(form);
-            console.log(data);
-            $.ajax({
-                url: '/api/image',
-                type: 'POST',
-                data: data,
-                processData: false, // Don't process the files
-                contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-                success: function (data, textStatus, jqXHR) {
-                    if (typeof data.error === 'undefined') {
-                        // Success so call function to process the form
-                        console.log(data);
-                        $('#form-video-src').attr('src', data.url);
-                        bar.find('.progress-bar').css('width', 100 + '%');
-                        setTimeout(function () {
-                            bar.hide()
-                        }, 500);
-                        var v = document.getElementById('form-video-video');
-                        v.load();
-                        v.play();
-                    }
-                    else {
-                        // Handle errors here
-                        console.log('ERRORS: ' + data.error);
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    // Handle errors here
-                    console.log('ERRORS: ' + textStatus);
-                    // STOP LOADING SPINNER
-                }
-            });
-        });
-    function connect() {
-        hideLogin();
-        setup_user_form();
-        connection = new WebSocket('ws://poputchiki.ru/api/realtime');
-        connection.onopen = function () {
-            console.log('ws connected')
-        };
-
-        connection.onmessage = function (event) {
-            data = JSON.parse(event.data);
-            console.log("got message", data);
-
-            if (data.type == 'progressmessage') {
-                console.log('progress ', data.body.progress);
-                var bar = $('#form-user-file-progress').find('.progress-bar');
-                bar.attr('aria-valuenow', data.body.progress);
-                bar.css('width', data.body.progress + '%')
-
-            }
-        };
-
-        connection.onclose = function () {
-            console.log('ws closed')
-        }
-    }
-
-    if (token != null && userId != null) {
-        console.log(token, userId);
-        user = new User({id: userId});
-        user.fetch({success: function () {
-            connect();
-        }});
-        console.log("auth ok")
-    }
-
-    function login(data) {
-        token = data.token;
-        userId = data.id;
-        $.cookie('token', token);
-        $.cookie('userId', userId);
-        console.log(token, userId);
-        console.log($.cookie('token'));
-        user = new User({id: userId});
-        user.fetch({success: function () {
-            connect();
-        }});
-    }
-
-    $("#form-register-submit").click(function (e) {
-        e.preventDefault();
-        var url = "/api/auth/register"; // the script where you handle the form input.
-
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: $("#form-register").serialize(), // serializes the form's elements.
-            success: function (data) {
-                login(data);
-                $('#myModal').modal('hide');
-            }
-        });
-    });
-    $("#form-login-submit").click(function (e) {
-        e.preventDefault();
-        var url = "/api/auth/login"; // the script where you handle the form input.
-
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: $("#form-login").serialize(), // serializes the form's elements.
-            success: function (data) {
-                login(data);
-                $('#loginModal').modal('hide');
-            }
-        });
-    });
-
-
-    var MyController = Backbone.Router.extend({
-        routes: {
-            "say/:something": "say"
-        },
-
-        say: function (something) {
-            alert(something);
-        }
-    });
-
-    var yC = new MyController;
-
-    Backbone.history.start();
-
 </script>
 </body>
 </html>
