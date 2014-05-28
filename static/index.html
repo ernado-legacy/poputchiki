@@ -14,10 +14,11 @@
 <div class="container">
     <div class="header">
         <ul class="nav nav-pills pull-right">
+            <li id="user-info"></li>
             <li><a href="#" data-toggle="modal" data-target="#videoModal" role="button">Загрузить видео</a></li>
             <li><a href="#" id="button-logout" style="display: none">Уйти</a></li>
         </ul>
-        <h3 class="text-muted">Попутчики</h3>
+        <h3 class="text-muted"><a href="/">Попутчики</a> </h3>
     </div>
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -140,8 +141,9 @@
         </p>
 
     </div>
+    <div class="jumbotron" id="content-wrapper"></div>
     <!-- /.modal -->
-    <div class="jumbotron" id="block-login">
+    <div class="jumbotron" id="block-login" style="display: none">
         <h1>Всегда прошу</h1>
 
         <p class="lead">К нашему шалашу</p>
@@ -153,38 +155,6 @@
         </a></p>
     </div>
 
-    <div class="row marketing">
-        <div class="col-lg-6">
-            <h4>Subheading</h4>
-
-            <p>Donec id elit non mi porta gravida at eget metus. Maecenas faucibus mollis interdum.</p>
-
-            <h4>Subheading</h4>
-
-            <p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet
-                fermentum.</p>
-
-            <h4>Subheading</h4>
-
-            <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
-        </div>
-
-        <div class="col-lg-6">
-            <h4>Subheading</h4>
-
-            <p>Donec id elit non mi porta gravida at eget metus. Maecenas faucibus mollis interdum.</p>
-
-            <h4>Subheading</h4>
-
-            <p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet
-                fermentum.</p>
-
-            <h4>Subheading</h4>
-
-            <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
-        </div>
-    </div>
-    <div id="#user-info"></div>
     <div class="footer"><p>© Попутчики 2014</p></div>
 </div>
 <!-- /container -->
@@ -198,10 +168,11 @@
 <script src="js/underscore-min.js"></script>
 <script src="js/backbone-min.js"></script>
 <script src="js/backbone.marionette.min.js"></script>
-<script src="js/app.js"></script>
+<script src="js/backbone.syphon.min.js"></script>
+
 <script type="text/template" id="user-info-template">
     <div class="well-sm">
-        <p><%= user.get('firstname') %> <%= user.get('secondname') %></p>
+        <p><a class="link" href="<%= user.get('url') %>"><%= user.get('firstname') %> <%= user.get('secondname') %></a></p>
     </div>
 </script>
 <script type="text/template" id="block-user-template">
@@ -213,6 +184,11 @@
         инфу</a>
     </p>
 </script>
+
+<script type="text/template" id="block-user-info-template">
+    <h1><%= user.get('firstname') %> <%= user.get('secondname') %></h1>
+</script>
+
 <script type="text/template" id="form-user-template">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -268,5 +244,6 @@
         <!-- /.modal-content -->
     </div>
 </script>
+<script src="js/app.js"></script>
 </body>
 </html>

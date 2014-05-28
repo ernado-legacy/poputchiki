@@ -99,32 +99,32 @@ func NewApp() *Application {
 		r.Post("/logout", NeedAuth, Logout)
 	})
 	m.Group("/api", func(r martini.Router) {
-		r.Group("/user", func(r martini.Router) {
-			r.Get("/:id", GetUser)
-			r.Patch("/:id", Update)
-			r.Put("/:id", Update)
-			// todo: test
-			r.Get("/:id/status", GetCurrentStatus)
+		r.Group("/user/:id", func(r martini.Router) {
+			r.Get("/", GetUser)
+			r.Patch("/", Update)
+			r.Put("/", Update)
 
-			r.Put("/:id/messages", SendMessage)
-			r.Get("/:id/messages", GetMessagesFromUser)
+			r.Get("/status", GetCurrentStatus)
 
-			r.Post("/:id/fav", AddToFavorites)
-			r.Delete("/:id/fav", RemoveFromFavorites)
-			r.Get("/:id/fav", GetFavorites)
+			r.Put("/messages", SendMessage)
+			r.Get("/messages", GetMessagesFromUser)
 
-			r.Post("/:id/blacklist", AddToBlacklist)
-			r.Delete("/:id/blacklist", RemoveFromBlacklist)
+			r.Post("/fav", AddToFavorites)
+			r.Delete("/fav", RemoveFromFavorites)
+			r.Get("/fav", GetFavorites)
 
-			r.Post("/:id/guests", AddToGuests)
-			r.Get("/:id/guests", GetGuests)
+			r.Post("/blacklist", AddToBlacklist)
+			r.Delete("/blacklist", RemoveFromBlacklist)
+
+			r.Post("/guests", AddToGuests)
+			r.Get("/guests", GetGuests)
 		}, IdWrapper)
 
 		r.Put("/status", AddStatus)
-		r.Group("/status", func(r martini.Router) {
-			r.Get("/status/:id", GetStatus)
-			r.Put("/status/:id", UpdateStatus)
-			r.Delete("/status/:id", RemoveStatus)
+		r.Group("/status/:id", func(r martini.Router) {
+			r.Get("/", GetStatus)
+			r.Put("/", UpdateStatus)
+			r.Delete("/", RemoveStatus)
 		}, IdWrapper)
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
