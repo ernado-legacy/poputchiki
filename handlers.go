@@ -1,13 +1,14 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"encoding/json"
-	"github.com/go-martini/martini"
-	"io"
+	"github.com/ginuerzh/weedo"
+	// "github.com/go-martini/martini"
+	// "io"
 	"labix.org/v2/mgo/bson"
 	"log"
-	"mime/multipart"
+	// "mime/multipart"
 	"net/http"
 	"time"
 )
@@ -430,76 +431,61 @@ func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token Toke
 	return Render(messages)
 }
 
-func UploadImage(db UserDB, parms martini.Params, r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	t := token.Get()
-	client := &http.Client{}
+func UploadImage(r *http.Request) (int, []byte) {
+	c := weedo.NewClient("localhost", 9333)
 	f, h, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(FORM_FILE, h.Filename)
+	// body := &bytes.Buffer{}
+	// writer := multipart.NewWriter(body)
+	// part, err := writer.CreateFormFile(FORM_FILE, h.Filename)
 	length := r.ContentLength
 
-	if length > 1024*1024*10 {
+	if length > 1024*1024*20 {
 		return Render(ErrorBadRequest)
 	}
 
-	var p float32
-	var read int64
-	bufLen := length / 50
-	for {
-		buffer := make([]byte, bufLen)
-		cBytes, err := f.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		read = read + int64(cBytes)
-		//fmt.Printf("read: %v \n",read )
-		p = float32(read) / float32(length) * 100
-		if t != nil {
-			realtime.Push(t.Id, ProgressMessage{p})
-		}
+	// var p float32
+	// var read int64
+	// bufLen := length / 50
+	// for {
+	// 	buffer := make([]byte, bufLen)
+	// 	cBytes, err := f.Read(buffer)
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	read = read + int64(cBytes)
+	// 	//fmt.Printf("read: %v \n",read )
+	// 	p = float32(read) / float32(length) * 100
+	// 	if t != nil {
+	// 		realtime.Push(t.Id, ProgressMessage{p})
+	// 	}
 
-		part.Write(buffer[0:cBytes])
-	}
-	// _, err = io.Copy(part, f)
-	err = writer.Close()
+	// 	part.Write(buffer[0:cBytes])
+	// }
+
+	// err = writer.Close()
+	// if err != nil {
+	// 	return Render(ErrorBackend)
+	// }
+	fid, size, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), f)
+	log.Println(fid, size)
+
 	if err != nil {
-		return Render(ErrorBackend)
-	}
-	urlStr := "http://localhost:9333/dir/assign"
-	req, err := http.NewRequest("GET", urlStr, nil)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println(err)
 		return Render(ErrorBackend)
 	}
 
-	rbody := &bytes.Buffer{}
-	_, err = rbody.ReadFrom(resp.Body)
+	purl, url, err := c.GetUrl(fid)
+
+	log.Println(purl, url)
+
 	if err != nil {
-		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	resp.Body.Close()
-	assign := WeedAssign{}
-	err = json.Unmarshal(rbody.Bytes(), &assign)
-	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
-	urlStr = "http://" + assign.Url + "/" + assign.Fid
-	req, err = http.NewRequest("POST", urlStr, body)
-	req.Header.Add("Content-type", writer.FormDataContentType())
-	resp, err = client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
-	im := Image{bson.NewObjectId(), assign.Fid, urlStr}
+
+	im := Image{bson.NewObjectId(), fid, purl}
 	return Render(im)
 }
 
@@ -561,3 +547,7 @@ func UpdateStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterf
 	}
 	return Render(status)
 }
+
+// func GetStatuses(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
+
+// }
