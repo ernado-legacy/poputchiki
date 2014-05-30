@@ -27,6 +27,8 @@ var (
 	processes          = runtime.NumCPU()
 	redisName          = projectName
 	redisAddr          = ":6379"
+	weedHost           = "localhost"
+	weedPort           = 9333
 )
 
 func getHash(password string) string {

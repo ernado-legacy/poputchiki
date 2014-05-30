@@ -4,8 +4,9 @@ import (
 	// "bytes"
 	"encoding/json"
 	"github.com/ginuerzh/weedo"
+	"github.com/rainycape/magick"
 	// "github.com/go-martini/martini"
-	// "io"
+	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
 	// "mime/multipart"
@@ -431,56 +432,61 @@ func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token Toke
 	return Render(messages)
 }
 
-func UploadImage(r *http.Request) (int, []byte) {
-	c := weedo.NewClient("localhost", 9333)
+func UploadImage(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	c := weedo.NewClient(weedHost, weedPort)
+	t := token.Get()
 	f, h, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
-	// body := &bytes.Buffer{}
-	// writer := multipart.NewWriter(body)
-	// part, err := writer.CreateFormFile(FORM_FILE, h.Filename)
+	
 	length := r.ContentLength
 
 	if length > 1024*1024*20 {
 		return Render(ErrorBadRequest)
 	}
 
-	// var p float32
-	// var read int64
-	// bufLen := length / 50
-	// for {
-	// 	buffer := make([]byte, bufLen)
-	// 	cBytes, err := f.Read(buffer)
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-	// 	read = read + int64(cBytes)
-	// 	//fmt.Printf("read: %v \n",read )
-	// 	p = float32(read) / float32(length) * 100
-	// 	if t != nil {
-	// 		realtime.Push(t.Id, ProgressMessage{p})
-	// 	}
+	progressReader, progressWriter := io.Pipe()
+	uploadReader, uploadWriter := io.Pipe()
 
-	// 	part.Write(buffer[0:cBytes])
-	// }
+	bufferWriter := io.MultiWriter(progressWriter, uploadWriter)
+	decodeReader := io.TeeReader(f, bufferWriter)
 
-	// err = writer.Close()
-	// if err != nil {
-	// 	return Render(ErrorBackend)
-	// }
-	fid, size, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), f)
-	log.Println(fid, size)
+	// decoding goroutine
+	go func() {
+		defer progressWriter.Close()
+		defer uploadWriter.Close()
+		_, err = magick.Decode(decodeReader)
+		log.Println("Decode error: ", err)
+	}()
 
+	// download progress goroutine
+	go func() {
+		var p float32
+		var read int64
+		bufLen := length / 50
+		for {
+			buffer := make([]byte, bufLen)
+			cBytes, err := progressReader.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			read = read + int64(cBytes)
+			//fmt.Printf("read: %v \n",read )
+			p = float32(read) / float32(length) * 100
+			if t != nil {
+				realtime.Push(t.Id, ProgressMessage{p})
+			}
+		}
+	}()
+
+	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), uploadReader)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 
-	purl, url, err := c.GetUrl(fid)
-
-	log.Println(purl, url)
-
+	purl, _, err := c.GetUrl(fid)
 	if err != nil {
 		return Render(ErrorBackend)
 	}

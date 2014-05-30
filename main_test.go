@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
-	// "io"
+	"io"
 	"io/ioutil"
 	"labix.org/v2/mgo/bson"
-	// "log"
-	// "mime/multipart"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	// "os"
-	// "path/filepath"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -133,46 +133,65 @@ func TestDBMethods(t *testing.T) {
 	})
 }
 
-// func TestUpload(t *testing.T) {
-// 	redisName = "poputchiki_test_upload"
-// 	dbName = "poputchiki_dev_upload"
-// 	path := "test/image.jpg"
-// 	file, err := os.Open(path)
-// 	a := NewApp()
-// 	defer a.Close()
-// 	a.DropDatabase()
+func TestUpload(t *testing.T) {
+	username := "test@test.ru"
+	password := "secretsecret"
+	redisName = "poputchiki_test_upload"
+	dbName = "poputchiki_dev_upload"
+	path := "test/image.jpg"
+	file, err := os.Open(path)
+	a := NewApp()
+	defer a.Close()
+	a.DropDatabase()
 
-// 	Convey("Request should completed", t, func() {
-// 		So(err, ShouldBeNil)
-// 		defer file.Close()
-// 		res := httptest.NewRecorder()
-// 		body := &bytes.Buffer{}
-// 		writer := multipart.NewWriter(body)
-// 		part, err := writer.CreateFormFile("file", filepath.Base(path))
-// 		a.DropDatabase()
-// 		So(err, ShouldBeNil)
-// 		_, err = io.Copy(part, file)
-// 		So(err, ShouldBeNil)
-// 		So(writer.Close(), ShouldBeNil)
-// 		req, err := http.NewRequest("POST", "/api/image", body)
-// 		So(err, ShouldBeNil)
-// 		req.Header.Add("Content-type", writer.FormDataContentType())
-// 		a.ServeHTTP(res, req)
-// 		So(res.Code, ShouldEqual, http.StatusOK)
-// 		imageBody, _ := ioutil.ReadAll(res.Body)
-// 		image := &Image{}
-// 		So(json.Unmarshal(imageBody, image), ShouldBeNil)
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(func() {
+			a.DropDatabase()
+		})
+		So(err, ShouldBeNil)
+		res := httptest.NewRecorder()
+		// sending registration request
+		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		a.ServeHTTP(res, req)
 
-// 		Convey("File must be able to download", func() {
-// 			log.Println(image.Url)
-// 			req, _ = http.NewRequest("GET", image.Url, nil)
-// 			client := &http.Client{}
-// 			res, err := client.Do(req)
-// 			So(err, ShouldBeNil)
-// 			So(res.StatusCode, ShouldEqual, http.StatusOK)
-// 		})
-// 	})
-// }
+		// reading response
+		So(res.Code, ShouldEqual, http.StatusOK)
+		tokenBody, _ := ioutil.ReadAll(res.Body)
+		token := &Token{}
+		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
+		Convey("Request should completed", func() {
+			So(err, ShouldBeNil)
+			defer file.Close()
+			res := httptest.NewRecorder()
+			body := &bytes.Buffer{}
+			writer := multipart.NewWriter(body)
+			part, err := writer.CreateFormFile("file", filepath.Base(path))
+			a.DropDatabase()
+			So(err, ShouldBeNil)
+			_, err = io.Copy(part, file)
+			So(err, ShouldBeNil)
+			So(writer.Close(), ShouldBeNil)
+			req, err := http.NewRequest("POST", "/api/image?token="+token.Token, body)
+			So(err, ShouldBeNil)
+			req.Header.Add("Content-type", writer.FormDataContentType())
+			a.ServeHTTP(res, req)
+			So(res.Code, ShouldEqual, http.StatusOK)
+			imageBody, _ := ioutil.ReadAll(res.Body)
+			image := &Image{}
+			So(json.Unmarshal(imageBody, image), ShouldBeNil)
+
+			Convey("File must be able to download", func() {
+				log.Println(image.Url)
+				req, _ = http.NewRequest("GET", image.Url, nil)
+				client := &http.Client{}
+				res, err := client.Do(req)
+				So(err, ShouldBeNil)
+				So(res.StatusCode, ShouldEqual, http.StatusOK)
+			})
+		})
+	})
+}
 
 func TestRealtime(t *testing.T) {
 	redisName = "poputchiki_test_realtime"
