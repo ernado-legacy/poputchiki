@@ -434,69 +434,6 @@ func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token Toke
 	return Render(messages)
 }
 
-func UploadImage(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	c := weedo.NewClient(weedHost, weedPort)
-	t := token.Get()
-	f, h, err := r.FormFile(FORM_FILE)
-	if err != nil {
-		log.Println("unable to read from file", err)
-		return Render(ErrorBackend)
-	}
-
-	length := r.ContentLength
-
-	if length > 1024*1024*20 {
-		return Render(ErrorBadRequest)
-	}
-
-	progressReader, progressWriter := io.Pipe()
-	uploadReader, uploadWriter := io.Pipe()
-
-	bufferWriter := io.MultiWriter(progressWriter, uploadWriter)
-	decodeReader := io.TeeReader(f, bufferWriter)
-
-	// decoding goroutine
-	go func() {
-		defer progressWriter.Close()
-		defer uploadWriter.Close()
-		_, err = magick.Decode(decodeReader)
-		log.Println("Decode error: ", err)
-	}()
-
-	// download progress goroutine
-	go func() {
-		var p float32
-		var read int64
-		bufLen := length / 50
-		for {
-			buffer := make([]byte, bufLen)
-			cBytes, err := progressReader.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-			read = read + int64(cBytes)
-			//fmt.Printf("read: %v \n",read )
-			p = float32(read) / float32(length) * 100
-			if t != nil {
-				realtime.Push(t.Id, ProgressMessage{p})
-			}
-		}
-	}()
-
-	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), uploadReader)
-	if err != nil {
-		return Render(ErrorBackend)
-	}
-
-	purl, _, err := c.GetUrl(fid)
-	if err != nil {
-		return Render(ErrorBackend)
-	}
-
-	im := Image{bson.NewObjectId(), fid, purl}
-	return Render(im)
-}
-
 func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
 	c := weedo.NewClient(weedHost, weedPort)
 	t := token.Get()
@@ -564,6 +501,88 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 
 	im := Image{bson.NewObjectId(), fid, purl}
 	return Render(im)
+}
+
+func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	c := weedo.NewClient(weedHost, weedPort)
+	t := token.Get()
+	f, h, err := r.FormFile(FORM_FILE)
+	if err != nil {
+		log.Println("unable to read form file", err)
+		return Render(ErrorBackend)
+	}
+
+	length := r.ContentLength
+
+	if length > 1024*1024*35 {
+		return Render(ErrorBadRequest)
+	}
+
+	progressReader, progressWriter := io.Pipe()
+	decodeReader := io.TeeReader(f, progressWriter)
+
+	// download progress goroutine
+	go func() {
+		defer progressWriter.Close()
+		var p float32
+		var read int64
+		bufLen := length / 50
+		for {
+			buffer := make([]byte, bufLen)
+			cBytes, err := progressReader.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			read = read + int64(cBytes)
+			//fmt.Printf("read: %v \n",read )
+			p = float32(read) / float32(length) * 100
+			if t != nil {
+				realtime.Push(t.Id, ProgressMessage{p})
+			}
+		}
+	}()
+
+	im, err := magick.Decode(decodeReader)
+
+	log.Println("decoded")
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+	height := float64(im.Height())
+	width := float64(im.Width())
+	max := 1000.0
+	ratio := max / width
+	if height > width {
+		ratio = max / height
+	}
+
+	log.Println(height, width, ratio, width*ratio, height*ratio)
+	resized, err := im.Resize(int(width*ratio), int(height*ratio), magick.FBox)
+
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	encodeReader, encodeWriter := io.Pipe()
+	go func() {
+		defer encodeWriter.Close()
+		info := magick.NewInfo()
+		info.SetFormat("webp")
+		resized.Encode(encodeWriter, info)
+	}()
+
+	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), encodeReader)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	purl, _, err := c.GetUrl(fid)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	return Render(Image{bson.NewObjectId(), fid, purl})
 }
 
 func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {
