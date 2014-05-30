@@ -9,6 +9,8 @@ import (
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"os"
+	"os/exec"
 	// "mime/multipart"
 	"net/http"
 	"time"
@@ -440,7 +442,7 @@ func UploadImage(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
-	
+
 	length := r.ContentLength
 
 	if length > 1024*1024*20 {
@@ -459,6 +461,75 @@ func UploadImage(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 		defer uploadWriter.Close()
 		_, err = magick.Decode(decodeReader)
 		log.Println("Decode error: ", err)
+	}()
+
+	// download progress goroutine
+	go func() {
+		var p float32
+		var read int64
+		bufLen := length / 50
+		for {
+			buffer := make([]byte, bufLen)
+			cBytes, err := progressReader.Read(buffer)
+			if err == io.EOF {
+				break
+			}
+			read = read + int64(cBytes)
+			//fmt.Printf("read: %v \n",read )
+			p = float32(read) / float32(length) * 100
+			if t != nil {
+				realtime.Push(t.Id, ProgressMessage{p})
+			}
+		}
+	}()
+
+	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), uploadReader)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	purl, _, err := c.GetUrl(fid)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	im := Image{bson.NewObjectId(), fid, purl}
+	return Render(im)
+}
+
+func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+	c := weedo.NewClient(weedHost, weedPort)
+	t := token.Get()
+	f, h, err := r.FormFile(FORM_FILE)
+	if err != nil {
+		log.Println("unable to read from file", err)
+		return Render(ErrorBackend)
+	}
+
+	length := r.ContentLength
+
+	if length > 1024*1024*20 {
+		return Render(ErrorBadRequest)
+	}
+
+	progressReader, progressWriter := io.Pipe()
+	uploadReader, uploadWriter := io.Pipe()
+	decodeReader := io.TeeReader(f, progressWriter)
+
+	// decoding goroutine
+	go func() {
+		defer progressWriter.Close()
+		defer uploadWriter.Close()
+		cmd := exec.Command("/bin/bash", "-c", "ffmpeg -i - -c:v libvpx -b:v 256k -c:a libvorbis -cpu-used 4 -vf scale=300:ih*300/iw,crop=out_w=in_h -f webm - ")
+		cmd.Stdin = decodeReader
+		cmd.Stderr = os.Stdout
+		cmd.Stdout = uploadWriter
+		e := cmd.Start()
+		if e != nil {
+			log.Println(e)
+		}
+		cmd.Wait()
+		log.Println("ok")
 	}()
 
 	// download progress goroutine

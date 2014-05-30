@@ -119,7 +119,7 @@ $('#form-video-file').on('change', function (e) {
     var data = new FormData(form);
     console.log(data);
     $.ajax({
-        url: '/api/image',
+        url: '/api/video',
         type: 'POST',
         data: data,
         processData: false, // Don't process the files

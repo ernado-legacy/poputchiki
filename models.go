@@ -104,6 +104,14 @@ type StripeItem struct {
 	Time      time.Time     `json:"time"                bson:"time"`
 }
 
+type File struct {
+	Id   bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Fid  string        `json:"fid"          bson:"fid"`
+	User bson.ObjectId `json:"user"         bson:"user"`
+	Time time.Time     `json:"time"         bson:"time"`
+	Type string        `json:"type"         bson:"type"`
+}
+
 type Image struct {
 	Id  bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Fid string        `json:"fid"          bson:"fid"`
@@ -121,8 +129,10 @@ type WeedAssign struct {
 type Photo struct {
 	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`
-	Image       Image         `json:"image"                 bson:"image"`
+	Image       File          `json:"image"                 bson:"image"`
+	ImageUrl    string        `json:"image_url"             bson:"-"`
 	Description string        `json:"description,omitempty" bson:"description,omitempty"`
 	Time        time.Time     `json:"time"         		    bson:"time"`
+
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }

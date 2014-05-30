@@ -131,6 +131,7 @@ func NewApp() *Application {
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
 		r.Post("/image", UploadImage)
+		r.Post("/video", UploadVideo)
 		r.Get("/realtime", realtime.RealtimeHandler)
 	}, NeedAuth)
 
