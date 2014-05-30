@@ -172,7 +172,7 @@ func TestUpload(t *testing.T) {
 			_, err = io.Copy(part, file)
 			So(err, ShouldBeNil)
 			So(writer.Close(), ShouldBeNil)
-			req, err := http.NewRequest("POST", "/api/image?token="+token.Token, body)
+			req, err := http.NewRequest("POST", "/api/photo?token="+token.Token, body)
 			So(err, ShouldBeNil)
 			req.Header.Add("Content-type", writer.FormDataContentType())
 			a.ServeHTTP(res, req)
