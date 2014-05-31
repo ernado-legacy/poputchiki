@@ -496,7 +496,7 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	return Render(im)
 }
 
-func UploadImageToWeed(image *magick.Image, format string) (string, string, error) {
+func uploadImageToWeed(image *magick.Image, format string) (string, string, error) {
 	c := weedo.NewClient(weedHost, weedPort)
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
@@ -557,31 +557,41 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	// download progress goroutine
 	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
+	// trying to decode image while receiving it
 	im, err := magick.Decode(decodeReader)
 	if err != nil {
 		return Render(ErrorBadRequest)
 	}
+
 	height := float64(im.Height())
 	width := float64(im.Width())
 	max := float64(PHOTO_MAX_SIZE)
+
+	// calculating scale-down ratio
 	ratio := max / width
 	if height > width {
 		ratio = max / height
 	}
 
+	// image dimensions is smaller than maximum
+	if height < max && width < max {
+		ratio = 1.0
+	}
+
+	// preparing variables for concurrent uploading/processing
 	failed := false
 	var photoWebp, photoJpeg File
 	var purlJpeg, purlWebp string
 	var thumbWebp, thumbJpeg File
 	var thumbPurlJpeg, thumbPurlWebp string
 
-	// async resize and upload
 	wg := new(sync.WaitGroup)
 	wg.Add(6)
 
+	// generating abpstract upload function
 	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
 		defer wg.Done()
-		fid, purl, err := UploadImageToWeed(image, extension)
+		fid, purl, err := uploadImageToWeed(image, extension)
 		*url = purl
 		if err != nil {
 			failed = true
