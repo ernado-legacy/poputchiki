@@ -27,8 +27,8 @@ type UserDB interface {
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 
-	IncBalance(id bson.ObjectId, amount int) error
-	DecBalance(id bson.ObjectId, amount int) error
+	IncBalance(id bson.ObjectId, amount uint) error
+	DecBalance(id bson.ObjectId, amount uint) error
 
 	SetOnline(id bson.ObjectId) error
 	SetOffline(id bson.ObjectId) error

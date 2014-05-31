@@ -11,21 +11,32 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	// "mime/multipart"
 	"net/http"
+	"sync"
 	"time"
 )
 
 const (
-	JSON_HEADER     = "application/json; charset=utf-8"
-	FORM_TARGET     = "target"
-	FORM_EMAIL      = "email"
-	FORM_PASSWORD   = "password"
-	FORM_FIRSTNAME  = "firstname"
-	FORM_SECONDNAME = "secondname"
-	FORM_PHONE      = "phone"
-	FORM_TEXT       = "text"
-	FORM_FILE       = "file"
+	THUMB_SIZE               = 200
+	PHOTO_MAX_SIZE           = 1000
+	PHOTO_MAX_MEGABYTES      = 20
+	VIDEO_MAX_MEGABYTES      = 50
+	VIDEO_MAX_LENGTH_SECONDS = 60
+	JSON_HEADER              = "application/json; charset=utf-8"
+	WEBP                     = "webp"
+	JPEG                     = "jpeg"
+	WEBP_FORMAT              = "image/webp"
+	JPEG_FORMAT              = "image/jpeg"
+	FORM_TARGET              = "target"
+	FORM_EMAIL               = "email"
+	FORM_PASSWORD            = "password"
+	FORM_FIRSTNAME           = "firstname"
+	FORM_SECONDNAME          = "secondname"
+	FORM_PHONE               = "phone"
+	FORM_TEXT                = "text"
+	FORM_FILE                = "file"
 )
 
 func ReadJson(r *http.Request, i *interface{}) {
@@ -445,7 +456,7 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 
 	length := r.ContentLength
 
-	if length > 1024*1024*20 {
+	if length > 1024*1024*VIDEO_MAX_MEGABYTES {
 		return Render(ErrorBadRequest)
 	}
 
@@ -503,10 +514,31 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	return Render(im)
 }
 
-func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
+func UploadImageToWeed(image *magick.Image, format string) (string, string, error) {
 	c := weedo.NewClient(weedHost, weedPort)
+	encodeReader, encodeWriter := io.Pipe()
+	go func() {
+		defer encodeWriter.Close()
+		info := magick.NewInfo()
+		info.SetFormat(format)
+		image.Encode(encodeWriter, info)
+	}()
+
+	fid, _, err := c.AssignUpload("image."+format, "image/"+format, encodeReader)
+	if err != nil {
+		return "", "", err
+	}
+	purl, _, err := c.GetUrl(fid)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fid, purl, nil
+}
+
+func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface, db UserDB) (int, []byte) {
 	t := token.Get()
-	f, h, err := r.FormFile(FORM_FILE)
+	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
 		return Render(ErrorBackend)
@@ -514,7 +546,7 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 
 	length := r.ContentLength
 
-	if length > 1024*1024*35 {
+	if length > 1024*1024*PHOTO_MAX_SIZE {
 		return Render(ErrorBadRequest)
 	}
 
@@ -543,46 +575,121 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	}()
 
 	im, err := magick.Decode(decodeReader)
-
-	log.Println("decoded")
 	if err != nil {
 		return Render(ErrorBadRequest)
 	}
 	height := float64(im.Height())
 	width := float64(im.Width())
-	max := 1000.0
+	max := float64(PHOTO_MAX_SIZE)
 	ratio := max / width
 	if height > width {
 		ratio = max / height
 	}
 
-	log.Println(height, width, ratio, width*ratio, height*ratio)
-	resized, err := im.Resize(int(width*ratio), int(height*ratio), magick.FBox)
+	var failed bool
+	failed = false
 
-	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
+	var photoWebp File
+	var photoJpeg File
+	var purlJpeg string
+	var purlWebp string
 
-	encodeReader, encodeWriter := io.Pipe()
+	var thumbWebp File
+	var thumbJpeg File
+	var thumbPurlJpeg string
+	var thumbPurlWebp string
+
+	// async decode and upload
+	wg := new(sync.WaitGroup)
+	wg.Add(6)
 	go func() {
-		defer encodeWriter.Close()
-		info := magick.NewInfo()
-		info.SetFormat("webp")
-		resized.Encode(encodeWriter, info)
+		defer wg.Done()
+		resized, err := im.Resize(int(width*ratio), int(height*ratio), magick.FBox)
+		if err != nil {
+			log.Println(err)
+			failed = true
+			return
+		}
+
+		go func() {
+			defer wg.Done()
+			fid_webp, purl_webp, err := UploadImageToWeed(resized, WEBP)
+			purlWebp = purl_webp
+			if err != nil {
+				failed = true
+				return
+			}
+			log.Println(purl_webp)
+			photoWebp = File{Id: bson.NewObjectId(), Fid: fid_webp, Time: time.Now(), User: t.Id, Type: WEBP_FORMAT}
+		}()
+		go func() {
+			defer wg.Done()
+
+			fid_jpeg, purl_jpeg, err := UploadImageToWeed(resized, JPEG)
+			purlJpeg = purl_jpeg
+			if err != nil {
+				failed = true
+				return
+			}
+			log.Println(purl_jpeg)
+			photoJpeg = File{Id: bson.NewObjectId(), Fid: fid_jpeg, Time: time.Now(), User: t.Id, Type: JPEG_FORMAT}
+		}()
 	}()
+	go func() {
+		defer wg.Done()
+		thumbnail, err := im.CropToRatio(1.0, magick.CSCenter)
+		if err != nil {
+			log.Println(err)
+			failed = true
+		}
+		thumbnail, err = thumbnail.Resize(THUMB_SIZE, THUMB_SIZE, magick.FBox)
+		if err != nil {
+			log.Println(err)
+			failed = true
+		}
+		go func() {
+			defer wg.Done()
+			fid_webp, purl_webp, err := UploadImageToWeed(thumbnail, WEBP)
+			thumbPurlWebp = purl_webp
+			if err != nil {
+				failed = true
+				return
+			}
+			log.Println(purl_webp)
+			thumbWebp = File{Id: bson.NewObjectId(), Fid: fid_webp, Time: time.Now(), User: t.Id, Type: WEBP_FORMAT}
+		}()
+		go func() {
+			defer wg.Done()
 
-	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), encodeReader)
+			fid_jpeg, purl_jpeg, err := UploadImageToWeed(thumbnail, JPEG)
+			thumbPurlJpeg = purl_jpeg
+			if err != nil {
+				failed = true
+				return
+			}
+			log.Println(purl_jpeg)
+			thumbJpeg = File{Id: bson.NewObjectId(), Fid: fid_jpeg, Time: time.Now(), User: t.Id, Type: JPEG_FORMAT}
+
+		}()
+	}()
+	wg.Wait()
+
+	if failed {
+		return Render(ErrorBackend)
+	}
+
+	photo, err := db.AddPhoto(t.Id, photoJpeg, photoWebp, BLANK)
+	photo.ImageUrl = purlJpeg
+
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 
-	purl, _, err := c.GetUrl(fid)
-	if err != nil {
-		return Render(ErrorBackend)
+	if strings.Contains(r.Header.Get("Accept"), "webp") {
+		photo.ImageUrl = purlWebp
 	}
 
-	return Render(Image{bson.NewObjectId(), fid, purl})
+	return Render(photo)
 }
 
 func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface) (int, []byte) {

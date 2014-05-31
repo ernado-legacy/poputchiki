@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -164,22 +163,22 @@ func (db *DB) SetOffline(id bson.ObjectId) error {
 
 func (db *DB) ChangeBalance(id bson.ObjectId, delta int) error {
 	change := mgo.Change{Update: bson.M{"$inc": bson.M{"balance": delta}}}
-	_, err := db.users.FindId(id).Apply(change, nil)
+
+	// integer overflow / negative balance protection
+	query := bson.M{"_id": id, "balance": bson.M{"$gte": (-1) * delta}}
+	if delta > 0 {
+		query = bson.M{"_id": id}
+	}
+	_, err := db.users.Find(query).Apply(change, &User{})
 	return err
 }
 
-func (db *DB) IncBalance(id bson.ObjectId, amount int) error {
-	return db.ChangeBalance(id, amount)
+func (db *DB) IncBalance(id bson.ObjectId, amount uint) error {
+	return db.ChangeBalance(id, int(amount))
 }
 
-func (db *DB) DecBalance(id bson.ObjectId, amount int) error {
-	u := db.Get(id)
-
-	if u.Balance < amount {
-		return errors.New("balance < amount")
-	}
-
-	return db.ChangeBalance(id, (-1)*amount)
+func (db *DB) DecBalance(id bson.ObjectId, amount uint) error {
+	return db.ChangeBalance(id, (-1)*int(amount))
 }
 
 func (db *DB) SetLastActionNow(id bson.ObjectId) error {

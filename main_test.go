@@ -39,10 +39,11 @@ func TestDBMethods(t *testing.T) {
 			err = db.Add(&u)
 			So(err, ShouldBeNil)
 			Convey("Balance update", func() {
-				db.IncBalance(id, 100)
-				db.DecBalance(id, 50)
+				So(db.IncBalance(id, 100), ShouldBeNil)
+				So(db.DecBalance(id, 50), ShouldBeNil)
 				newU := db.Get(id)
 				So(newU.Balance, ShouldEqual, 50)
+				So(db.DecBalance(id, 100), ShouldNotBeNil)
 			})
 			Convey("Status update", func() {
 				db.SetOnline(id)
@@ -178,12 +179,12 @@ func TestUpload(t *testing.T) {
 			a.ServeHTTP(res, req)
 			So(res.Code, ShouldEqual, http.StatusOK)
 			imageBody, _ := ioutil.ReadAll(res.Body)
-			image := &Image{}
+			image := &Photo{}
+			log.Println(string(imageBody))
 			So(json.Unmarshal(imageBody, image), ShouldBeNil)
 
 			Convey("File must be able to download", func() {
-				log.Println(image.Url)
-				req, _ = http.NewRequest("GET", image.Url, nil)
+				req, _ = http.NewRequest("GET", image.ImageUrl, nil)
 				client := &http.Client{}
 				res, err := client.Do(req)
 				So(err, ShouldBeNil)
