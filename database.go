@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -172,6 +173,12 @@ func (db *DB) IncBalance(id bson.ObjectId, amount int) error {
 }
 
 func (db *DB) DecBalance(id bson.ObjectId, amount int) error {
+	u := db.Get(id)
+
+	if u.Balance < amount {
+		return errors.New("balance < amount")
+	}
+
 	return db.ChangeBalance(id, (-1)*amount)
 }
 
