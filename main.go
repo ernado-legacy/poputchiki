@@ -89,7 +89,6 @@ func NewApp() *Application {
 
 	m := martini.Classic()
 
-	m.Use(martini.Static("static", martini.StaticOptions{Prefix: "/"}))
 	m.Use(JsonEncoder)
 	m.Use(TokenWrapper)
 	m.Map(db)
