@@ -253,9 +253,9 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	return err
 }
 
-func (db *DB) AddPhoto(user bson.ObjectId, image File, desctiption string) (*Photo, error) {
+func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, desctiption string) (*Photo, error) {
 	// creating photo
-	p := &Photo{Id: bson.NewObjectId(), User: user, Image: image, Time: time.Now(), Description: desctiption}
+	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid, Time: time.Now(), Description: desctiption}
 	err := db.photo.Insert(p)
 
 	if err != nil {

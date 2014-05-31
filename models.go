@@ -118,18 +118,11 @@ type Image struct {
 	Url string        `json:"url"          bson:"url,omitempty"`
 }
 
-//{"count":1,"fid":"3,01637037d6","url":"127.0.0.1:8080","publicUrl":"localhost:8080"}
-type WeedAssign struct {
-	Count     int    `json:"count"`
-	Fid       string `json:"fid"`
-	Url       string `json:"url"`
-	PublicUrl string `json:"publicUrl"`
-}
-
 type Photo struct {
 	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`
-	Image       File          `json:"image"                 bson:"image"`
+	ImageWebp   string        `json:"-"                     bson:"image_webp"`
+	ImageJpeg   string        `json:"-"                     bson:"image_jpeg"`
 	ImageUrl    string        `json:"image_url"             bson:"-"`
 	Description string        `json:"description,omitempty" bson:"description,omitempty"`
 	Time        time.Time     `json:"time"         		    bson:"time"`

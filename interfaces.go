@@ -47,7 +47,7 @@ type UserDB interface {
 	RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error
 	UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error
 
-	AddPhoto(user bson.ObjectId, image File, desctiption string) (*Photo, error)
+	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, desctiption string) (*Photo, error)
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	// api/photo/:id/comment

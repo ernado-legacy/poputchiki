@@ -67,6 +67,10 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w htt
 	c.Map(t)
 }
 
+func JsonEncoderWrapper(r *http.Request, c martini.Context) {
+	c.Map(json.NewDecoder(r.Body))
+}
+
 func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter, parms martini.Params) {
 	hexId := parms["id"]
 	if !bson.IsObjectIdHex(hexId) {

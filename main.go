@@ -90,6 +90,7 @@ func NewApp() *Application {
 	m := martini.Classic()
 
 	m.Use(JsonEncoder)
+	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
 	m.Map(db)
 	m.Map(tokenStorage)
