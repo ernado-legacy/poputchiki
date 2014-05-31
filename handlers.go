@@ -455,7 +455,6 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	}
 
 	length := r.ContentLength
-
 	if length > 1024*1024*VIDEO_MAX_MEGABYTES {
 		return Render(ErrorBadRequest)
 	}
@@ -481,24 +480,7 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	}()
 
 	// download progress goroutine
-	go func() {
-		var p float32
-		var read int64
-		bufLen := length / 50
-		for {
-			buffer := make([]byte, bufLen)
-			cBytes, err := progressReader.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-			read = read + int64(cBytes)
-			//fmt.Printf("read: %v \n",read )
-			p = float32(read) / float32(length) * 100
-			if t != nil {
-				realtime.Push(t.Id, ProgressMessage{p})
-			}
-		}
-	}()
+	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
 	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), uploadReader)
 	if err != nil {
@@ -536,6 +518,26 @@ func UploadImageToWeed(image *magick.Image, format string) (string, string, erro
 	return fid, purl, nil
 }
 
+func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
+	defer progressWriter.Close()
+	var p float32
+	var read int64
+	bufLen := length / 50
+	for {
+		buffer := make([]byte, bufLen)
+		cBytes, err := progressReader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		read = read + int64(cBytes)
+		//fmt.Printf("read: %v \n",read )
+		p = float32(read) / float32(length) * 100
+		if t != nil {
+			realtime.Push(t.Id, ProgressMessage{p})
+		}
+	}
+}
+
 func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface, db UserDB) (int, []byte) {
 	t := token.Get()
 	f, _, err := r.FormFile(FORM_FILE)
@@ -545,7 +547,6 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	}
 
 	length := r.ContentLength
-
 	if length > 1024*1024*PHOTO_MAX_SIZE {
 		return Render(ErrorBadRequest)
 	}
@@ -554,25 +555,7 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	decodeReader := io.TeeReader(f, progressWriter)
 
 	// download progress goroutine
-	go func() {
-		defer progressWriter.Close()
-		var p float32
-		var read int64
-		bufLen := length / 50
-		for {
-			buffer := make([]byte, bufLen)
-			cBytes, err := progressReader.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-			read = read + int64(cBytes)
-			//fmt.Printf("read: %v \n",read )
-			p = float32(read) / float32(length) * 100
-			if t != nil {
-				realtime.Push(t.Id, ProgressMessage{p})
-			}
-		}
-	}()
+	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
 	im, err := magick.Decode(decodeReader)
 	if err != nil {
@@ -586,91 +569,54 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 		ratio = max / height
 	}
 
-	var failed bool
-	failed = false
+	failed := false
+	var photoWebp, photoJpeg File
+	var purlJpeg, purlWebp string
+	var thumbWebp, thumbJpeg File
+	var thumbPurlJpeg, thumbPurlWebp string
 
-	var photoWebp File
-	var photoJpeg File
-	var purlJpeg string
-	var purlWebp string
-
-	var thumbWebp File
-	var thumbJpeg File
-	var thumbPurlJpeg string
-	var thumbPurlWebp string
-
-	// async decode and upload
+	// async resize and upload
 	wg := new(sync.WaitGroup)
 	wg.Add(6)
+
+	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
+		defer wg.Done()
+		fid, purl, err := UploadImageToWeed(image, extension)
+		*url = purl
+		if err != nil {
+			failed = true
+			return
+		}
+		*photo = File{Id: bson.NewObjectId(), Fid: fid, Time: time.Now(), User: t.Id, Type: format}
+	}
+
+	// resize image and upload to weedfs
 	go func() {
 		defer wg.Done()
 		resized, err := im.Resize(int(width*ratio), int(height*ratio), magick.FBox)
 		if err != nil {
-			log.Println(err)
 			failed = true
 			return
 		}
-
-		go func() {
-			defer wg.Done()
-			fid_webp, purl_webp, err := UploadImageToWeed(resized, WEBP)
-			purlWebp = purl_webp
-			if err != nil {
-				failed = true
-				return
-			}
-			log.Println(purl_webp)
-			photoWebp = File{Id: bson.NewObjectId(), Fid: fid_webp, Time: time.Now(), User: t.Id, Type: WEBP_FORMAT}
-		}()
-		go func() {
-			defer wg.Done()
-
-			fid_jpeg, purl_jpeg, err := UploadImageToWeed(resized, JPEG)
-			purlJpeg = purl_jpeg
-			if err != nil {
-				failed = true
-				return
-			}
-			log.Println(purl_jpeg)
-			photoJpeg = File{Id: bson.NewObjectId(), Fid: fid_jpeg, Time: time.Now(), User: t.Id, Type: JPEG_FORMAT}
-		}()
+		go upload(resized, &purlWebp, &photoWebp, WEBP, WEBP_FORMAT)
+		go upload(resized, &purlJpeg, &photoJpeg, JPEG, JPEG_FORMAT)
 	}()
+
+	// make thumbnail and upload to weedfs
 	go func() {
 		defer wg.Done()
 		thumbnail, err := im.CropToRatio(1.0, magick.CSCenter)
 		if err != nil {
-			log.Println(err)
 			failed = true
+			return
 		}
 		thumbnail, err = thumbnail.Resize(THUMB_SIZE, THUMB_SIZE, magick.FBox)
 		if err != nil {
-			log.Println(err)
 			failed = true
+			return
 		}
-		go func() {
-			defer wg.Done()
-			fid_webp, purl_webp, err := UploadImageToWeed(thumbnail, WEBP)
-			thumbPurlWebp = purl_webp
-			if err != nil {
-				failed = true
-				return
-			}
-			log.Println(purl_webp)
-			thumbWebp = File{Id: bson.NewObjectId(), Fid: fid_webp, Time: time.Now(), User: t.Id, Type: WEBP_FORMAT}
-		}()
-		go func() {
-			defer wg.Done()
-
-			fid_jpeg, purl_jpeg, err := UploadImageToWeed(thumbnail, JPEG)
-			thumbPurlJpeg = purl_jpeg
-			if err != nil {
-				failed = true
-				return
-			}
-			log.Println(purl_jpeg)
-			thumbJpeg = File{Id: bson.NewObjectId(), Fid: fid_jpeg, Time: time.Now(), User: t.Id, Type: JPEG_FORMAT}
-
-		}()
+		go upload(thumbnail, &thumbPurlWebp, &thumbWebp, WEBP, WEBP_FORMAT)
+		go upload(thumbnail, &thumbPurlJpeg, &thumbJpeg, JPEG, JPEG_FORMAT)
 	}()
 	wg.Wait()
 
