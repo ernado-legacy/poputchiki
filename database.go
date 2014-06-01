@@ -271,6 +271,20 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, desct
 	return p, err
 }
 
+func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
+	album.User = user
+	album.Time = time.Now()
+	album.Id = bson.NewObjectId()
+	return album, db.albums.Insert(album)
+}
+
+func (db *DB) AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error {
+	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": photo}}}
+	_, err := db.albums.Find(bson.M{"_id": album, "user": user}).Apply(change, &Album{})
+
+	return err
+}
+
 func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, c *Comment) error {
 	c.User = user
 	c.Id = bson.NewObjectId()

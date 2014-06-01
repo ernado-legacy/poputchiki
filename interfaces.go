@@ -52,6 +52,9 @@ type UserDB interface {
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	// api/photo/:id/comment
 	AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, c *Comment) error
+
+	AddAlbum(user bson.ObjectId, album *Album) (*Album, error)
+	AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error
 }
 
 type TokenStorage interface {

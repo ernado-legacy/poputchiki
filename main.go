@@ -130,7 +130,8 @@ func NewApp() *Application {
 		}, IdWrapper)
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
-		r.Post("/photo", UploadPhoto)
+		r.Post("/album/:id/photo", IdWrapper, UploadPhoto)
+		r.Put("/album", AddAlbum)
 		r.Post("/video", UploadVideo)
 		r.Get("/realtime", realtime.RealtimeHandler)
 	}, NeedAuth)

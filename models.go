@@ -118,6 +118,16 @@ type Image struct {
 	Url string        `json:"url"          bson:"url,omitempty"`
 }
 
+type Album struct {
+	Id        bson.ObjectId   `json:"id,omitempty"          bson:"_id,omitempty"`
+	User      bson.ObjectId   `json:"user,omitempty""                  bson:"user"`
+	ImageWebp string          `json:"-"                     bson:"image_webp"`
+	ImageJpeg string          `json:"-"                     bson:"image_jpeg"`
+	ImageUrl  string          `json:"image_url,omitempty"   bson:"-"`
+	Time      time.Time       `json:"time"         		    bson:"time"`
+	Photo     []bson.ObjectId `json:"photo,omitempty"       bson:"photo,omitempty"`
+}
+
 type Photo struct {
 	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`

@@ -161,6 +161,19 @@ func TestUpload(t *testing.T) {
 		tokenBody, _ := ioutil.ReadAll(res.Body)
 		token := &Token{}
 		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
+
+		res = httptest.NewRecorder()
+		album := &Album{}
+		albumJs, err := json.Marshal(album)
+		buf := bytes.NewReader(albumJs)
+		So(err, ShouldBeNil)
+		req, _ = http.NewRequest("PUT", "/api/album?token="+token.Token, buf)
+		a.ServeHTTP(res, req)
+		So(res.Code, ShouldEqual, http.StatusOK)
+		albumJs, err = ioutil.ReadAll(res.Body)
+		So(err, ShouldBeNil)
+		So(json.Unmarshal(albumJs, album), ShouldBeNil)
+
 		Convey("Request should completed", func() {
 			So(err, ShouldBeNil)
 			defer file.Close()
@@ -173,7 +186,7 @@ func TestUpload(t *testing.T) {
 			_, err = io.Copy(part, file)
 			So(err, ShouldBeNil)
 			So(writer.Close(), ShouldBeNil)
-			req, err := http.NewRequest("POST", "/api/photo?token="+token.Token, body)
+			req, err := http.NewRequest("POST", "/api/album/"+album.Id.Hex()+"/photo/?token="+token.Token, body)
 			So(err, ShouldBeNil)
 			req.Header.Add("Content-type", writer.FormDataContentType())
 			a.ServeHTTP(res, req)

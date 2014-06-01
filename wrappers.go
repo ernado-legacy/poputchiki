@@ -76,6 +76,7 @@ func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.R
 	if !bson.IsObjectIdHex(hexId) {
 		code, data := Render(ErrorBadId)
 		http.Error(w, string(data), code) // todo: set content-type
+		return
 	}
 	idHandler := IdHandler{bson.ObjectIdHex(hexId)}
 	c.Map(idHandler)

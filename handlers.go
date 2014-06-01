@@ -446,9 +446,8 @@ func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token Toke
 }
 
 func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
-	c := weedo.NewClient(weedHost, weedPort)
 	t := token.Get()
-	f, h, err := r.FormFile(FORM_FILE)
+	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
@@ -482,22 +481,29 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	// download progress goroutine
 	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
-	fid, _, err := c.AssignUpload(h.Filename, h.Header.Get("Content-Type"), uploadReader)
+	fid, purl, err := uploadToWeed(uploadReader, "video", "webp")
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
-	purl, _, err := c.GetUrl(fid)
-	if err != nil {
-		return Render(ErrorBackend)
-	}
-
 	im := Image{bson.NewObjectId(), fid, purl}
 	return Render(im)
 }
 
-func uploadImageToWeed(image *magick.Image, format string) (string, string, error) {
+// reads data from io.Reader, uploads it with type/format and returs fid, purl and error
+func uploadToWeed(reader io.Reader, t, format string) (string, string, error) {
 	c := weedo.NewClient(weedHost, weedPort)
+	fid, _, err := c.AssignUpload(t+"."+format, t+"/"+format, reader)
+	if err != nil {
+		return "", "", err
+	}
+	purl, _, err := c.GetUrl(fid)
+	if err != nil {
+		return "", "", err
+	}
+	return fid, purl, nil
+}
+
+func uploadImageToWeed(image *magick.Image, format string) (string, string, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
@@ -505,17 +511,7 @@ func uploadImageToWeed(image *magick.Image, format string) (string, string, erro
 		info.SetFormat(format)
 		image.Encode(encodeWriter, info)
 	}()
-
-	fid, _, err := c.AssignUpload("image."+format, "image/"+format, encodeReader)
-	if err != nil {
-		return "", "", err
-	}
-	purl, _, err := c.GetUrl(fid)
-	if err != nil {
-		return "", "", err
-	}
-
-	return fid, purl, nil
+	return uploadToWeed(encodeReader, "image", format)
 }
 
 func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
@@ -538,8 +534,9 @@ func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *i
 	}
 }
 
-func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface, db UserDB) (int, []byte) {
+func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface, db UserDB, uid IdInterface) (int, []byte) {
 	t := token.Get()
+	albumId := uid.Get()
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -641,6 +638,12 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 		return Render(ErrorBackend)
 	}
 
+	err = db.AddPhotoToAlbum(t.Id, albumId, photo.Id)
+
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
 	if strings.Contains(r.Header.Get("Accept"), "webp") {
 		photo.ImageUrl = purlWebp
 	}
@@ -663,6 +666,23 @@ func AddStatus(db UserDB, uid IdInterface, r *http.Request, token TokenInterface
 		return Render(ErrorBackend)
 	}
 	return Render(status)
+}
+
+func AddAlbum(db UserDB, token TokenInterface, decoder *json.Decoder) (int, []byte) {
+	t := token.Get()
+	album := &Album{}
+	if err := decoder.Decode(album); err != nil {
+		log.Println(err)
+		return Render(ErrorBadRequest)
+	}
+
+	album, err := db.AddAlbum(t.Id, album)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	return Render(album)
 }
 
 func GetStatus(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
