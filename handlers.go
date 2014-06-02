@@ -46,8 +46,9 @@ func ReadJson(r *http.Request, i *interface{}) {
 	decoder.Decode(i)
 }
 
-func GetUser(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
-	log.Println("get user", id.Hex())
+func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept) (int, []byte) {
+	c := weedo.NewClient(weedHost, weedPort)
+
 	user := db.Get(id)
 
 	if user == nil {
@@ -69,6 +70,8 @@ func GetUser(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	if t == nil || t.Id != id {
 		user.CleanPrivate()
 	}
+
+	user.SetAvatarUrl(c, db, webp)
 
 	return Render(user)
 }
@@ -283,14 +286,22 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	return Render(t)
 }
 
-func Update(db UserDB, r *http.Request, id bson.ObjectId) (int, []byte) {
+func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
 
-	UpdateUserFromForm(r, user)
-	err := db.Update(user)
+	userUpdated := &User{}
+	decoder.Decode(userUpdated)
+
+	// preventing user from edinit sensible fields
+	userUpdated.Id = user.Id
+	userUpdated.Balance = user.Balance
+	userUpdated.Password = user.Password
+	userUpdated.LastAction = user.LastAction
+
+	err := db.Update(userUpdated)
 
 	if err != nil {
 		return Render(ErrorBackend)

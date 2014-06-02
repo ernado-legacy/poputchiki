@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ginuerzh/weedo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 	"time"
@@ -51,6 +52,18 @@ func (u *User) CleanPrivate() {
 	u.Favorites = nil
 	u.Blacklist = nil
 	u.Balance = 0
+}
+
+func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
+	photo, err := db.GetPhoto(u.Avatar)
+	if err == nil {
+		fid := photo.ImageJpeg
+		if webp {
+			fid = photo.ImageWebp
+		}
+		url, _, _ := c.GetUrl(fid)
+		u.AvatarUrl = url
+	}
 }
 
 type Guest struct {
