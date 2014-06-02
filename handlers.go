@@ -447,6 +447,7 @@ func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, token Toke
 
 func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterface) (int, []byte) {
 	t := token.Get()
+	c := weedo.NewClient(weedHost, weedPort)
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
@@ -481,7 +482,7 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	// download progress goroutine
 	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
-	fid, purl, err := uploadToWeed(uploadReader, "video", "webp")
+	fid, purl, err := uploadToWeed(c, uploadReader, "video", "webp")
 	if err != nil {
 		return Render(ErrorBackend)
 	}
@@ -490,28 +491,33 @@ func UploadVideo(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
-func uploadToWeed(reader io.Reader, t, format string) (string, string, error) {
-	c := weedo.NewClient(weedHost, weedPort)
+func uploadToWeed(c *weedo.Client, reader io.Reader, t, format string) (string, string, error) {
 	fid, _, err := c.AssignUpload(t+"."+format, t+"/"+format, reader)
 	if err != nil {
+		log.Println(t, format, err)
 		return "", "", err
 	}
 	purl, _, err := c.GetUrl(fid)
 	if err != nil {
+		log.Println(err)
 		return "", "", err
 	}
+	log.Println(t, format, "uploaded", purl)
 	return fid, purl, nil
 }
 
-func uploadImageToWeed(image *magick.Image, format string) (string, string, error) {
+func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (string, string, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
 		info := magick.NewInfo()
 		info.SetFormat(format)
-		image.Encode(encodeWriter, info)
+		err := image.Encode(encodeWriter, info)
+		if err != nil {
+			log.Println(err)
+		}
 	}()
-	return uploadToWeed(encodeReader, "image", format)
+	return uploadToWeed(c, encodeReader, "image", format)
 }
 
 func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
@@ -536,6 +542,7 @@ func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *i
 
 func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterface, db UserDB, uid IdInterface) (int, []byte) {
 	t := token.Get()
+	c := weedo.NewClient(weedHost, weedPort)
 	albumId := uid.Get()
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
@@ -588,7 +595,7 @@ func UploadPhoto(r *http.Request, token TokenInterface, realtime RealtimeInterfa
 	// generating abpstract upload function
 	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
 		defer wg.Done()
-		fid, purl, err := uploadImageToWeed(image, extension)
+		fid, purl, err := uploadImageToWeed(c, image, extension)
 		*url = purl
 		if err != nil {
 			failed = true

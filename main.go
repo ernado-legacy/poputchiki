@@ -72,6 +72,22 @@ func NewDatabase(session *mgo.Session) UserDB {
 	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll}
 }
 
+func DataBase() martini.Handler {
+	session, err := mgo.Dial(mongoHost)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(c martini.Context) {
+		var db UserDB
+		s := session.Clone()
+		db = NewDatabase(s)
+		// defer s.Close()
+		c.Map(db)
+		c.Next()
+	}
+}
+
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
 	if err != nil {
@@ -79,10 +95,10 @@ func NewApp() *Application {
 	}
 
 	runtime.GOMAXPROCS(processes)
-	var db UserDB
+	// var db UserDB
 	var tokenStorage TokenStorage
 	var realtime RealtimeInterface
-	db = NewDatabase(session)
+	// db = NewDatabase(session)
 	p := newPool()
 	tokenStorage = &TokenStorageRedis{p}
 	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
@@ -92,7 +108,8 @@ func NewApp() *Application {
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
-	m.Map(db)
+	m.Use(DataBase())
+	// m.Map(db)
 	m.Map(tokenStorage)
 	m.Map(realtime)
 	m.Group("/api/auth", func(r martini.Router) {
@@ -142,7 +159,7 @@ func NewApp() *Application {
 }
 
 func (a *Application) Close() {
-	a.session.Close()
+	// a.session.Close()
 	a.p.Close()
 }
 
