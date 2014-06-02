@@ -41,38 +41,22 @@ const (
 	FORM_FILE                = "file"
 )
 
-func ReadJson(r *http.Request, i *interface{}) {
-	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(i)
-}
-
 func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept) (int, []byte) {
 	c := weedo.NewClient(weedHost, weedPort)
-
 	user := db.Get(id)
-
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
-	blacklisted := false
 	for _, u := range user.Blacklist {
 		if u == t.Id {
-			blacklisted = true
+			return Render(ErrorBlacklisted)
 		}
 	}
-
-	if blacklisted {
-		return Render(ErrorBlacklisted)
-	}
-
 	// hiding private fields for non-owner
 	if t == nil || t.Id != id {
 		user.CleanPrivate()
 	}
-
 	user.SetAvatarUrl(c, db, webp)
-
 	return Render(user)
 }
 
@@ -81,23 +65,18 @@ func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
-
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
-
-	err := db.AddToFavorites(user.Id, friend.Id)
-	if err != nil {
+	if err := db.AddToFavorites(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
 	return Render("updated")
 }
 
@@ -106,23 +85,18 @@ func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
-
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
-
-	err := db.AddToBlacklist(user.Id, friend.Id)
-	if err != nil {
+	if err := db.AddToBlacklist(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
 	return Render("added to blacklist")
 }
 
@@ -131,23 +105,18 @@ func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
-
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
-
-	err := db.RemoveFromBlacklist(user.Id, friend.Id)
-	if err != nil {
+	if err := db.RemoveFromBlacklist(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
 	return Render("removed")
 }
 
@@ -156,23 +125,18 @@ func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
-
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
-
-	err := db.RemoveFromFavorites(user.Id, friend.Id)
-	if err != nil {
+	if err := db.RemoveFromFavorites(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
 	return Render("removed")
 }
 
@@ -181,29 +145,23 @@ func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	if favorites == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	for key, _ := range favorites {
 		favorites[key].CleanPrivate()
 	}
-
 	return Render(favorites)
 }
 
 func GetGuests(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	guests, err := db.GetAllGuests(id)
-
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
 	if guests == nil {
-		return Render(ErrorUserNotFound)
+		return Render(ErrorUserNotFound) // todo: rename error
 	}
-
 	for key, _ := range guests {
 		guests[key].CleanPrivate()
 	}
-
 	return Render(guests)
 }
 
@@ -237,30 +195,23 @@ func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime Realtime
 func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
 	user := db.GetUsername(username)
-	log.Println(user)
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	if user.Password != getHash(password) {
 		return Render(ErrorAuth)
 	}
-
 	t, err := tokens.Generate(user)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
 	return Render(t)
 }
 
 func Logout(db UserDB, r *http.Request, tokens TokenStorage, t *Token) (int, []byte) {
-	err := tokens.Remove(t)
-
-	if err != nil {
+	if err := tokens.Remove(t); err != nil {
 		return Render(ErrorBackend)
 	}
-
 	return Render("logged out")
 }
 
@@ -271,9 +222,7 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 		return Render(ErrorBadRequest) // todo: change error name
 	}
 
-	err := db.Add(u)
-
-	if err != nil {
+	if err := db.Add(u); err != nil {
 		log.Println(err)
 		return Render(ErrorBadRequest) // todo: change error name
 	}
@@ -295,70 +244,52 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 	userUpdated := &User{}
 	decoder.Decode(userUpdated)
 
-	// preventing user from edinit sensible fields
 	userUpdated.Id = user.Id
 	userUpdated.Balance = user.Balance
 	userUpdated.Password = user.Password
 	userUpdated.LastAction = user.LastAction
 
 	err := db.Update(userUpdated)
-
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render(user)
 }
 
-func SendMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
+func Must(err error) {
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
+	origin := t.Id
+	now := time.Now()
 
 	if text == BLANK {
 		return Render(ErrorBadRequest)
 	}
 
-	destination := id
-	origin := t.Id
-
-	now := time.Now()
 	m1 := Message{bson.NewObjectId(), origin, origin, destination, now, text}
 	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
 
 	go func() {
 		u := db.Get(destination)
-		blacklisted := false
-		for _, id := range u.Blacklist {
-			if id == origin {
-				blacklisted = true
-			}
-		}
-
-		if blacklisted {
-			err := realtime.Push(origin, MessageSendBlacklisted{m1.Id})
-			if err != nil {
-				log.Println(err)
-			}
-		}
-
-		err := realtime.Push(origin, m1)
-		if err != nil {
-			log.Println(err)
-		}
-
-		err = realtime.Push(destination, m2)
-		if err != nil {
-			log.Println(err)
-		}
-
-		err = db.AddMessage(&m1)
-		if err != nil {
-			log.Println(err)
+		if u == nil {
 			return
 		}
-
-		err = db.AddMessage(&m2)
-		if err != nil {
-			log.Println(err)
+		// check blacklist of destination
+		for _, id := range u.Blacklist {
+			if id == origin {
+				Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
+				return
+			}
 		}
+		Must(realtime.Push(origin, m1))
+		Must(realtime.Push(destination, m2))
+		Must(db.AddMessage(&m1))
+		Must(db.AddMessage(&m2))
 	}()
 
 	return Render("message sent")
@@ -366,40 +297,27 @@ func SendMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token, realtim
 
 func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	message, err := db.GetMessage(id)
-
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-
 	if message.User != t.Id {
 		return Render(ErrorNotAllowed)
 	}
-
 	go func() {
-		err := db.RemoveMessage(id)
-
-		if err != nil {
-			log.Println(err)
-		}
+		Must(db.RemoveMessage(id))
 	}()
-
 	return Render("message removed")
 }
 
 func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	destination := t.Id
-
-	messages, err := db.GetMessagesFromUser(destination, origin)
-
+	messages, err := db.GetMessagesFromUser(t.Id, origin)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
 	if messages == nil {
-		return Render(ErrorUserNotFound) // todo: rename error
+		return Render(ErrorUserNotFound)
 	}
-
 	return Render(messages)
 }
 
@@ -505,7 +423,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	}
 
 	length := r.ContentLength
-	if length > 1024*1024*PHOTO_MAX_SIZE {
+	if length > 1024*1024*PHOTO_MAX_MEGABYTES {
 		return nil, errors.New("bad request")
 	}
 
@@ -614,12 +532,9 @@ func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, d
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	err = db.AddPhotoToAlbum(t.Id, albumId, photo.Id)
-
-	if err != nil {
+	if db.AddPhotoToAlbum(t.Id, albumId, photo.Id) != nil {
 		return Render(ErrorBackend)
 	}
-
 	return Render(photo)
 }
 
@@ -630,16 +545,14 @@ func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	}
 	return Render(photo)
 }
+
 func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(status)
-
-	if err != nil {
+	if err := decoder.Decode(status); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
-	status, err = db.AddStatus(t.Id, status.Text)
+	status, err := db.AddStatus(t.Id, status.Text)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
@@ -652,7 +565,6 @@ func AddAlbum(db UserDB, t *Token, decoder *json.Decoder) (int, []byte) {
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
-
 	album, err := db.AddAlbum(t.Id, album)
 	if err != nil {
 		log.Println(err)
@@ -671,8 +583,7 @@ func GetStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 }
 
 func RemoveStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
-	err := db.RemoveStatusSecure(t.Id, id)
-	if err != nil {
+	if err := db.RemoveStatusSecure(t.Id, id); err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render("ok")
@@ -686,22 +597,14 @@ func GetCurrentStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	return Render(status)
 }
 
-func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
+func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decoder *json.Decoder) (int, []byte) {
 	status := &StatusUpdate{}
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(status)
-
-	if err != nil {
+	if err := decoder.Decode(status); err != nil {
 		return Render(ErrorBadRequest)
 	}
-
-	status, err = db.UpdateStatusSecure(t.Id, id, status.Text)
+	status, err := db.UpdateStatusSecure(t.Id, id, status.Text)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render(status)
 }
-
-// func GetStatuses(db UserDB, token TokenInterface, uid IdInterface) (int, []byte) {
-
-// }
