@@ -58,8 +58,7 @@ func chackOrigin(r *http.Request) bool {
 	return true
 }
 
-func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, token TokenInterface) (int, []byte) {
-	t := token.Get()
+func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, t *Token) (int, []byte) {
 	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
 	_, ok := w.(http.Hijacker)
 	if !ok {

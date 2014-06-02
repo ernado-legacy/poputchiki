@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+type WebpAccept bool
+
 type UserDB interface {
 	// GetAll() []*User
 	GetUsername(username string) *User
@@ -63,15 +65,11 @@ type TokenStorage interface {
 	Remove(token *Token) error
 }
 
-type TokenInterface interface {
-	Get() *Token
-}
-
 type IdInterface interface {
 	Get() bson.ObjectId
 }
 
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
-	RealtimeHandler(w http.ResponseWriter, r *http.Request, token TokenInterface) (int, []byte)
+	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *Token) (int, []byte)
 }

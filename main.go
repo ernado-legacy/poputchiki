@@ -108,6 +108,7 @@ func NewApp() *Application {
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
+	m.Use(WebpWrapper)
 	m.Use(DataBase())
 	// m.Map(db)
 	m.Map(tokenStorage)
@@ -119,9 +120,9 @@ func NewApp() *Application {
 	})
 	m.Group("/api", func(r martini.Router) {
 		r.Group("/user/:id", func(r martini.Router) {
-			r.Get("/", GetUser)
-			r.Patch("/", Update)
-			r.Put("/", Update)
+			r.Get("", GetUser)
+			r.Patch("", Update)
+			r.Put("", Update)
 
 			r.Get("/status", GetCurrentStatus)
 
@@ -141,15 +142,16 @@ func NewApp() *Application {
 
 		r.Put("/status", AddStatus)
 		r.Group("/status/:id", func(r martini.Router) {
-			r.Get("/", GetStatus)
-			r.Put("/", UpdateStatus)
-			r.Delete("/", RemoveStatus)
+			r.Get("", GetStatus)
+			r.Put("", UpdateStatus)
+			r.Delete("", RemoveStatus)
 		}, IdWrapper)
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
-		r.Post("/album/:id/photo", IdWrapper, UploadPhoto)
+		r.Post("/album/:id/photo", IdWrapper, UploadPhotoToAlbum)
 		r.Put("/album", AddAlbum)
 		r.Post("/video", UploadVideo)
+		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)
 	}, NeedAuth)
 

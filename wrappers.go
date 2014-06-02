@@ -6,6 +6,7 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,6 @@ func Render(value interface{}) (int, []byte) {
 }
 
 func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter) {
-	var t TokenAbstract
 	var hexToken string
 	q := r.URL.Query()
 
@@ -63,8 +63,24 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w htt
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 
-	t = TokenHanlder{err, token}
-	c.Map(t)
+	c.Map(token)
+}
+
+func WebpWrapper(c martini.Context, r *http.Request) {
+	var accept WebpAccept
+	accept = false
+	cookie, err := r.Cookie("webp")
+	if err != nil {
+		c.Map(accept)
+		return
+	}
+	val, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		c.Map(accept)
+		return
+	}
+	accept = WebpAccept(val == 1)
+	c.Map(accept)
 }
 
 func JsonEncoderWrapper(r *http.Request, c martini.Context) {
@@ -82,8 +98,8 @@ func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.R
 	c.Map(idHandler)
 }
 
-func NeedAuth(res http.ResponseWriter, token TokenInterface) {
-	if token.Get() == nil {
+func NeedAuth(res http.ResponseWriter, t *Token) {
+	if t == nil {
 		code, resp := Render(ErrorAuth)
 		res.WriteHeader(code)
 		res.Write(resp)
