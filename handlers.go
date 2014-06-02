@@ -439,11 +439,11 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 	// download progress goroutine
 	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
-	fid, _, size, err := uploadToWeed(c, uploadReader, "video", "webm")
+	fid, purl, size, err := uploadToWeed(c, uploadReader, "video", "webm")
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	return Render(File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/webm", size})
+	return Render(File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/webm", size, purl})
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
