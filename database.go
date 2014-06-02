@@ -14,6 +14,7 @@ type DB struct {
 	statuses *mgo.Collection
 	photo    *mgo.Collection
 	albums   *mgo.Collection
+	files    *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -276,6 +277,13 @@ func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
 	album.Time = time.Now()
 	album.Id = bson.NewObjectId()
 	return album, db.albums.Insert(album)
+}
+
+func (db *DB) AddFile(user bson.ObjectId, file *File) (*File, error) {
+	file.User = user
+	file.Time = time.Now()
+	err := db.files.Insert(file)
+	return file, err
 }
 
 func (db *DB) AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error {

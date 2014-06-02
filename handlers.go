@@ -545,6 +545,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 			return
 		}
 		*photo = File{Id: bson.NewObjectId(), Fid: fid, Time: time.Now(), User: t.Id, Type: format}
+		go db.AddFile(t.Id, photo)
 	}
 
 	// resize image and upload to weedfs
