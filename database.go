@@ -279,11 +279,8 @@ func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
 	return album, db.albums.Insert(album)
 }
 
-func (db *DB) AddFile(user bson.ObjectId, file *File) (*File, error) {
-	file.User = user
-	file.Time = time.Now()
-	err := db.files.Insert(file)
-	return file, err
+func (db *DB) AddFile(file *File) (*File, error) {
+	return file, db.files.Insert(file)
 }
 
 func (db *DB) AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error {

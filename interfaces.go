@@ -58,7 +58,7 @@ type UserDB interface {
 	AddAlbum(user bson.ObjectId, album *Album) (*Album, error)
 	AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error
 
-	AddFile(user bson.ObjectId, file *File) (*File, error)
+	AddFile(file *File) (*File, error)
 }
 
 type TokenStorage interface {
