@@ -405,7 +405,7 @@ func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progr
 		if err == io.EOF {
 			break
 		}
-		read = read + int64(cBytes)
+		read += int64(cBytes)
 		//fmt.Printf("read: %v \n",read )
 		p = float32(read) / float32(length) * 100
 		if t != nil {
