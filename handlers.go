@@ -28,6 +28,7 @@ const (
 	JSON_HEADER              = "application/json; charset=utf-8"
 	WEBP                     = "webp"
 	JPEG                     = "jpeg"
+	PNG                      = "png"
 	WEBP_FORMAT              = "image/webp"
 	JPEG_FORMAT              = "image/jpeg"
 	FORM_TARGET              = "target"
@@ -427,31 +428,30 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 	// download progress goroutine
 	go pushProgress(length, progressWriter, progressReader, realtime, t)
 
-	fid, purl, err := uploadToWeed(c, uploadReader, "video", "webp")
+	fid, _, size, err := uploadToWeed(c, uploadReader, "video", "webm")
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	im := Image{bson.NewObjectId(), fid, purl}
-	return Render(im)
+	return Render(File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/webm", size})
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
-func uploadToWeed(c *weedo.Client, reader io.Reader, t, format string) (string, string, error) {
-	fid, _, err := c.AssignUpload(t+"."+format, t+"/"+format, reader)
+func uploadToWeed(c *weedo.Client, reader io.Reader, t, format string) (string, string, int64, error) {
+	fid, size, err := c.AssignUpload(t+"."+format, t+"/"+format, reader)
 	if err != nil {
 		log.Println(t, format, err)
-		return "", "", err
+		return "", "", size, err
 	}
 	purl, _, err := c.GetUrl(fid)
 	if err != nil {
 		log.Println(err)
-		return "", "", err
+		return "", "", size, err
 	}
 	log.Println(t, format, "uploaded", purl)
-	return fid, purl, nil
+	return fid, purl, size, nil
 }
 
-func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (string, string, error) {
+func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (string, string, int64, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
@@ -538,13 +538,13 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	// generating abpstract upload function
 	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
 		defer wg.Done()
-		fid, purl, err := uploadImageToWeed(c, image, extension)
+		fid, purl, size, err := uploadImageToWeed(c, image, extension)
 		*url = purl
 		if err != nil {
 			failed = true
 			return
 		}
-		*photo = File{Id: bson.NewObjectId(), Fid: fid, Time: time.Now(), User: t.Id, Type: format}
+		*photo = File{Id: bson.NewObjectId(), Fid: fid, Time: time.Now(), User: t.Id, Type: format, Size: size}
 		go db.AddFile(photo)
 	}
 

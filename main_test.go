@@ -556,7 +556,7 @@ func TestMethods(t *testing.T) {
 						// we are requesting messages for user1 from user2
 						reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
 						req, _ := http.NewRequest("GET", reqUrl, nil)
-						time.Sleep(time.Millisecond * 5) // waiting for async message send
+						time.Sleep(time.Millisecond * 20) // waiting for async message send
 						a.ServeHTTP(res, req)
 						messagesBody, _ := ioutil.ReadAll(res.Body)
 						m := []Message{}

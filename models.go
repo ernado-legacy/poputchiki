@@ -15,7 +15,7 @@ type User struct {
 	Phone      string          `json:"phone,omitempty"      bson:"phone,omitempty"`
 	Password   string          `json:"-"                    bson:"password"`
 	Online     bool            `json:"online,omitempty"     bson:"online,omitempty"`
-	Photo      Image           `json:"photo,omitempty"      bson:"photo",omitempty"`
+	Avatar     Photo           `json:"avatar,omitempty"     bson:"avatar,omitempty"`
 	Balance    uint            `json:"balance,omitempty"    bson:"balance,omitempty"`
 	LastAction time.Time       `json:"lastaction,omitempty" bson:"lastaction",omitempty"`
 	Favorites  []bson.ObjectId `json:"favorites,omitempty"  bson:"favorites,omitempty"`
@@ -110,6 +110,7 @@ type File struct {
 	User bson.ObjectId `json:"user"         bson:"user"`
 	Time time.Time     `json:"time"         bson:"time"`
 	Type string        `json:"type"         bson:"type"`
+	Size int64         `json:"size"         bson:"size"`
 }
 
 type Image struct {
@@ -130,7 +131,7 @@ type Album struct {
 
 type Photo struct {
 	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
-	User        bson.ObjectId `json:"user"                  bson:"user"`
+	User        bson.ObjectId `json:"user,omitempty"        bson:"user,omitempty"`
 	ImageWebp   string        `json:"-"                     bson:"image_webp"`
 	ImageJpeg   string        `json:"-"                     bson:"image_jpeg"`
 	ImageUrl    string        `json:"image_url"             bson:"-"`
