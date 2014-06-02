@@ -66,6 +66,15 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w htt
 	c.Map(token)
 }
 
+func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *Token) {
+	if t.Id != id {
+		log.Println(t.Id.Hex(), id)
+		code, data := Render(ErrorNotAllowed)
+		http.Error(w, string(data), code) // todo: set content-type
+		return
+	}
+}
+
 func WebpWrapper(c martini.Context, r *http.Request) {
 	var accept WebpAccept
 	accept = false

@@ -121,23 +121,25 @@ func NewApp() *Application {
 	m.Group("/api", func(r martini.Router) {
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
-			r.Patch("", Update)
-			r.Put("", Update)
-
 			r.Get("/status", GetCurrentStatus)
 
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
 
-			r.Post("/fav", AddToFavorites)
-			r.Delete("/fav", RemoveFromFavorites)
-			r.Get("/fav", GetFavorites)
+			r.Group("", func(d martini.Router) {
+				d.Patch("", Update)
+				d.Put("", Update)
+				d.Post("/fav", AddToFavorites)
+				d.Delete("/fav", RemoveFromFavorites)
+				d.Get("/fav", GetFavorites)
 
-			r.Post("/blacklist", AddToBlacklist)
-			r.Delete("/blacklist", RemoveFromBlacklist)
+				d.Post("/blacklist", AddToBlacklist)
+				d.Delete("/blacklist", RemoveFromBlacklist)
 
-			r.Post("/guests", AddToGuests)
-			r.Get("/guests", GetGuests)
+				d.Post("/guests", AddToGuests)
+				d.Get("/guests", GetGuests)
+			}, IdEqualityRequired)
+
 		}, IdWrapper)
 
 		r.Put("/status", AddStatus)

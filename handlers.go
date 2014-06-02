@@ -72,11 +72,7 @@ func GetUser(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	return Render(user)
 }
 
-func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -101,11 +97,7 @@ func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int
 	return Render("updated")
 }
 
-func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -130,11 +122,7 @@ func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int
 	return Render("added to blacklist")
 }
 
-func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -159,11 +147,7 @@ func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token)
 	return Render("removed")
 }
 
-func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -188,11 +172,7 @@ func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token)
 	return Render("removed")
 }
 
-func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	favorites := db.GetFavorites(id)
 	if favorites == nil {
 		return Render(ErrorUserNotFound)
@@ -205,11 +185,7 @@ func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, 
 	return Render(favorites)
 }
 
-func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func GetGuests(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	guests, err := db.GetAllGuests(id)
 
 	if err != nil {
@@ -227,11 +203,7 @@ func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []b
 	return Render(guests)
 }
 
-func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime RealtimeInterface) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -310,11 +282,7 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	return Render(t)
 }
 
-func Update(db UserDB, r *http.Request, t *Token, id bson.ObjectId) (int, []byte) {
-	if t.Id != id {
-		return Render(ErrorNotAllowed)
-	}
-
+func Update(db UserDB, r *http.Request, id bson.ObjectId) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
