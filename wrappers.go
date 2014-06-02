@@ -94,8 +94,7 @@ func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.R
 		http.Error(w, string(data), code) // todo: set content-type
 		return
 	}
-	idHandler := IdHandler{bson.ObjectIdHex(hexId)}
-	c.Map(idHandler)
+	c.Map(bson.ObjectIdHex(hexId))
 }
 
 func NeedAuth(res http.ResponseWriter, t *Token) {

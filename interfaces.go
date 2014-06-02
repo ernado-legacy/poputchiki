@@ -65,10 +65,6 @@ type TokenStorage interface {
 	Remove(token *Token) error
 }
 
-type IdInterface interface {
-	Get() bson.ObjectId
-}
-
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
 	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *Token) (int, []byte)

@@ -45,8 +45,7 @@ func ReadJson(r *http.Request, i *interface{}) {
 	decoder.Decode(i)
 }
 
-func GetUser(db UserDB, t *Token, uid IdInterface) (int, []byte) {
-	id := uid.Get()
+func GetUser(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	log.Println("get user", id.Hex())
 	user := db.Get(id)
 
@@ -73,9 +72,7 @@ func GetUser(db UserDB, t *Token, uid IdInterface) (int, []byte) {
 	return Render(user)
 }
 
-func AddToFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
-
+func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -104,8 +101,7 @@ func AddToFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) (int,
 	return Render("updated")
 }
 
-func AddToBlacklist(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -134,8 +130,7 @@ func AddToBlacklist(db UserDB, uid IdInterface, r *http.Request, t *Token) (int,
 	return Render("added to blacklist")
 }
 
-func RemoveFromBlacklist(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -164,8 +159,7 @@ func RemoveFromBlacklist(db UserDB, uid IdInterface, r *http.Request, t *Token) 
 	return Render("removed")
 }
 
-func RemoveFromFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -194,8 +188,7 @@ func RemoveFromFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) 
 	return Render("removed")
 }
 
-func GetFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -212,8 +205,7 @@ func GetFavorites(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, [
 	return Render(favorites)
 }
 
-func GetGuests(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -235,8 +227,7 @@ func GetGuests(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []by
 	return Render(guests)
 }
 
-func AddToGuests(db UserDB, uid IdInterface, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
-	id := uid.Get()
+func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -319,8 +310,7 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	return Render(t)
 }
 
-func Update(db UserDB, r *http.Request, t *Token, uid IdInterface) (int, []byte) {
-	id := uid.Get()
+func Update(db UserDB, r *http.Request, t *Token, id bson.ObjectId) (int, []byte) {
 	if t.Id != id {
 		return Render(ErrorNotAllowed)
 	}
@@ -339,14 +329,14 @@ func Update(db UserDB, r *http.Request, t *Token, uid IdInterface) (int, []byte)
 	return Render(user)
 }
 
-func SendMessage(db UserDB, uid IdInterface, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
+func SendMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
 
 	if text == BLANK {
 		return Render(ErrorBadRequest)
 	}
 
-	destination := uid.Get()
+	destination := id
 	origin := t.Id
 
 	now := time.Now()
@@ -394,8 +384,7 @@ func SendMessage(db UserDB, uid IdInterface, r *http.Request, t *Token, realtime
 	return Render("message sent")
 }
 
-func RemoveMessage(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	id := uid.Get()
+func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	message, err := db.GetMessage(id)
 
 	if err != nil {
@@ -418,8 +407,7 @@ func RemoveMessage(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, 
 	return Render("message removed")
 }
 
-func GetMessagesFromUser(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
-	origin := uid.Get()
+func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	destination := t.Id
 
 	messages, err := db.GetMessagesFromUser(destination, origin)
@@ -639,9 +627,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	return photo, err
 }
 
-func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, uid IdInterface, webpAccept WebpAccept) (int, []byte) {
-	albumId := uid.Get()
-
+func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -662,7 +648,7 @@ func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	}
 	return Render(photo)
 }
-func AddStatus(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
+func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(status)
@@ -694,35 +680,34 @@ func AddAlbum(db UserDB, t *Token, decoder *json.Decoder) (int, []byte) {
 	return Render(album)
 }
 
-func GetStatus(db UserDB, t *Token, uid IdInterface) (int, []byte) {
-	status, err := db.GetStatus(uid.Get())
+func GetStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+	status, err := db.GetStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render(status)
 }
 
-func RemoveStatus(db UserDB, t *Token, uid IdInterface) (int, []byte) {
-	err := db.RemoveStatusSecure(t.Id, uid.Get())
+func RemoveStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+	err := db.RemoveStatusSecure(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render("ok")
 }
 
-func GetCurrentStatus(db UserDB, t *Token, uid IdInterface) (int, []byte) {
-	status, err := db.GetCurrentStatus(uid.Get())
+func GetCurrentStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+	status, err := db.GetCurrentStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render(status)
 }
 
-func UpdateStatus(db UserDB, uid IdInterface, r *http.Request, t *Token) (int, []byte) {
+func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(status)
-	id := uid.Get()
 
 	if err != nil {
 		return Render(ErrorBadRequest)
