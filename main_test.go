@@ -127,7 +127,7 @@ func TestDBMethods(t *testing.T) {
 			})
 			Convey("Add photo", func() {
 				i := File{Id: bson.NewObjectId(), User: id}
-				_, err := db.AddPhoto(id, i, i, "test")
+				_, err := db.AddPhoto(id, i, i, i, i, "test")
 				So(err, ShouldBeNil)
 			})
 		})

@@ -593,8 +593,9 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 		return nil, errors.New("failed")
 	}
 
-	photo, err := db.AddPhoto(t.Id, photoJpeg, photoWebp, BLANK)
+	photo, err := db.AddPhoto(t.Id, photoJpeg, photoWebp, thumbJpeg, thumbWebp, BLANK)
 	photo.ImageUrl = purlJpeg
+	photo.ThumbnailUrl = thumbPurlJpeg
 
 	if err != nil {
 		return nil, err
@@ -602,6 +603,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 
 	if bool(webpAccept) {
 		photo.ImageUrl = purlWebp
+		photo.ThumbnailUrl = thumbPurlWebp
 	}
 
 	return photo, err

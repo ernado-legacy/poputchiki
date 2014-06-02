@@ -57,12 +57,14 @@ func (u *User) CleanPrivate() {
 func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
 	photo, err := db.GetPhoto(u.Avatar)
 	if err == nil {
-		fid := photo.ImageJpeg
+		suffix := ".jpg"
+		fid := photo.ThumbnailJpeg
 		if webp {
-			fid = photo.ImageWebp
+			fid = photo.ThumbnailWebp
+			suffix = ".webp"
 		}
 		url, _, _ := c.GetUrl(fid)
-		u.AvatarUrl = url
+		u.AvatarUrl = url + suffix
 	}
 }
 
@@ -144,13 +146,16 @@ type Album struct {
 }
 
 type Photo struct {
-	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
-	User        bson.ObjectId `json:"user"                  bson:"user"`
-	ImageWebp   string        `json:"-"                     bson:"image_webp"`
-	ImageJpeg   string        `json:"-"                     bson:"image_jpeg"`
-	ImageUrl    string        `json:"image_url"             bson:"-"`
-	Description string        `json:"description,omitempty" bson:"description,omitempty"`
-	Time        time.Time     `json:"time"         		    bson:"time"`
+	Id            bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
+	User          bson.ObjectId `json:"user"                  bson:"user"`
+	ImageWebp     string        `json:"-"                     bson:"image_webp"`
+	ImageJpeg     string        `json:"-"                     bson:"image_jpeg"`
+	ImageUrl      string        `json:"image_url"             bson:"-"`
+	ThumbnailWebp string        `json:"-"                     bson:"thumbnail_webp"`
+	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
+	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
+	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
+	Time          time.Time     `json:"time"         		  bson:"time"`
 
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }
