@@ -437,7 +437,7 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 	}()
 
 	// download progress goroutine
-	go pushProgress(length, progressWriter, progressReader, realtime, t)
+	go pushProgress(length, 50, progressWriter, progressReader, realtime, t)
 
 	fid, purl, size, err := uploadToWeed(c, uploadReader, "video", "webm")
 	if err != nil {
@@ -476,11 +476,11 @@ func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (str
 	return uploadToWeed(c, encodeReader, "image", format)
 }
 
-func pushProgress(length int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
+func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
 	defer progressWriter.Close()
 	var p float32
 	var read int64
-	bufLen := length / 50
+	bufLen := length / rate
 	for {
 		buffer := make([]byte, bufLen)
 		cBytes, err := progressReader.Read(buffer)
@@ -513,7 +513,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	decodeReader := io.TeeReader(f, progressWriter)
 
 	// download progress goroutine
-	go pushProgress(length, progressWriter, progressReader, realtime, t)
+	go pushProgress(length, 10, progressWriter, progressReader, realtime, t)
 
 	// trying to decode image while receiving it
 	im, err := magick.Decode(decodeReader)
