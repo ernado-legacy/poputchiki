@@ -27,8 +27,8 @@
         /logout - post()
 
     /user/:id
-        / - get() -> user
-        / - put(user)
+        - get() -> user
+        - put(user)
 
         # get current status of user
         /status - get() -> status
@@ -39,9 +39,9 @@
 
         # favorites
         /fav
-            / - post(id)
-            / - delete(id)
-            / - get() -> user[]
+            - post(id)
+            - delete(id)
+            - get() -> user[]
 
         /blacklist - post(id)
         /blacklist - delete(id)
@@ -50,55 +50,59 @@
         /guests - post(id)
         /guests - get() -> user[]
 
+        # not implemented
         # get list of user photo ???
         /photo - get() -> photo[]
         # get list of users video
         /video - get() -> video[]
 
+    # not implemented
     /photo ???
-        / - put(photo)
+        - put(photo)
         /:id
-            / - get()
-            / - delete()
+            - get()
+            - delete()
 
     # not implemented
     /album ???
         / - put()
         /:id
-            / - get()
-            / - delete()
-            /photos
-                / - get()
-                / - put(photo)
-                / - delete()
+            - get()
+            - delete()
+            /photo
+                - get()
+                - put(photo)
+                - delete()
+                - post(form) -> photo
 
     # not implemented
     /audio
-        / - put(audio)
+        - put(audio)
         /:id
-            / - get() -> audio
-            / - delete()
+            - get() -> audio
+            - delete()
 
     # not implemented
     /video
-        / - put(video)
+        - put(video)
         /:id
-            / - get() -> video
-            / - delete()
+            - get() -> video
+            - delete()
 
     # statuses system
     /status - put(status)
         /:id
-            / - get() -> status
-            / - put(status)
-            / - delete()
+            - get() -> status
+            - put(status)
+            - delete()
 
+    # not implemented
     /stripe
-        / - put(stipeitem)
+        - put(stipeitem)
         /:id - get(stipeitem)
             /comments
-                / - get() -> comment[]
-                / - put(comment) -> comment
+                - get() -> comment[]
+                - put(comment) -> comment
                 /:id - put(comment) -> comment
                 /:id - delete()
 
@@ -107,6 +111,7 @@
     /upload
         /image - post(form) -> file
         /video - post(form) -> file
+        # not implemented
         /audio - post(form) -> file
 
     /realtime - get()->[ws protocol upgrade]

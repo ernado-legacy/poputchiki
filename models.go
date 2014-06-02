@@ -157,6 +157,5 @@ type Photo struct {
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
 	Time          time.Time     `json:"time"         		  bson:"time"`
-
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }

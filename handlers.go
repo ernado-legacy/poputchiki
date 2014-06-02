@@ -323,6 +323,7 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *To
 
 func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
 	c := weedo.NewClient(weedHost, weedPort)
+	id := bson.NewObjectId()
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
@@ -346,12 +347,11 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 		cmd.Stdin = decodeReader
 		cmd.Stderr = os.Stdout
 		cmd.Stdout = uploadWriter
-		e := cmd.Start()
-		if e != nil {
+		if e := cmd.Start(); e != nil {
 			log.Println(e)
+			return
 		}
 		cmd.Wait()
-		log.Println("ok")
 	}()
 
 	// download progress goroutine
@@ -359,9 +359,10 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 
 	fid, purl, size, err := uploadToWeed(c, uploadReader, "video", "webm")
 	if err != nil {
+		Must(err)
 		return Render(ErrorBackend)
 	}
-	return Render(File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/webm", size, purl})
+	return Render(File{id, fid, t.Id, time.Now(), "video/webm", size, purl})
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
@@ -386,8 +387,7 @@ func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (str
 		defer encodeWriter.Close()
 		info := magick.NewInfo()
 		info.SetFormat(format)
-		err := image.Encode(encodeWriter, info)
-		if err != nil {
+		if err := image.Encode(encodeWriter, info); err != nil {
 			log.Println(err)
 		}
 	}()

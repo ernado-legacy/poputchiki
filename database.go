@@ -23,7 +23,6 @@ func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 
 	// first query - distinct favorites id's from user
 	err := db.users.FindId(id).Distinct("favorites", &favoritesIds)
-
 	if err != nil {
 		return nil
 	}
