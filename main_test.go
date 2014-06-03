@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"io/ioutil"
@@ -18,6 +19,12 @@ import (
 	"testing"
 	"time"
 )
+
+func TestEtcd(t *testing.T) {
+	Convey("etcd connect", t, func() {
+		So(loadConfig(), ShouldBeNil)
+	})
+}
 
 func TestDBMethods(t *testing.T) {
 	dbName = "poputchiki_dev_db"

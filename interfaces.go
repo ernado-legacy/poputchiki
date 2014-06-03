@@ -7,6 +7,17 @@ import (
 
 type WebpAccept bool
 
+type VideoAccept string
+
+type AudioAccept string
+
+var (
+	VA_WEBM VideoAccept = "webm"
+	VA_MP4  VideoAccept = "mp4"
+	AA_ACC  AudioAccept = "acc"
+	AA_OGG  AudioAccept = "ogg"
+)
+
 type UserDB interface {
 	// GetAll() []*User
 	GetUsername(username string) *User
@@ -59,6 +70,7 @@ type UserDB interface {
 	AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error
 
 	AddFile(file *File) (*File, error)
+	AddVideo(video *Video) (*Video, error)
 }
 
 type TokenStorage interface {

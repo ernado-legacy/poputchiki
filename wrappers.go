@@ -92,6 +92,32 @@ func WebpWrapper(c martini.Context, r *http.Request) {
 	c.Map(accept)
 }
 
+func VideoWrapper(c martini.Context, r *http.Request) {
+	var accept VideoAccept = "none"
+	cookie, err := r.Cookie("video")
+	if err != nil {
+		c.Map(accept)
+		return
+	}
+	if cookie.Value != BLANK {
+		accept = VideoAccept(cookie.Value)
+	}
+	c.Map(accept)
+}
+
+func AudioWrapper(c martini.Context, r *http.Request) {
+	var accept AudioAccept = "none"
+	cookie, err := r.Cookie("audio")
+	if err != nil {
+		c.Map(accept)
+		return
+	}
+	if cookie.Value != BLANK {
+		accept = AudioAccept(cookie.Value)
+	}
+	c.Map(accept)
+}
+
 func JsonEncoderWrapper(r *http.Request, c martini.Context) {
 	c.Map(json.NewDecoder(r.Body))
 }

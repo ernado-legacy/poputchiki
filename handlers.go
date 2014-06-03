@@ -1,19 +1,22 @@
 package main
 
 import (
-	// "bytes"
+	"bufio"
 	"encoding/json"
 	"github.com/ginuerzh/weedo"
 	"github.com/rainycape/magick"
 	// "github.com/go-martini/martini"
+	"bytes"
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	// "strings"
 	// "mime/multipart"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -24,7 +27,7 @@ const (
 	PHOTO_MAX_SIZE           = 1000
 	PHOTO_MAX_MEGABYTES      = 20
 	VIDEO_MAX_MEGABYTES      = 50
-	VIDEO_MAX_LENGTH_SECONDS = 60
+	VIDEO_MAX_LENGTH_SECONDS = 360
 	JSON_HEADER              = "application/json; charset=utf-8"
 	WEBP                     = "webp"
 	JPEG                     = "jpeg"
@@ -321,9 +324,10 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *To
 	return Render(messages)
 }
 
-func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
-	c := weedo.NewClient(weedHost, weedPort)
+func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept) (int, []byte) {
+	// c := weedo.NewClient(weedHost, weedPort)
 	id := bson.NewObjectId()
+	video := Video{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
@@ -331,38 +335,290 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface) (int, []
 	}
 
 	length := r.ContentLength
+	var b bytes.Buffer
+
 	if length > 1024*1024*VIDEO_MAX_MEGABYTES {
 		return Render(ErrorBadRequest)
 	}
 
-	progressReader, progressWriter := io.Pipe()
-	uploadReader, uploadWriter := io.Pipe()
-	decodeReader := io.TeeReader(f, progressWriter)
+	sourceFilename := "/tmp/" + id.Hex() + "-source"
+	buffer := make([]byte, 1024*300)
+	f.Read(buffer)
+	cmd := exec.Command("/bin/bash", "-c", "ffprobe "+sourceFilename)
+	cmd.Stderr = bufio.NewWriter(&b)
+	sourceFile, err := os.Create(sourceFilename)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
 
+	sourceFile.Write(buffer)
+	sourceFile.Close()
+	cmd.Start()
+	cmd.Wait()
+
+	// parse duration
+	testOutput := string(b.Bytes())
+	durationToken := "Duration:"
+	startDuration := strings.Index(testOutput, durationToken)
+	endDuration := strings.Index(testOutput, ", start:")
+	duration := strings.TrimSpace(testOutput[startDuration+len(durationToken) : endDuration])
+	var hours, minutes, seconds, ms int64
+	_, err = fmt.Sscanf(duration, "%02d:%02d:%02d.%02d", &hours, &minutes, &seconds, &ms)
+	totalSeconds := hours*60*60 + minutes*60 + seconds
+	video.Duration = totalSeconds
+
+	// check duration
+	if duration == "N/A" || totalSeconds > VIDEO_MAX_LENGTH_SECONDS {
+		os.Remove(sourceFilename)
+		return Render(ErrorBadRequest)
+	}
+
+	sourceFile, err = os.OpenFile(sourceFilename, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	written, err := io.Copy(sourceFile, f)
+	log.Println(written, err)
+	sourceFile.Close()
 	// decoding goroutine
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	uploadReaderMp4, uploadWriterMp4 := io.Pipe()
+	uploadReaderWebm, uploadWriterWebm := io.Pipe()
+
+	progressReaderMp4, progressWriterMp4 := io.Pipe()
+	progressReaderWebm, progressWriterWebm := io.Pipe()
+
+	//  ffmpeg -i input.flv -ss 00:00:14.435 -f image2 -vframes 1 out.png
 	go func() {
-		defer progressWriter.Close()
-		defer uploadWriter.Close()
-		cmd := exec.Command("/bin/bash", "-c", "ffmpeg -i - -c:v libvpx -b:v 256k -c:a libvorbis -cpu-used 4 -vf scale=300:ih*300/iw,crop=out_w=in_h -f webm - ")
+		c := weedo.NewClient(weedHost, weedPort)
+		log.Println("making screenshot")
+		defer wg.Done()
+		b := bytes.NewBuffer(nil)
+		file, err := os.OpenFile(sourceFilename, os.O_RDONLY, 0644)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		cmd := exec.Command("/bin/bash", "-c", "ffmpeg -i - -ss 00:00:01.00 -f image2 -vframes 1 -vcodec png -")
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = bufio.NewWriter(b)
+		cmd.Stdin = file
+		cmd.Start()
+		cmd.Wait()
+		file.Close()
+
+		im, err := magick.Decode(bufio.NewReader(b))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		thumbnail, err := im.CropToRatio(1.0, magick.CSCenter)
+		if err != nil {
+			return
+		}
+		thumbnail, err = thumbnail.Resize(THUMB_SIZE, THUMB_SIZE, magick.FBox)
+		if err != nil {
+			return
+		}
+		fid, purlWebp, size, err := uploadImageToWeed(c, thumbnail, "webp")
+		video.ThumbnailWebp = fid
+		log.Println(fid, purlWebp, size, err)
+		fid, purl, size, err := uploadImageToWeed(c, thumbnail, "jpeg")
+		video.ThumbnailJpeg = fid
+		video.ThumbnailUrl = purl
+		if webpAccept {
+			video.ThumbnailUrl = purlWebp
+		}
+		log.Println(fid, purl, size, err)
+	}()
+
+	go func() {
+		log.Println("mp4 convert started")
+		defer wg.Done()
+		defer uploadWriterMp4.Close()
+		// defer progressWriterMp4.Close()
+		// defer uploadWriterMp4.Close()
+		filename := id.Hex() + ".mp4"
+		path := "/tmp/" + filename
+		file, err := os.OpenFile(sourceFilename, os.O_RDONLY, 0644)
+		decodeReader := io.TeeReader(file, progressWriterMp4)
+		defer progressWriterWebm.Close()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer os.Remove(path)
+		cmd := exec.Command("/bin/bash", "-c", "ffmpeg -i - -vcodec h264 -acodec aac -strict -2 -vf scale=300:ih*300/iw,crop=out_w=in_h  "+path)
+		// cmd.Stderr = os.Stdout
 		cmd.Stdin = decodeReader
-		cmd.Stderr = os.Stdout
-		cmd.Stdout = uploadWriter
+
 		if e := cmd.Start(); e != nil {
 			log.Println(e)
 			return
 		}
 		cmd.Wait()
+		log.Println("mp4 ok")
+		file.Close()
+		file, err = os.Open(path)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		io.Copy(uploadWriterMp4, file)
+		file.Close()
 	}()
 
-	// download progress goroutine
-	go pushProgress(length, 50, progressWriter, progressReader, realtime, t)
+	go func() {
+		log.Println("mp4 convert started")
+		defer wg.Done()
+		defer uploadWriterWebm.Close()
+		// defer progressWriterMp4.Close()
+		// defer uploadWriterMp4.Close()
+		filename := id.Hex() + ".webm"
+		path := "/tmp/" + filename
+		file, err := os.OpenFile(sourceFilename, os.O_RDONLY, 0644)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		decodeReader := io.TeeReader(file, progressWriterWebm)
+		defer progressWriterWebm.Close()
+		defer os.Remove(path)
+		cmd := exec.Command("/bin/bash", "-c", "ffmpeg -i - -c:v libvpx -b:v 256k -c:a libvorbis -cpu-used 4 -vf scale=300:ih*300/iw,crop=out_w=in_h "+path)
+		// cmd.Stderr = os.Stdout
+		cmd.Stdin = decodeReader
 
-	fid, purl, size, err := uploadToWeed(c, uploadReader, "video", "webm")
+		if e := cmd.Start(); e != nil {
+			log.Println(e)
+			return
+		}
+		cmd.Wait()
+		log.Println("webm ok")
+		file.Close()
+		file, err = os.Open(path)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		io.Copy(uploadWriterWebm, file)
+		file.Close()
+	}()
+
+	// remove file after transcode
+	go func() {
+		c := make(chan bool, 1)
+		go func() {
+			wg.Wait()
+			c <- true
+		}()
+		select {
+		case <-c:
+			{
+				log.Println("transcoding ok")
+			}
+		case <-time.After(time.Second * 600):
+			{
+				log.Println("transcoding timed out")
+			}
+		}
+		os.Remove(sourceFilename)
+	}()
+
+	go func() {
+		log.Println("processing progress")
+		end := make(chan bool, 2)
+		update := make(chan bool, 1)
+		var pWebm float32
+		var pMp4 float32
+		start := func(writer *io.PipeWriter, reader *io.PipeReader, progress *float32) {
+			log.Println("started progress processing")
+			defer writer.Close()
+			var read int64
+			bufLen := length / 50
+			for {
+				cBytes, err := reader.Read(make([]byte, bufLen))
+				if err == io.EOF {
+					end <- true
+					break
+				}
+				read += int64(cBytes)
+				*progress = float32(read) / float32(length) * 100
+				update <- true
+			}
+		}
+		go func() {
+			<-end
+			<-end
+			close(update)
+		}()
+		go start(progressWriterMp4, progressReaderMp4, &pMp4)
+		go start(progressWriterWebm, progressReaderWebm, &pWebm)
+
+		lastProgress := pWebm
+		lastTime := time.Now()
+		for _ = range update {
+			progress := (pWebm + pMp4) / 2
+			if (progress-lastProgress) > 1.0 && time.Since(lastTime) > time.Millisecond*300 {
+				realtime.Push(t.Id, ProgressMessage{id, progress})
+				lastTime = time.Now()
+				lastProgress = progress
+			}
+		}
+		log.Println("progress hahdling finished")
+	}()
+
+	go func() {
+		c := weedo.NewClient(weedHost, weedPort)
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+		fileWebm := File{}
+		fileMp4 := File{}
+		var ok error
+		ok = nil
+		go func() {
+			defer wg.Done()
+			fid, purl, size, err := uploadToWeed(c, uploadReaderWebm, "video", "webm")
+			if err != nil {
+				ok = err
+			}
+			fileWebm = File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/webm", size, purl}
+		}()
+		go func() {
+			defer wg.Done()
+			fid, purl, size, err := uploadToWeed(c, uploadReaderMp4, "video", "mp4")
+			if err != nil {
+				ok = err
+			}
+			fileMp4 = File{bson.NewObjectId(), fid, t.Id, time.Now(), "video/mp4", size, purl}
+		}()
+		wg.Wait()
+		if ok != nil {
+			log.Println(ok)
+		} else {
+			log.Println("uploaded")
+		}
+		video.VideoMpeg = fileMp4.Fid
+		video.VideoWebm = fileWebm.Fid
+		log.Println("video accept", videoAccept)
+		if videoAccept == VA_MP4 {
+			video.VideoUrl = fileMp4.Url
+		}
+		if videoAccept == VA_WEBM {
+			video.VideoUrl = fileWebm.Url
+		}
+		realtime.Push(t.Id, video)
+	}()
+	_, err = db.AddVideo(&video)
 	if err != nil {
-		Must(err)
 		return Render(ErrorBackend)
 	}
-	return Render(File{id, fid, t.Id, time.Now(), "video/webm", size, purl})
+	return Render(video)
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
@@ -409,7 +665,7 @@ func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progr
 		//fmt.Printf("read: %v \n",read )
 		p = float32(read) / float32(length) * 100
 		if t != nil {
-			realtime.Push(t.Id, ProgressMessage{p})
+			realtime.Push(t.Id, ProgressMessage{t.Id, p})
 		}
 	}
 }

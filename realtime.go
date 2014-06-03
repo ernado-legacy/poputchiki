@@ -46,7 +46,7 @@ func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
 		log.Println(err)
 		return err
 	}
-	log.Println("pushing event", string(eJson), key)
+	// log.Println("pushing event", string(eJson), key)
 	_, err = conn.Do("PUBLISH", key, eJson)
 	if err != nil {
 		log.Println(err)

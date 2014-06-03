@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"github.com/coreos/go-etcd/etcd"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -24,6 +26,8 @@ var (
 	photoCollection    = "photo"
 	albumsCollection   = "albums"
 	filesCollection    = "files"
+	videoCollection    = "audio"
+	audioCollection    = "video"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
@@ -42,6 +46,35 @@ type Application struct {
 	session *mgo.Session
 	p       *redis.Pool
 	m       *martini.ClassicMartini
+}
+
+func loadConfig() error {
+	c := etcd.NewClient([]string{"http://127.0.0.1:4001"})
+	_, err := c.Update("test", "test", 0)
+	if err != nil {
+		return err
+	}
+	mongo, err := c.Get("mongodb-master", false, false)
+	if err != nil {
+		return err
+	}
+	mongoHost = mongo.Node.Value
+	redisMaster, err := c.Get("redis-master", false, false)
+	if err != nil {
+		return err
+	}
+	redisAddr = redisMaster.Node.Value
+	weedMaster, err := c.Get("weed-master/host", false, false)
+	if err != nil {
+		return err
+	}
+	weedHost = weedMaster.Node.Value
+	weedMaster, err = c.Get("weed-master/port", false, false)
+	if err != nil {
+		return err
+	}
+	weedPort, err = strconv.Atoi(weedMaster.Node.Value)
+	return err
 }
 
 func newPool() *redis.Pool {
@@ -71,7 +104,9 @@ func NewDatabase(session *mgo.Session) UserDB {
 	pcoll := db.C(photoCollection)
 	acoll := db.C(albumsCollection)
 	fcoll := db.C(filesCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll}
+	vcoll := db.C(filesCollection)
+	aucoll := db.C(filesCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll}
 }
 
 func DataBase() martini.Handler {
@@ -111,6 +146,8 @@ func NewApp() *Application {
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
 	m.Use(WebpWrapper)
+	m.Use(AudioWrapper)
+	m.Use(VideoWrapper)
 	m.Use(DataBase())
 	// m.Map(db)
 	m.Map(tokenStorage)

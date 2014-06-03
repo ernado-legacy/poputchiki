@@ -91,7 +91,8 @@ type RealtimeEvent struct {
 }
 
 type ProgressMessage struct {
-	Progress float32 `json:"progress"`
+	Id       bson.ObjectId `json:"id,omitempty"`
+	Progress float32       `json:"progress"`
 }
 
 type MessageSendBlacklisted struct {
@@ -151,11 +152,37 @@ type Photo struct {
 	User          bson.ObjectId `json:"user"                  bson:"user"`
 	ImageWebp     string        `json:"-"                     bson:"image_webp"`
 	ImageJpeg     string        `json:"-"                     bson:"image_jpeg"`
-	ImageUrl      string        `json:"image_url"             bson:"-"`
+	ImageUrl      string        `json:"url"                   bson:"-"`
 	ThumbnailWebp string        `json:"-"                     bson:"thumbnail_webp"`
 	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
 	Time          time.Time     `json:"time"         		  bson:"time"`
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
+}
+
+type Video struct {
+	Id            bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
+	User          bson.ObjectId `json:"user"                  bson:"user"`
+	VideoWebm     string        `json:"-"                     bson:"video_webm"`
+	VideoMpeg     string        `json:"-"                     bson:"video_mpeg"`
+	VideoUrl      string        `json:"url"                   bson:"-"`
+	ThumbnailWebp string        `json:"-"                     bson:"thumbnail_webp"`
+	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
+	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
+	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
+	Time          time.Time     `json:"time"         		  bson:"time"`
+	Duration      int64         `json:"duration"              bson:"duration"`
+}
+
+type Audio struct {
+	Id           bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
+	User         bson.ObjectId `json:"user"                  bson:"user"`
+	AudioMp3     string        `json:"-"                     bson:"audio_mp3"`
+	AudioOgg     string        `json:"-"                     bson:"audio_ogg"`
+	AudioUrl     string        `json:"url"                   bson:"-"`
+	ThumbnailUrl string        `json:"thumbnail_url"         bson:"-"`
+	Description  string        `json:"description,omitempty" bson:"description,omitempty"`
+	Time         time.Time     `json:"time"         		 bson:"time"`
+	Duration     int64         `json:"duration"              bson:"duration"`
 }
