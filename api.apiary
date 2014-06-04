@@ -1,0 +1,320 @@
+FORMAT: 1A
+HOST: http://www.google.com
+
+# poputchiki api
+
+# Group Аутентификация и логин
+Методы аутентификации и управление сессией для **Poputchiki api**
+
+## Token [/api/auth/register]
++ Model (application/json)
+    Токен, содержащий в себе id пользователя и значение token
+
+    + Body
+
+            {id: "536a40ae67188e1496c09862", token: "5e056e7d286c5ac2a61b0480a7e44a2eb30c5d979a1dc5ee3ec8d2faa5196f14"}
+
+### Регистрация в системе [POST]
++ Request (application/json)
+
+        { "login": "ivanivanov@yandex.ru", "password": "ribamech1601" }
+
++ Response 200 (application/json)
+        [Token][]
+
+## Token [/api/auth/login]
+### Вход на сайт [POST]
++ Request (application/json)
+
+        { "login": "ivanivanov@yandex.ru", "password": "ribamech1601" }
+
++ Response 200 (application/json)
+        [Token][]
+
+## Выход [/api/auth/logout]
+### Завершение сессии [POST]
++ Response 200
+
+# Group Пользователи
+
+## UserCollection [/api/user/]
+
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+
+            [
+                {
+                    "id": "536a40ae67188e1496c09862",
+                    "firstname": "Ivan",
+                    "secondname": "Ivanov",
+                    "email": "ivanivanov@yandex.ru",                                        // private
+                    "phone": "+79181112233",                                                // private
+                    "online": true,
+                    "avatar_url": "http://cdn1.poputchiki.ru:8080/7,126489.webp"
+                    "balance": 106,                                                         // private
+                    "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
+                    "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
+                    "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
+                    "countries": ["Russia", "Ukraine", "USA"]
+                },
+                {
+                    "id": "536a40ae67188e1496c09862",
+                    "firstname": "Vasia",
+                    "secondname": "Petrov",
+                    "email": "ivanpetrov@yandex.ru",                                        // private
+                    "phone": "+79181111233",                                                // private
+                    "online": false,
+                    "avatar_url": "http://cdn1.poputchiki.ru:8080/7,112489.webp"
+                    "balance": 106,                                                         // private
+                    "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
+                    "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
+                    "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
+                    "countries": ["Russia", "Ukraine", "USA"]
+                }
+            ]
+
+
+## User [/api/user/{id}]
+
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` пользователя.
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+
+            {
+                "id": "536a40ae67188e1496c09862",
+                "firstname": "Ivan",
+                "secondname": "Ivanov",
+                "email": "ivanivanov@yandex.ru",                                        // private
+                "phone": "+79181112233",                                                // private
+                "online": true,
+                "avatar_url": "http://cdn1.poputchiki.ru:8080/7,126489.webp"
+                "balance": 106,                                                         // private
+                "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
+                "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
+                "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
+                "countries": ["Russia", "Ukraine", "USA"]
+            }
+
+### Получить юзера [GET]
++ Response 200 (application/json)
+    [User][]
+
+### Удалить юзера [DELETE]
++ Response 200
+
+### Обновить данные юзера [PUT]
++ Request (application/json)
+    [User][]
++ Response 200 (application/json)
+    [User][]
+
+## Status [/api/user/{id}/status]
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` пользователя.
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+
+            {
+                "id": "536a40ae67188e1496c09862",
+                "user": "536a40ae671a8e1d96c0e862",
+                "text": "hello",
+                "time": "2014-06-04T14:09:44.306190209+04:00",                   
+            }
+            
+### Получить [GET]
++ Response 200 (application/json)
+    [Status][]
+
+## Избранное [/api/user/{id}/fav]
+### Получить [GET]
++ Response 200 (application/json)
+    [UserCollection][]
+
+### Добавить [PUT]
++ Request
+
+        536a40ae67188e1496c09862
+    
++ Response 200
+
+### Удалить [DELETE]
++ Request
+
+        536a40ae67188e1496c09862
+    
++ Response 200
+
+## Черный список [/api/user/{id}/blacklist]
+### Получить [GET]
++ Response 200 (application/json)
+    [UserCollection][]
+
+### Добавить [PUT]
++ Request
+
+        536a40ae67188e1496c09862
+    
++ Response 200
+
+### Удалить [DELETE]
++ Request
+
+        536a40ae67188e1496c09862
+    
++ Response 200
+
+## Гости [/api/user/{id}/guests]
+### Получить [GET]
++ Response 200 (application/json)
+    [UserCollection][]
+
+### Добавить [PUT]
++ Request
+
+        536a40ae67188e1496c09862
+    
++ Response 200
+
+# Group Сообщения
+
+## Message [/api/message/{id}]
+
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` получателя.
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+
+            {
+                "id": "536a40ae67188e1496c09862",
+                "user": "536a40ae671a8e1d96c0e862",
+                "origin": "536a40ae671a8e1d96c0e862",
+                "destination": "536a40ae671a8e1d96c0e862",                 
+                "text": "hello",
+                "time": "2014-06-04T14:09:44.306190209+04:00",                   
+            }
+            
+### Удалить [DELETE]
++ Response 200
+
+## MessageCollection [/api/user/{id}/messages]
+
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` получателя.
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+    
+            [
+                {
+                    "id": "536a40ae67188e1496c09862",
+                    "user": "536a40ae671a8e1d96c0e862",
+                    "origin": "536a40ae671a8e1d96c0e862",
+                    "destination": "536a40ae671a8e1d96c0e862",                 
+                    "text": "hello",
+                    "time": "2014-06-04T14:09:44.306190209+04:00",                   
+                },
+                {
+                    "id": "536a40ae67188e1496c09862",
+                    "user": "536a40ae671a8e1d96c0e862",
+                    "origin": "536a40ae671a8e1d96c0e862",
+                    "destination": "536a40ae671a8e1d96c0e862",                 
+                    "text": "lol",
+                    "time": "2014-06-04T14:09:44.306190209+04:00",                   
+                },
+                {
+                    "id": "536a40ae67188e1496c09862",
+                    "user": "536a40ae671a8e1d96c0e862",
+                    "origin": "536a40ae671a8e1d96c0e862",
+                    "destination": "536a40ae671a8e1d96c0e862",                 
+                    "text": "og",
+                    "time": "2014-06-04T14:09:44.306190209+04:00",                   
+                }
+            ]
+
+### Получить диалог [GET]
++ Response 200 (application/json)
+    [MessageCollection][]
+
+### Отправить сообщение [PUT]
++ Request (application/json)
+    [Message][]
++ Response 200 (application/json)
+    [Message][]
+
+# Group Статусы
+## Status [/api/status]
+### Новый статус [PUT]
++ Request (application/json)
+    [Status][]
++ Response 200 (application/json)
+    [Status][]
+
+## Status [/api/status/{id}]
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` статуса.
+    
+### Удалить [DELETE]
++ Response 200
+
+### Получить [GET]
++ Response 200 (application/json)
+    [Status][]
+
+### Обновить [PUT]
++ Request (application/json)
+    [Status][]
++ Response 200 (application/json)
+    [Status][]
+
+# Group Видео
+## VideoObject [/nonexistent/video/]
+
++ Parameters
+    + id (required, ObjectID, `536a40ae67188e1496c09862`) ... Mongo `id` получателя.
++ Model (application/json)
+    JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Body
+    
+            {
+                duration: 33
+                id: "538f1aa336c4533d18000103"
+                thumbnail_url: "http://localhost:8080/6,09cd6e994055.webp"
+                time: "2014-06-04T17:09:55.848603356+04:00"
+                url: "http://localhost:8080/3,09cb7d6eaa19.webm"
+                user: "536a40ae67188e1496c09862"
+            }
+            
+## Video [/api/video]
+### Загрузить [POST]
++ Request 
+    + Headers
+    
+            Content-Type: multipart/form-data
+    
+    + Body
+    
+            file=01010010101010100...01010
+
++ Response 200 
+    [VideoObject][]
+
+## Video [/api/video/{id}]
+### Обновить [PUT]
++ Request (application/json)
+    [VideoObject][]
++ Response 200 (application/json)
+    [VideoObject][]
+
+### Удалить [DELETE]
++ Response 200
