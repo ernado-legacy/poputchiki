@@ -146,7 +146,7 @@ func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
 }
 
 func (realtime *RealtimeRedis) CloseWs(c ReltWSChannel) {
-	log.Println("closing", c)
+	log.Println("closing realtime channel")
 	delete(realtime.chans[c.user].chans, c.id)
 }
 

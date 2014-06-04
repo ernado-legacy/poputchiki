@@ -28,6 +28,7 @@ var (
 	filesCollection    = "files"
 	videoCollection    = "audio"
 	audioCollection    = "video"
+	stripeCollection   = "stripe"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
@@ -104,9 +105,10 @@ func NewDatabase(session *mgo.Session) UserDB {
 	pcoll := db.C(photoCollection)
 	acoll := db.C(albumsCollection)
 	fcoll := db.C(filesCollection)
-	vcoll := db.C(filesCollection)
-	aucoll := db.C(filesCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll}
+	vcoll := db.C(videoCollection)
+	aucoll := db.C(audioCollection)
+	stcoll := db.C(stripeCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll}
 }
 
 func DataBase() martini.Handler {
@@ -216,6 +218,7 @@ func (a *Application) DropDatabase() {
 	a.session.DB(dbName).C(guestsCollection).DropCollection()
 	a.session.DB(dbName).C(filesCollection).DropCollection()
 	a.session.DB(dbName).C(statusesCollection).DropCollection()
+	a.session.DB(dbName).C(stripeCollection).DropCollection()
 	a.InitDatabase()
 }
 
@@ -254,6 +257,7 @@ func (a *Application) InitDatabase() {
 	db.C(messagesCollection).EnsureIndex(index)
 	db.C(statusesCollection).EnsureIndex(index)
 	db.C(filesCollection).EnsureIndex(index)
+	db.C(stripeCollection).EnsureIndex(index)
 }
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {

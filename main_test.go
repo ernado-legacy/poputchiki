@@ -61,6 +61,23 @@ func TestDBMethods(t *testing.T) {
 				So(newU2.Online, ShouldEqual, false)
 			})
 
+			Convey("Stripe add", func() {
+				video := Video{}
+				video.Id = bson.NewObjectId()
+				video.User = id
+
+				s, err := db.AddStripeItem(id, video)
+				So(err, ShouldBeNil)
+				Convey("Stripe get", func() {
+					s1, err := db.GetStripeItem(s.Id)
+					So(err, ShouldBeNil)
+					So(s1.Type, ShouldEqual, "video")
+					dta, err := bson.Marshal(s1.Media)
+					So(err, ShouldBeNil)
+					So(bson.Unmarshal(dta, &video), ShouldBeNil)
+				})
+			})
+
 			Convey("Status add", func() {
 				text := "status hello world"
 				s, err := db.AddStatus(id, text)

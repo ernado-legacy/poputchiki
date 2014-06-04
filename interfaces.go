@@ -71,6 +71,9 @@ type UserDB interface {
 
 	AddFile(file *File) (*File, error)
 	AddVideo(video *Video) (*Video, error)
+
+	AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem, error)
+	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
 }
 
 type TokenStorage interface {

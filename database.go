@@ -4,6 +4,8 @@ import (
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -17,6 +19,7 @@ type DB struct {
 	files    *mgo.Collection
 	video    *mgo.Collection
 	audio    *mgo.Collection
+	stripe   *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -331,4 +334,18 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 	_, err := db.photo.Find(bson.M{"_id": id, "user": user}).Apply(change, p)
 	p.Description = photo.Description
 	return p, err
+}
+
+func (db *DB) AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem, error) {
+	i := &StripeItem{}
+	i.Id = bson.NewObjectId()
+	i.User = user
+	i.Media = media
+	i.Type = strings.ToLower(reflect.TypeOf(media).Name())
+	return i, db.stripe.Insert(i)
+}
+
+func (db *DB) GetStripeItem(id bson.ObjectId) (*StripeItem, error) {
+	s := &StripeItem{}
+	return s, db.stripe.FindId(id).One(s)
 }

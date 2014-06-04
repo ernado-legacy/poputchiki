@@ -5,6 +5,7 @@ import (
 	"github.com/ginuerzh/weedo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
+
 	"time"
 )
 
@@ -19,7 +20,7 @@ type User struct {
 	AvatarUrl  string          `json:"avatar_url,omitempty" bson:"-"`
 	Avatar     bson.ObjectId   `json:"avatar,omitempty"     bson:"avatar,omitempty"`
 	Balance    uint            `json:"balance,omitempty"    bson:"balance,omitempty"`
-	LastAction time.Time       `json:"lastaction,omitempty" bson:"lastaction",omitempty"`
+	LastAction time.Time       `json:"last_action,omitempty" bson:"last_action",omitempty"`
 	Favorites  []bson.ObjectId `json:"favorites,omitempty"  bson:"favorites,omitempty"`
 	Blacklist  []bson.ObjectId `json:"blacklist,omitempty"  bson:"blacklist,omitempty"`
 	Countries  []string        `json:"countries,omitempty"  bson:"countries,omitempty"`
@@ -116,7 +117,12 @@ type StatusUpdate struct {
 type StripeItem struct {
 	Id        bson.ObjectId `json:"id"                  bson:"_id"`
 	User      bson.ObjectId `json:"user"                bson:"user"`
-	Image     Image         `json:"image"               bson:"image"`
+	ImageWebp string        `json:"-"                   bson:"image_webp"`
+	ImageJpeg string        `json:"-"                   bson:"image_jpeg"`
+	ImageUrl  string        `json:"image_url,omitempty" bson:"-"`
+	Type      string        `json:"type"                bson:"type"`
+	Url       string        `json:"url"                 bson:"-"`
+	Media     interface{}   `json:"-"                   bson:"media"`
 	Countries []string      `json:"countries,omitempty" bson:"countries,omitempty"`
 	Time      time.Time     `json:"time"                bson:"time"`
 }
