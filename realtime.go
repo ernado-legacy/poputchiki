@@ -89,7 +89,8 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	c := make(chan RealtimeEvent, RELT_BUFF_SIZE)
 
 	conn := realtime.Conn()
-	psc := redis.PubSubConn{conn}
+	psc := redis.PubSubConn{}
+	psc.Conn = conn
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
 	log.Println("starting listeting", key)
@@ -116,17 +117,19 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	return c
 }
 
+func pushAll(event RealtimeEvent, chans map[bson.ObjectId]chan RealtimeEvent) {
+	for _, channel := range chans {
+		channel <- event
+	}
+}
+
 func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 	log.Println("getting realtime channel")
 	c := ReltChannel{make(map[bson.ObjectId](chan RealtimeEvent)), realtime.getChannel(id)}
 	c.events = realtime.getChannel(id)
 	go func() {
 		for event := range c.events {
-			go func() {
-				for _, channel := range c.chans {
-					channel <- event
-				}
-			}()
+			go pushAll(event, c.chans)
 		}
 	}()
 	return c

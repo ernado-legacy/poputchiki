@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -847,4 +848,18 @@ func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decode
 		return Render(ErrorBackend)
 	}
 	return Render(status)
+}
+
+func SearchPeople(r *http.Request) (int, []byte) {
+	q := r.URL.Query()
+	sex := q["sex"]
+	p := Pagination{}
+	if len(q["page"]) > 0 {
+		p.Number, _ = strconv.Atoi(q["page"][0])
+	}
+	if len(q["offset"]) > 0 {
+		p.Offset, _ = strconv.Atoi(q["offset"][0])
+	}
+	log.Println(sex, p)
+	return Render("ok")
 }

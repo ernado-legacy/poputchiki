@@ -10,20 +10,35 @@ import (
 )
 
 type User struct {
-	Id         bson.ObjectId   `json:"id"                   bson:"_id"`
-	FirstName  string          `json:"firstname"            bson:"firstname,omitempty"`
-	SecondName string          `json:"secondname" 	        bson:"secondname,omitempty"`
-	Email      string          `json:"email,omitempty"      bson:"email,omitempty"`
-	Phone      string          `json:"phone,omitempty"      bson:"phone,omitempty"`
-	Password   string          `json:"-"                    bson:"password"`
-	Online     bool            `json:"online,omitempty"     bson:"online,omitempty"`
-	AvatarUrl  string          `json:"avatar_url,omitempty" bson:"-"`
-	Avatar     bson.ObjectId   `json:"avatar,omitempty"     bson:"avatar,omitempty"`
-	Balance    uint            `json:"balance,omitempty"    bson:"balance,omitempty"`
-	LastAction time.Time       `json:"last_action,omitempty" bson:"last_action",omitempty"`
-	Favorites  []bson.ObjectId `json:"favorites,omitempty"  bson:"favorites,omitempty"`
-	Blacklist  []bson.ObjectId `json:"blacklist,omitempty"  bson:"blacklist,omitempty"`
-	Countries  []string        `json:"countries,omitempty"  bson:"countries,omitempty"`
+	Id         bson.ObjectId   `json:"id"                     bson:"_id"`
+	FirstName  string          `json:"firstname"              bson:"firstname,omitempty"`
+	SecondName string          `json:"secondname"             bson:"secondname,omitempty"`
+	Email      string          `json:"email,omitempty"        bson:"email,omitempty"`
+	Phone      string          `json:"phone,omitempty"        bson:"phone,omitempty"`
+	Password   string          `json:"-"                      bson:"password"`
+	Online     bool            `json:"online,omitempty"       bson:"online,omitempty"`
+	AvatarUrl  string          `json:"avatar_url,omitempty"   bson:"-"`
+	Avatar     bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
+	Balance    uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
+	Age        uint            `json:"age,omitempty"          bson:"age,omitempty"`
+	LastAction time.Time       `json:"last_action,omitempty"  bson:"last_action,omitempty"`
+	Favorites  []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
+	Blacklist  []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
+	Countries  []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
+}
+
+// additional user info
+type UserInfo struct {
+	Id           bson.ObjectId `json:"id"                     bson:"_id"`
+	Weight       uint          `json:"weight,omitempty"       bson:"weight,omitempty"`
+	Growth       uint          `json:"growth,omitempty"       bson:"growth,omitempty"`
+	Destinations []string      `json:"destinations,omitempty" bson:"destinations,omitempty"`
+	Seasons      []string      `json:"seasons,omitempty"      bson:"seasons,omitempty"`
+}
+
+type Pagination struct {
+	Number int
+	Offset int
 }
 
 const (
@@ -68,6 +83,8 @@ func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
 		u.AvatarUrl = url + suffix
 	}
 }
+
+// func (v *Video) SetUrl(c *weedo.Client)
 
 type Guest struct {
 	Id    bson.ObjectId `json:"id"    bson:"_id"`
@@ -145,11 +162,11 @@ type Image struct {
 
 type Album struct {
 	Id        bson.ObjectId   `json:"id,omitempty"          bson:"_id,omitempty"`
-	User      bson.ObjectId   `json:"user,omitempty""                  bson:"user"`
+	User      bson.ObjectId   `json:"user,omitempty"        bson:"user"`
 	ImageWebp string          `json:"-"                     bson:"image_webp"`
 	ImageJpeg string          `json:"-"                     bson:"image_jpeg"`
 	ImageUrl  string          `json:"image_url,omitempty"   bson:"-"`
-	Time      time.Time       `json:"time"         		    bson:"time"`
+	Time      time.Time       `json:"time"              bson:"time"`
 	Photo     []bson.ObjectId `json:"photo,omitempty"       bson:"photo,omitempty"`
 }
 
@@ -163,7 +180,7 @@ type Photo struct {
 	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
-	Time          time.Time     `json:"time"         		  bson:"time"`
+	Time          time.Time     `json:"time"                  bson:"time"`
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }
 
@@ -177,7 +194,7 @@ type Video struct {
 	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
-	Time          time.Time     `json:"time"         		  bson:"time"`
+	Time          time.Time     `json:"time"                  bson:"time"`
 	Duration      int64         `json:"duration"              bson:"duration"`
 }
 
@@ -189,6 +206,6 @@ type Audio struct {
 	AudioUrl     string        `json:"url"                   bson:"-"`
 	ThumbnailUrl string        `json:"thumbnail_url"         bson:"-"`
 	Description  string        `json:"description,omitempty" bson:"description,omitempty"`
-	Time         time.Time     `json:"time"         		 bson:"time"`
+	Time         time.Time     `json:"time"                  bson:"time"`
 	Duration     int64         `json:"duration"              bson:"duration"`
 }

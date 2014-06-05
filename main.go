@@ -196,6 +196,7 @@ func NewApp() *Application {
 		r.Post("/video", UploadVideo)
 		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)
+		r.Get("/search", SearchPeople)
 	}, NeedAuth)
 
 	a := &Application{session, p, m}
