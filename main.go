@@ -150,6 +150,7 @@ func NewApp() *Application {
 	m.Use(WebpWrapper)
 	m.Use(AudioWrapper)
 	m.Use(VideoWrapper)
+	m.Use(PaginationWrapper)
 	m.Use(DataBase())
 	// m.Map(db)
 	m.Map(tokenStorage)

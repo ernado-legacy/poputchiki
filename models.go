@@ -37,7 +37,7 @@ type UserInfo struct {
 }
 
 type Pagination struct {
-	Number int
+	Count  int
 	Offset int
 }
 

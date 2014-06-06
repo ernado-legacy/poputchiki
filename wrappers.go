@@ -9,6 +9,11 @@ import (
 	"strconv"
 )
 
+const (
+	QUERY_PAGINATION_COUNT  = "count"
+	QUERY_PAGINATION_OFFSET = "offset"
+)
+
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Upgrade") != "" {
 		log.Println("not setting header")
@@ -38,6 +43,20 @@ func Render(value interface{}) (int, []byte) {
 	default:
 		return http.StatusOK, j
 	}
+}
+
+func PaginationWrapper(c martini.Context, r *http.Request) {
+	q := r.URL.Query()
+	p := Pagination{}
+
+	if len(q[QUERY_PAGINATION_COUNT]) == 1 {
+		p.Count, _ = strconv.Atoi(q[QUERY_PAGINATION_COUNT][0])
+	}
+	if len(q[QUERY_PAGINATION_OFFSET]) == 1 {
+		p.Offset, _ = strconv.Atoi(q[QUERY_PAGINATION_OFFSET][0])
+	}
+
+	c.Map(p)
 }
 
 func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter) {
