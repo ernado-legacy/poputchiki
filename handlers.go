@@ -2,22 +2,19 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/ginuerzh/weedo"
 	"github.com/rainycape/magick"
-	// "github.com/go-martini/martini"
-	"bytes"
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
-	// "strings"
-	// "mime/multipart"
-	"errors"
-	"fmt"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -44,6 +41,15 @@ const (
 	FORM_PHONE               = "phone"
 	FORM_TEXT                = "text"
 	FORM_FILE                = "file"
+	FILTER_SEX               = "sex"
+	FILTER_SEASON            = "season"
+	FILTER_AGE_MIN           = "agemin"
+	FILTER_AGE_MAX           = "agemax"
+	FILTER_WEIGHT_MIN        = "weightmin"
+	FILTER_WEIGHT_MAX        = "weightmax"
+	FILTER_DESTINATION       = "destination"
+	FILTER_GROWTH_MIN        = "growthmin"
+	FILTER_GROWTH_MAX        = "growthmax"
 )
 
 func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept) (int, []byte) {
@@ -849,8 +855,23 @@ func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decode
 	return Render(status)
 }
 
-func SearchPeople(pagination Pagination, r *http.Request) (int, []byte) {
-	log.Printf("%d count, %d offset", pagination.Count, pagination.Offset)
-	q := r.URL.Query()
-	return Render(q["sex"])
+func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept) (int, []byte) {
+	c := weedo.NewClient(weedHost, weedPort)
+	query, err := NewQuery(r.URL.Query())
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBadRequest)
+	}
+	result, err := db.Search(query, pagination.Count, pagination.Offset)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	log.Println(query)
+	for key, _ := range result {
+		result[key].Prepare(c, db, webpAccept)
+	}
+
+	return Render(result)
 }

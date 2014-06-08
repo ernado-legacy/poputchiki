@@ -42,7 +42,11 @@ func TestDBMethods(t *testing.T) {
 			u.Password = "test"
 			u.Id = bson.NewObjectId()
 			id := u.Id
+			u.Birthday = time.Now().AddDate(-25, 0, 0)
 			u.Email = "test@test.te"
+			u.Sex = SEX_MALE
+			u.Growth = 180
+			u.Seasons = []string{SEASON_SUMMER, SEASON_SPRING}
 			err = db.Add(&u)
 			So(err, ShouldBeNil)
 			Convey("Balance update", func() {
@@ -51,6 +55,88 @@ func TestDBMethods(t *testing.T) {
 				newU := db.Get(id)
 				So(newU.Balance, ShouldEqual, 50)
 				So(db.DecBalance(id, 100), ShouldNotBeNil)
+			})
+			Convey("Search", func() {
+				Convey("Growth", func() {
+					result, err := db.Search(&SearchQuery{GrowthMin: 175, GrowthMax: 186}, 0, 0)
+					So(err, ShouldBeNil)
+					found := false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					result, err = db.Search(&SearchQuery{GrowthMin: 160, GrowthMax: 179}, 0, 0)
+					So(err, ShouldBeNil)
+					found = false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeFalse)
+				})
+				Convey("Season", func() {
+					result, err := db.Search(&SearchQuery{Seasons: []string{SEASON_AUTUMN, SEASON_SUMMER}}, 0, 0)
+					So(err, ShouldBeNil)
+					found := false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					result, err = db.Search(&SearchQuery{Seasons: []string{SEASON_WINTER, SEASON_AUTUMN}}, 0, 0)
+					So(err, ShouldBeNil)
+					found = false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeFalse)
+				})
+				Convey("Sex", func() {
+					result, err := db.Search(&SearchQuery{Sex: SEX_MALE}, 0, 0)
+					So(err, ShouldBeNil)
+					found := false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					result, err = db.Search(&SearchQuery{Sex: SEX_FEMALE}, 0, 0)
+					So(err, ShouldBeNil)
+					found = false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeFalse)
+				})
+				Convey("Age", func() {
+					result, err := db.Search(&SearchQuery{AgeMin: 18, AgeMax: 26}, 0, 0)
+					So(err, ShouldBeNil)
+					found := false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					result, err = db.Search(&SearchQuery{AgeMax: 23}, 0, 0)
+					So(err, ShouldBeNil)
+					found = false
+					for _, item := range result {
+						if item.Id == u.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeFalse)
+				})
 			})
 			Convey("Status update", func() {
 				db.SetOnline(id)
@@ -75,6 +161,17 @@ func TestDBMethods(t *testing.T) {
 					dta, err := bson.Marshal(s1.Media)
 					So(err, ShouldBeNil)
 					So(bson.Unmarshal(dta, &video), ShouldBeNil)
+				})
+				Convey("In stripe", func() {
+					stripe, err := db.GetStripe(0, 0)
+					So(err, ShouldBeNil)
+					found := false
+					for _, item := range stripe {
+						if item.Id == s.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
 				})
 			})
 

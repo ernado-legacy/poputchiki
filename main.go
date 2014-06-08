@@ -152,7 +152,6 @@ func NewApp() *Application {
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
 	m.Use(DataBase())
-	// m.Map(db)
 	m.Map(tokenStorage)
 	m.Map(realtime)
 	m.Group("/api/auth", func(r martini.Router) {

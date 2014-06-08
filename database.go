@@ -1,12 +1,18 @@
 package main
 
 import (
+	"errors"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"reflect"
 	"strings"
 	"time"
+)
+
+const (
+	STRIPE_COUNT = 20
+	SEARCH_COUNT = 40
 )
 
 type DB struct {
@@ -348,4 +354,59 @@ func (db *DB) AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem,
 func (db *DB) GetStripeItem(id bson.ObjectId) (*StripeItem, error) {
 	s := &StripeItem{}
 	return s, db.stripe.FindId(id).One(s)
+}
+
+func (db *DB) GetStripe(count, offset int) ([]*StripeItem, error) {
+	s := []*StripeItem{}
+	if count == 0 {
+		count = STRIPE_COUNT
+	}
+	return s, db.stripe.Find(nil).Skip(offset).Limit(count).All(&s)
+}
+
+func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
+	if count == 0 {
+		count = SEARCH_COUNT
+	}
+
+	query := q.ToBson()
+	log.Println(query)
+	u := []*User{}
+
+	return u, db.users.Find(query).Skip(offset).Limit(count).All(&u)
+}
+
+func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error) {
+	if count == 0 {
+		count = SEARCH_COUNT
+	}
+
+	statuses := []*StatusUpdate{}
+	query := q.ToBson()
+
+	u := []*User{}
+	query["statusupdate"] = bson.M{"$exists": true}
+	err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(u)
+	users := make([]bson.ObjectId, len(u))
+	for i, user := range u {
+		users[i] = user.Id
+	}
+	if err != nil {
+		return statuses, err
+	}
+	err = db.statuses.Find(bson.M{"user": bson.M{"$in": users}}).All(&statuses)
+
+	if len(statuses) != len(users) {
+		return statuses, errors.New("unexpected length")
+	}
+
+	for i, user := range u {
+		statuses[i].ImageJpeg = user.AvatarJpeg
+		statuses[i].ImageWebp = user.AvatarWebp
+	}
+	if err != nil {
+		return statuses, err
+	}
+
+	return statuses, err
 }

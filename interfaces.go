@@ -74,6 +74,9 @@ type UserDB interface {
 
 	AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem, error)
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
+	GetStripe(count, offset int) ([]*StripeItem, error)
+
+	Search(q *SearchQuery, count, offset int) ([]*User, error)
 }
 
 type TokenStorage interface {
