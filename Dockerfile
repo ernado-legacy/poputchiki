@@ -15,7 +15,16 @@ ADD id_rsa /root/.ssh/id_rsa
 ADD id_rsa.pub /root/.ssh/id_rsa.pub
 RUN chmod 700 /root/.ssh/id_rsa
 
-RUN version=alpha1 git clone git@gitlab.cydev.ru:cydev/poputchiki-api.git /go/src/gitlab.cydev.ru/cydev/poputchiki-api
+# building imagemagick
+RUN apt-get install wget -y
+RUN wget http://www.imagemagick.org/download/ImageMagick.tar.gz
+RUN tar xvzf ImageMagick.tar.gz
+RUN apt-get build-dep imagemagick -y
+RUN apt-get install libwebp-dev devscripts -y
+RUN cd  ImageMagick-* && ./configure
+RUN make -j $(nproc)
+
+RUN version=alpha1 git clone git@cydev.ru:cydev/poputchiki-api.git /go/src/gitlab.cydev.ru/cydev/poputchiki-api
 WORKDIR /go/src/gitlab.cydev.ru/cydev/poputchiki-api
 RUN go get .
 RUN go install

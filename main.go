@@ -34,7 +34,7 @@ var (
 	processes          = runtime.NumCPU()
 	redisName          = projectName
 	redisAddr          = ":6379"
-	weedHost           = "localhost"
+	weedHost           = "msk1.cydev.ru"
 	weedPort           = 9333
 )
 
@@ -272,7 +272,7 @@ func main() {
 	projectNameF := flag.String("name", "poputchiki", "project name")
 	mongoHostF := flag.String("mongo", "localhost", "mongo host")
 	redisAddrF := flag.String("redis", ":6379", "redis host")
-	weedHostF := flag.String("weed", "localhost", "weed host")
+	weedHostF := flag.String("weed", "msk1.cydev.ru", "weed host")
 	flag.Parse()
 	projectName = *projectNameF
 	dbName = projectName
