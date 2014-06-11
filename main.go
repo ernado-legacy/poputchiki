@@ -267,7 +267,6 @@ func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	a := NewApp()
 	saltF := flag.String("salt", "salt", "salt")
 	projectNameF := flag.String("name", "poputchiki", "project name")
 	mongoHostF := flag.String("mongo", "localhost", "mongo host")
@@ -281,6 +280,7 @@ func main() {
 	mongoHost = *mongoHostF
 	weedHost = *weedHostF
 	salt = *saltF
+	a := NewApp()
 	defer a.Close()
 	a.Run()
 }
