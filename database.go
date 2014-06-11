@@ -204,13 +204,20 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 }
 
 func (db *DB) AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error) {
-	p := StatusUpdate{}
+	p := &StatusUpdate{}
 	p.Id = bson.NewObjectId()
 	p.Text = text
 	p.Time = time.Now()
 	p.User = u
 
-	return &p, db.statuses.Insert(&p)
+	if err := db.statuses.Insert(p); err != nil {
+		return nil, err
+	}
+
+	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": time.Now()}}}
+	_, 	err := db.users.FindId(u).Apply(update, &User{})
+
+	return p, err
 }
 
 func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error) {

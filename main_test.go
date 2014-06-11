@@ -4,27 +4,26 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-
 	. "github.com/smartystreets/goconvey/convey"
-	"io"
+	// "io"
 	"io/ioutil"
 	"labix.org/v2/mgo/bson"
-	"log"
-	"mime/multipart"
+	// "log"
+	// "mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
+	// "os"
+	// "path/filepath"
 	"testing"
 	"time"
 )
 
-func TestEtcd(t *testing.T) {
-	Convey("etcd connect", t, func() {
-		So(loadConfig(), ShouldBeNil)
-	})
-}
+// func TestEtcd(t *testing.T) {
+// 	Convey("etcd connect", t, func() {
+// 		So(loadConfig(), ShouldBeNil)
+// 	})
+// }
 
 func TestDBMethods(t *testing.T) {
 	dbName = "poputchiki_dev_db"
@@ -255,78 +254,78 @@ func TestDBMethods(t *testing.T) {
 	})
 }
 
-func TestUpload(t *testing.T) {
-	username := "test@test.ru"
-	password := "secretsecret"
-	redisName = "poputchiki_test_upload"
-	dbName = "poputchiki_dev_upload"
-	path := "test/image.jpg"
-	file, err := os.Open(path)
-	a := NewApp()
-	defer a.Close()
-	a.DropDatabase()
+// func TestUpload(t *testing.T) {
+// 	username := "test@test.ru"
+// 	password := "secretsecret"
+// 	redisName = "poputchiki_test_upload"
+// 	dbName = "poputchiki_dev_upload"
+// 	path := "test/image.jpg"
+// 	file, err := os.Open(path)
+// 	a := NewApp()
+// 	defer a.Close()
+// 	a.DropDatabase()
 
-	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(func() {
-			a.DropDatabase()
-		})
-		So(err, ShouldBeNil)
-		res := httptest.NewRecorder()
-		// sending registration request
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		a.ServeHTTP(res, req)
+// 	Convey("Registration with unique username and valid password should be successfull", t, func() {
+// 		Reset(func() {
+// 			a.DropDatabase()
+// 		})
+// 		So(err, ShouldBeNil)
+// 		res := httptest.NewRecorder()
+// 		// sending registration request
+// 		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+// 		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+// 		a.ServeHTTP(res, req)
 
-		// reading response
-		So(res.Code, ShouldEqual, http.StatusOK)
-		tokenBody, _ := ioutil.ReadAll(res.Body)
-		token := &Token{}
-		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
+// 		// reading response
+// 		So(res.Code, ShouldEqual, http.StatusOK)
+// 		tokenBody, _ := ioutil.ReadAll(res.Body)
+// 		token := &Token{}
+// 		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
 
-		res = httptest.NewRecorder()
-		album := &Album{}
-		albumJs, err := json.Marshal(album)
-		buf := bytes.NewReader(albumJs)
-		So(err, ShouldBeNil)
-		req, _ = http.NewRequest("PUT", "/api/album?token="+token.Token, buf)
-		a.ServeHTTP(res, req)
-		So(res.Code, ShouldEqual, http.StatusOK)
-		albumJs, err = ioutil.ReadAll(res.Body)
-		So(err, ShouldBeNil)
-		So(json.Unmarshal(albumJs, album), ShouldBeNil)
+// 		res = httptest.NewRecorder()
+// 		album := &Album{}
+// 		albumJs, err := json.Marshal(album)
+// 		buf := bytes.NewReader(albumJs)
+// 		So(err, ShouldBeNil)
+// 		req, _ = http.NewRequest("PUT", "/api/album?token="+token.Token, buf)
+// 		a.ServeHTTP(res, req)
+// 		So(res.Code, ShouldEqual, http.StatusOK)
+// 		albumJs, err = ioutil.ReadAll(res.Body)
+// 		So(err, ShouldBeNil)
+// 		So(json.Unmarshal(albumJs, album), ShouldBeNil)
 
-		Convey("Request should completed", func() {
-			So(err, ShouldBeNil)
-			defer file.Close()
-			res := httptest.NewRecorder()
-			body := &bytes.Buffer{}
-			writer := multipart.NewWriter(body)
-			part, err := writer.CreateFormFile("file", filepath.Base(path))
-			a.DropDatabase()
-			So(err, ShouldBeNil)
-			_, err = io.Copy(part, file)
-			So(err, ShouldBeNil)
-			So(writer.Close(), ShouldBeNil)
-			req, err := http.NewRequest("POST", "/api/album/"+album.Id.Hex()+"/photo/?token="+token.Token, body)
-			So(err, ShouldBeNil)
-			req.Header.Add("Content-type", writer.FormDataContentType())
-			a.ServeHTTP(res, req)
-			So(res.Code, ShouldEqual, http.StatusOK)
-			imageBody, _ := ioutil.ReadAll(res.Body)
-			image := &Photo{}
-			log.Println(string(imageBody))
-			So(json.Unmarshal(imageBody, image), ShouldBeNil)
+// 		Convey("Request should completed", func() {
+// 			So(err, ShouldBeNil)
+// 			defer file.Close()
+// 			res := httptest.NewRecorder()
+// 			body := &bytes.Buffer{}
+// 			writer := multipart.NewWriter(body)
+// 			part, err := writer.CreateFormFile("file", filepath.Base(path))
+// 			a.DropDatabase()
+// 			So(err, ShouldBeNil)
+// 			_, err = io.Copy(part, file)
+// 			So(err, ShouldBeNil)
+// 			So(writer.Close(), ShouldBeNil)
+// 			req, err := http.NewRequest("POST", "/api/album/"+album.Id.Hex()+"/photo/?token="+token.Token, body)
+// 			So(err, ShouldBeNil)
+// 			req.Header.Add("Content-type", writer.FormDataContentType())
+// 			a.ServeHTTP(res, req)
+// 			So(res.Code, ShouldEqual, http.StatusOK)
+// 			imageBody, _ := ioutil.ReadAll(res.Body)
+// 			image := &Photo{}
+// 			log.Println(string(imageBody))
+// 			So(json.Unmarshal(imageBody, image), ShouldBeNil)
 
-			Convey("File must be able to download", func() {
-				req, _ = http.NewRequest("GET", image.ImageUrl, nil)
-				client := &http.Client{}
-				res, err := client.Do(req)
-				So(err, ShouldBeNil)
-				So(res.StatusCode, ShouldEqual, http.StatusOK)
-			})
-		})
-	})
-}
+// 			Convey("File must be able to download", func() {
+// 				req, _ = http.NewRequest("GET", image.ImageUrl, nil)
+// 				client := &http.Client{}
+// 				res, err := client.Do(req)
+// 				So(err, ShouldBeNil)
+// 				So(res.StatusCode, ShouldEqual, http.StatusOK)
+// 			})
+// 		})
+// 	})
+// }
 
 func TestRealtime(t *testing.T) {
 	redisName = "poputchiki_test_realtime"
@@ -514,8 +513,7 @@ func TestMethods(t *testing.T) {
 			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
 			u := User{}
 			u.Id = token1.Id
-			u.FirstName = firstname
-			u.SecondName = secondname
+			u.Name = firstname
 			u.Phone = phone
 			uJson, err := json.Marshal(u)
 			uReader := bytes.NewReader(uJson)
@@ -537,8 +535,7 @@ func TestMethods(t *testing.T) {
 				u := User{}
 				userBody, _ := ioutil.ReadAll(res.Body)
 				json.Unmarshal(userBody, &u)
-				So(u.FirstName, ShouldEqual, firstname)
-				So(u.SecondName, ShouldEqual, secondname)
+				So(u.Name, ShouldEqual, firstname)
 				So(u.Phone, ShouldEqual, phone)
 				a.DropDatabase()
 			})

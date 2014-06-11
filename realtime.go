@@ -22,6 +22,7 @@ const (
 	REALTIME_CHANNEL_KEY = "channel"
 	RELT_BUFF_SIZE       = 100
 	RELT_WS_BUFF_SIZE    = 10
+	RELT_PING_RATE_MS    = 1000
 )
 
 type RealtimeRedis struct {
@@ -72,12 +73,36 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	c := realtime.GetWSChannel(t.Id)
-	defer realtime.CloseWs(c)
+
+	connClosed := make(chan bool, 10)
+
+	go func() {
+		<-connClosed
+		realtime.CloseWs(c)
+		log.Println("connection closed")
+	}()
 	conn.WriteJSON(t)
+
+	conn.SetPongHandler(func(s string) error {
+		log.Println("pong")
+		return nil
+	})
+
+	go func() {
+		for {
+			time.Sleep(time.Millisecond * RELT_PING_RATE_MS)
+			err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(time.Second*5))
+			if err != nil {
+				connClosed <- true
+				return
+			}
+		}
+	}()
+
 	for event := range c.channel {
 		err := conn.WriteJSON(event)
 		if err != nil {
-			log.Println(err)
+			connClosed <- true
 			return Render(ErrorBackend)
 		}
 	}
@@ -126,7 +151,6 @@ func pushAll(event RealtimeEvent, chans map[bson.ObjectId]chan RealtimeEvent) {
 func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 	log.Println("getting realtime channel")
 	c := ReltChannel{make(map[bson.ObjectId](chan RealtimeEvent)), realtime.getChannel(id)}
-	c.events = realtime.getChannel(id)
 	go func() {
 		for event := range c.events {
 			go pushAll(event, c.chans)

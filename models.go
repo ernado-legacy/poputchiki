@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ginuerzh/weedo"
 	"labix.org/v2/mgo/bson"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -25,8 +26,7 @@ const (
 
 type User struct {
 	Id           bson.ObjectId   `json:"id"                     bson:"_id"`
-	FirstName    string          `json:"firstname"              bson:"firstname,omitempty"`
-	SecondName   string          `json:"secondname"             bson:"secondname,omitempty"`
+	Name         string          `json:"name"              		bson:"name,omitempty"`
 	Sex          string          `json:"sex,omitempty"          bson:"sex"`
 	Email        string          `json:"email,omitempty"        bson:"email"`
 	Phone        string          `json:"phone,omitempty"        bson:"phone"`
@@ -34,11 +34,13 @@ type User struct {
 	Online       bool            `json:"online,omitempty"       bson:"online,omitempty"`
 	AvatarUrl    string          `json:"avatar_url,omitempty"   bson:"-"`
 	Avatar       bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
-	AvatarWebp   string          `json:"-"                      bson:"image_webp"`
-	AvatarJpeg   string          `json:"-"                      bson:"image_jpeg"`
+	AvatarWebp   string          `json:"-"                      bson:"image_webp,omitempty"`
+	AvatarJpeg   string          `json:"-"                      bson:"image_jpeg,omitempty"`
 	Balance      uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
 	Age          int             `json:"age,omitempty"          bson:"-"`
 	Birthday     time.Time       `json:"birthday,omitempty"     bson:"birthday,omitempty"`
+	City         string          `json:"city,omitempty"         bson:"city,omitempty"`
+	Country      string          `json:"country,omitempty"      bson:"country,omitempty"`
 	Weight       uint            `json:"weight,omitempty"       bson:"weight,omitempty"`
 	Growth       uint            `json:"growth,omitempty"       bson:"growth,omitempty"`
 	Destinations []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
@@ -66,15 +68,9 @@ type SearchQuery struct {
 	WeightMax    int
 	GrowthMin    int
 	GrowthMax    int
-	// FILTER_SEX               = "sex"
-	// FILTER_SEASON            = "season"
-	// FILTER_AGE_MIN           = "agemin"
-	// FILTER_AGE_MAX           = "agemax"
-	// FILTER_WEIGHT_MIN        = "weightmin"
-	// FILTER_WEIGHT_MAX        = "weightmax"
-	// FILTER_DESTINATION       = "destination"
-	// FILTER_GROWTH_MIN        = "growthmin"
-	// FILTER_GROWTH_MAX        = "growthmax"
+	City         string
+	Country      string
+	Text         string
 }
 
 func NewQuery(q url.Values) (*SearchQuery, error) {
@@ -148,7 +144,18 @@ func (q *SearchQuery) ToBson() bson.M {
 		query = append(query, bson.M{"weight": bson.M{"$gte": q.WeightMin, "$lte": q.WeightMax}})
 	}
 
-	return bson.M{"$and": query}
+	if q.City != BLANK {
+		query = append(query, bson.M{"city": q.City})
+	}
+
+	if q.Country != BLANK && q.City == BLANK {
+		query = append(query, bson.M{"country": q.Country})
+	}
+
+	fullQuery := bson.M{"$and": query}
+	m, _ := json.Marshal(fullQuery)
+	log.Println(string(m))
+	return fullQuery
 }
 
 type Pagination struct {
@@ -166,8 +173,7 @@ func UserFromForm(r *http.Request) *User {
 	u.Email = r.FormValue(FORM_EMAIL)
 	u.Password = getHash(r.FormValue(FORM_PASSWORD))
 	u.Phone = r.FormValue(FORM_PHONE)
-	u.FirstName = r.FormValue(FORM_FIRSTNAME)
-	u.SecondName = r.FormValue(FORM_SECONDNAME)
+	u.Name = r.FormValue(FORM_FIRSTNAME)
 	return &u
 }
 
@@ -212,7 +218,9 @@ func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
 func (u *User) Prepare(c *weedo.Client, db UserDB, webp WebpAccept) {
 	u.SetAvatarUrl(c, db, webp)
 	now := time.Now()
-	u.Age = diff(u.Birthday, now)
+	if u.Age != 0 {
+		u.Age = diff(u.Birthday, now)
+	}
 }
 
 // func (v *Video) SetUrl(c *weedo.Client)

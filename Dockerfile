@@ -15,7 +15,7 @@ ADD id_rsa /root/.ssh/id_rsa
 ADD id_rsa.pub /root/.ssh/id_rsa.pub
 RUN chmod 700 /root/.ssh/id_rsa
 
-RUN version=alpha git clone git@gitlab.cydev.ru:cydev/poputchiki-api.git /go/src/gitlab.cydev.ru/cydev/poputchiki-api
+RUN version=alpha1 git clone git@gitlab.cydev.ru:cydev/poputchiki-api.git /go/src/gitlab.cydev.ru/cydev/poputchiki-api
 WORKDIR /go/src/gitlab.cydev.ru/cydev/poputchiki-api
 RUN go get .
 RUN go install

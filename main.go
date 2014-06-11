@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"flag"
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
@@ -267,6 +268,19 @@ func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 func main() {
 	a := NewApp()
+	saltF := flag.String("salt", "salt", "salt")
+	projectNameF := flag.String("name", "poputchiki", "project name")
+	mongoHostF := flag.String("mongo", "localhost", "mongo host")
+	redisAddrF := flag.String("redis", ":6379", "redis host")
+	weedHostF := flag.String("weed", "localhost", "weed host")
+	flag.Parse()
+	projectName = *projectNameF
+	dbName = projectName
+	redisName = projectName
+	redisAddr = *redisAddrF
+	mongoHost = *mongoHostF
+	weedHost = *weedHostF
+	salt = *saltF
 	defer a.Close()
 	a.Run()
 }
