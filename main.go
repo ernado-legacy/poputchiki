@@ -135,10 +135,10 @@ func NewApp() *Application {
 	}
 
 	runtime.GOMAXPROCS(processes)
-	// var db UserDB
+	var db UserDB
 	var tokenStorage TokenStorage
 	var realtime RealtimeInterface
-	// db = NewDatabase(session)
+	db = NewDatabase(session)
 	p := newPool()
 	tokenStorage = &TokenStorageRedis{p}
 	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
@@ -152,9 +152,10 @@ func NewApp() *Application {
 	m.Use(AudioWrapper)
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
-	m.Use(DataBase())
+	// m.Use(DataBase())
 	m.Map(tokenStorage)
 	m.Map(realtime)
+	m.Map(db)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
