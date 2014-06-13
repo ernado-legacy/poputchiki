@@ -405,18 +405,6 @@ func TestMethods(t *testing.T) {
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusNotFound)
 			})
-			Convey("500 InternalServerError - database is dead", func() {
-				a.Close()
-				res := httptest.NewRecorder()
-				err := json.Unmarshal(tokenBody, &token1)
-				So(err, ShouldEqual, nil)
-				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId().Hex(), token1.Token)
-				req, _ := http.NewRequest("GET", reqUrl, nil)
-				a.ServeHTTP(res, req)
-				a = NewApp()
-				a.DropDatabase()
-				So(res.Code, ShouldEqual, http.StatusInternalServerError)
-			})
 		})
 
 		Convey("User PATCH error handling", func() {
@@ -456,20 +444,6 @@ func TestMethods(t *testing.T) {
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusMethodNotAllowed)
 			})
-			Convey("500 InternalServerError - database is dead", func() {
-				a.Close()
-				res := httptest.NewRecorder()
-				err := json.Unmarshal(tokenBody, &token1)
-				So(err, ShouldEqual, nil)
-
-				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId().Hex(), token1.Token)
-				req, _ := http.NewRequest("PATCH", reqUrl, nil)
-				req.PostForm = url.Values{FORM_FIRSTNAME: {firstname}, FORM_SECONDNAME: {secondname}, FORM_PHONE: {phone}}
-				a.ServeHTTP(res, req)
-				a = NewApp()
-				a.DropDatabase()
-				So(res.Code, ShouldEqual, http.StatusInternalServerError)
-			})
 		})
 
 		Convey("Login error handling", func() {
@@ -492,17 +466,6 @@ func TestMethods(t *testing.T) {
 
 				So(res.Code, ShouldEqual, http.StatusUnauthorized)
 				a.DropDatabase()
-			})
-			Convey("500 InternalServerError - database is dead", func() {
-				a.Close()
-				res := httptest.NewRecorder()
-				// trying to log in
-				req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
-				req.PostForm = url.Values{FORM_PASSWORD: {"randompass"}, FORM_EMAIL: {"randomemail"}}
-				a.ServeHTTP(res, req)
-				a = NewApp()
-				a.DropDatabase()
-				So(res.Code, ShouldEqual, http.StatusInternalServerError)
 			})
 		})
 

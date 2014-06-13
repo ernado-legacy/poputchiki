@@ -30,6 +30,7 @@ var (
 	videoCollection    = "audio"
 	audioCollection    = "video"
 	stripeCollection   = "stripe"
+	tokenCollection    = "tokens"
 	mongoHost          = "localhost"
 	processes          = runtime.NumCPU()
 	redisName          = projectName
@@ -140,7 +141,7 @@ func NewApp() *Application {
 	var realtime RealtimeInterface
 	db = NewDatabase(session)
 	p := newPool()
-	tokenStorage = &TokenStorageRedis{p}
+	tokenStorage = &TokenStorageMemory{session.DB(dbName).C(tokenCollection), make(map[string]bson.ObjectId)}
 	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
 
 	m := martini.Classic()
@@ -155,6 +156,7 @@ func NewApp() *Application {
 	// m.Use(DataBase())
 	m.Map(tokenStorage)
 	m.Map(realtime)
+	m.Map(NewAdapter())
 	m.Map(db)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)
@@ -222,6 +224,7 @@ func (a *Application) DropDatabase() {
 	a.session.DB(dbName).C(filesCollection).DropCollection()
 	a.session.DB(dbName).C(statusesCollection).DropCollection()
 	a.session.DB(dbName).C(stripeCollection).DropCollection()
+	a.session.DB(dbName).C(tokenCollection).DropCollection()
 	a.InitDatabase()
 }
 

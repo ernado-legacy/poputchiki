@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/ginuerzh/weedo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
@@ -201,7 +200,7 @@ func diff(t1, t2 time.Time) (years int) {
 	return
 }
 
-func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
+func (u *User) SetAvatarUrl(adapter *WeedAdapter, db UserDB, webp WebpAccept) {
 	photo, err := db.GetPhoto(u.Avatar)
 	if err == nil {
 		suffix := ".jpg"
@@ -210,15 +209,20 @@ func (u *User) SetAvatarUrl(c *weedo.Client, db UserDB, webp WebpAccept) {
 			fid = photo.ThumbnailWebp
 			suffix = ".webp"
 		}
-		url, _, _ := c.GetUrl(fid)
+		url, _ := adapter.GetUrl(fid)
 		u.AvatarUrl = url + suffix
 	}
 }
 
-func (u *User) Prepare(c *weedo.Client, db UserDB, webp WebpAccept) {
-	u.SetAvatarUrl(c, db, webp)
+func (u *User) Prepare(adapter *WeedAdapter, db UserDB, webp WebpAccept) {
+	u.SetAvatarUrl(adapter, db, webp)
 	now := time.Now()
-	if u.Age != 0 {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
+	if u.Birthday.Unix() != 0 {
 		u.Age = diff(u.Birthday, now)
 	}
 }

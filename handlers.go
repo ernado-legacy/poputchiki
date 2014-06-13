@@ -1,5 +1,7 @@
 package main
 
+import unsafe "unsafe"
+
 import (
 	"bufio"
 	"bytes"
@@ -52,9 +54,25 @@ const (
 	FILTER_GROWTH_MAX        = "growthmax"
 )
 
-func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept) (int, []byte) {
-	c := weedo.NewClient(weedHost, weedPort)
-	user := db.Get(id)
+func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept, adapter *WeedAdapter) (int, []byte) {
+	log.Println("TEST")
+	userChannel := make(chan *User)
+	go func() {
+		userChannel <- db.Get(id)
+	}()
+
+	var user *User
+	const infoSize = unsafe.Sizeof(User{})
+	log.Println(infoSize)
+
+	select {
+	case <-time.After(time.Millisecond * 10):
+		log.Println("database get timed out")
+		return Render(ErrorBackend)
+	case u := <-userChannel:
+		user = u
+	}
+
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
@@ -67,7 +85,19 @@ func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept) (int, []byt
 	if t == nil || t.Id != id {
 		user.CleanPrivate()
 	}
-	user.SetAvatarUrl(c, db, webp)
+
+	ok := make(chan time.Time)
+	go func() {
+		user.Prepare(adapter, db, webp)
+		ok <- time.Now()
+	}()
+	select {
+	case <-time.After(time.Millisecond * 70):
+		log.Println("prepare")
+	case <-ok:
+		return Render(user)
+	}
+
 	return Render(user)
 }
 
@@ -855,8 +885,7 @@ func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decode
 	return Render(status)
 }
 
-func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept) (int, []byte) {
-	c := weedo.NewClient(weedHost, weedPort)
+func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)
@@ -870,7 +899,7 @@ func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept 
 
 	log.Println(query)
 	for key, _ := range result {
-		result[key].Prepare(c, db, webpAccept)
+		result[key].Prepare(adapter, db, webpAccept)
 	}
 
 	return Render(result)

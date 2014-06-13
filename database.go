@@ -215,7 +215,7 @@ func (db *DB) AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error) {
 	}
 
 	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": time.Now()}}}
-	_, 	err := db.users.FindId(u).Apply(update, &User{})
+	_, err := db.users.FindId(u).Apply(update, &User{})
 
 	return p, err
 }
