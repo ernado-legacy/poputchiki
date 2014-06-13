@@ -1,0 +1,14 @@
+image: radrydzewski/go:1.2
+env:
+  - GOPATH=/var/cache/drone
+script:
+  - go get .
+  - go build
+  - go test -v
+services:
+  - redis 
+  - mongo
+notify:
+  email:
+    recipients:
+      - ernado@ya.ru
