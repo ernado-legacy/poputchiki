@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ginuerzh/weedo"
 	"github.com/rainycape/magick"
 	"io"
 	"labix.org/v2/mgo/bson"
@@ -362,7 +361,7 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *To
 	return Render(messages)
 }
 
-func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept) (int, []byte) {
+func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept, adapter *WeedAdapter) (int, []byte) {
 	// c := weedo.NewClient(weedHost, weedPort)
 	id := bson.NewObjectId()
 	video := Video{Id: id, User: t.Id, Time: time.Now()}
@@ -432,7 +431,6 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	wg.Add(3)
 	// thumbnail goroutine
 	go func() {
-		c := weedo.NewClient(weedHost, weedPort)
 		log.Println("making screenshot")
 		defer wg.Done()
 		b := bytes.NewBuffer(nil)
@@ -461,13 +459,13 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 		if err != nil {
 			return
 		}
-		fid, purlWebp, _, err := uploadImageToWeed(c, thumbnail, "webp")
+		fid, purlWebp, _, err := uploadImageToWeed(adapter, thumbnail, "webp")
 		if err != nil {
 			log.Println("upload video", id, "error:", err)
 			return
 		}
 		video.ThumbnailWebp = fid
-		fid, purl, _, err := uploadImageToWeed(c, thumbnail, "jpeg")
+		fid, purl, _, err := uploadImageToWeed(adapter, thumbnail, "jpeg")
 		if err != nil {
 			log.Println("upload video", id, "error:", err)
 			return
@@ -593,7 +591,6 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 
 	// upload goroutine
 	go func() {
-		c := weedo.NewClient(weedHost, weedPort)
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 		fileWebm := File{}
@@ -602,7 +599,7 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 		ok = nil
 		go func() {
 			defer wg.Done()
-			fid, purl, size, err := uploadToWeed(c, uploadReaderWebm, "video", "webm")
+			fid, purl, size, err := uploadToWeed(adapter, uploadReaderWebm, "video", "webm")
 			if err != nil {
 				ok = err
 			}
@@ -610,7 +607,7 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 		}()
 		go func() {
 			defer wg.Done()
-			fid, purl, size, err := uploadToWeed(c, uploadReaderMp4, "video", "mp4")
+			fid, purl, size, err := uploadToWeed(adapter, uploadReaderMp4, "video", "mp4")
 			if err != nil {
 				ok = err
 			}
@@ -642,13 +639,13 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
-func uploadToWeed(c *weedo.Client, reader io.Reader, t, format string) (string, string, int64, error) {
-	fid, size, err := c.AssignUpload(t+"."+format, t+"/"+format, reader)
+func uploadToWeed(adapter *WeedAdapter, reader io.Reader, t, format string) (string, string, int64, error) {
+	fid, size, err := adapter.client.AssignUpload(t+"."+format, t+"/"+format, reader)
 	if err != nil {
 		log.Println(t, format, err)
 		return "", "", size, err
 	}
-	purl, _, err := c.GetUrl(fid)
+	purl, err := adapter.GetUrl(fid)
 	if err != nil {
 		log.Println(err)
 		return "", "", size, err
@@ -657,7 +654,7 @@ func uploadToWeed(c *weedo.Client, reader io.Reader, t, format string) (string, 
 	return fid, purl, size, nil
 }
 
-func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (string, string, int64, error) {
+func uploadImageToWeed(adapter *WeedAdapter, image *magick.Image, format string) (string, string, int64, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
@@ -667,7 +664,7 @@ func uploadImageToWeed(c *weedo.Client, image *magick.Image, format string) (str
 			log.Println(err)
 		}
 	}()
-	return uploadToWeed(c, encodeReader, "image", format)
+	return uploadToWeed(adapter, encodeReader, "image", format)
 }
 
 func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
@@ -690,8 +687,7 @@ func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progr
 	}
 }
 
-func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept) (*Photo, error) {
-	c := weedo.NewClient(weedHost, weedPort)
+func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *WeedAdapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -743,7 +739,7 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	// generating abpstract upload function
 	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
 		defer wg.Done()
-		fid, purl, size, err := uploadImageToWeed(c, image, extension)
+		fid, purl, size, err := uploadImageToWeed(adapter, image, extension)
 		*url = purl
 		if err != nil {
 			failed = true
@@ -803,8 +799,8 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	return photo, err
 }
 
-func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept) (int, []byte) {
-	photo, err := uploadPhoto(r, t, realtime, db, webpAccept)
+func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
+	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
@@ -814,8 +810,8 @@ func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, d
 	return Render(photo)
 }
 
-func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept) (int, []byte) {
-	photo, err := uploadPhoto(r, t, realtime, db, webpAccept)
+func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
+	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err != nil {
 		return Render(ErrorBackend)
 	}

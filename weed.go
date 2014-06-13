@@ -19,7 +19,7 @@ type WeedAdapter struct {
 func NewAdapter() *WeedAdapter {
 	w := &WeedAdapter{}
 	w.volumes = make(map[int]string)
-	w.client = weedo.NewClient(weedHost, weedPort)
+	w.client = weedo.NewClient(weedUrl)
 	return w
 }
 
@@ -39,10 +39,11 @@ func (adapter *WeedAdapter) GetUrl(fid string) (url string, err error) {
 	volumeUrl, ok := adapter.volumes[volumeId]
 
 	if !ok {
-		volumeUrl, _, err = adapter.client.Lookup(uint64(volumeId))
+		v, err := adapter.client.Volume(fid[:index], "")
 		if err != nil {
-			return
+			return "", err
 		}
+		volumeUrl = v.PublicUrl
 		adapter.volumes[volumeId] = volumeUrl
 	}
 	url = volumeUrl + "/" + fid

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
@@ -37,6 +38,7 @@ var (
 	redisAddr          = ":6379"
 	weedHost           = "msk1.cydev.ru"
 	weedPort           = 9333
+	weedUrl            = fmt.Sprintf("http://%s:%s", weedHost, weedPort)
 )
 
 func getHash(password string) string {
@@ -283,6 +285,7 @@ func main() {
 	redisAddr = *redisAddrF
 	mongoHost = *mongoHostF
 	weedHost = *weedHostF
+	weedUrl = fmt.Sprintf("http://%s:%s", weedHost, weedPort)
 	salt = *saltF
 	a := NewApp()
 	defer a.Close()
