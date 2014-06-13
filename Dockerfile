@@ -80,11 +80,11 @@ RUN make distclean
 RUN hash -r
 
 # cached pull
-RUN version=alpha4 git clone git@cydev.ru:cydev/poputchiki-api.git /go/src/cydev.ru/cydev/poputchiki-api
+RUN version=alpha5 git clone git@cydev.ru:cydev/poputchiki-api.git /go/src/cydev.ru/cydev/poputchiki-api
 WORKDIR /go/src/cydev.ru/cydev/poputchiki-api
 RUN go get .
 
-RUN varsion=alpha5 git pull
+RUN varsion=alpha6 git pull
 RUN go get .
 RUN go install
 
