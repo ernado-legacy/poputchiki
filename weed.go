@@ -50,6 +50,6 @@ func (adapter *WeedAdapter) GetUrl(fid string) (url string, err error) {
 		volumeUrl = v.PublicUrl
 		adapter.volumes[volumeId] = volumeUrl
 	}
-	url = volumeUrl + "/" + fid
+	url = "http://" + volumeUrl + "/" + fid
 	return
 }
