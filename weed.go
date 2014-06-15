@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/ginuerzh/weedo"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -33,14 +34,17 @@ func (adapter *WeedAdapter) GetUrl(fid string) (url string, err error) {
 	}
 	volumeId, err := strconv.Atoi(fid[:index])
 	if err != nil {
+		log.Println("fid", err)
 		return "", InvalidFid
 	}
 
 	volumeUrl, ok := adapter.volumes[volumeId]
 
 	if !ok {
+		log.Println(fid[:index])
 		v, err := adapter.client.Volume(fid[:index], "")
 		if err != nil {
+			log.Println("weed adapter", err)
 			return "", err
 		}
 		volumeUrl = v.PublicUrl

@@ -266,6 +266,11 @@ type Comment struct {
 	Time time.Time     `json:"time" bson:"time"`
 }
 
+type LoginCredentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type StatusUpdate struct {
 	Id        bson.ObjectId `json:"id"       bson:"_id"`
 	User      bson.ObjectId `json:"user"     bson:"user"`
@@ -280,6 +285,8 @@ type StatusUpdate struct {
 type StripeItem struct {
 	Id        bson.ObjectId `json:"id"                  bson:"_id"`
 	User      bson.ObjectId `json:"user"                bson:"user"`
+	Name      string        `json:"name"                bson:"name"`
+	Age       int           `json:"age,omitempty"       bson:"-"`
 	ImageWebp string        `json:"-"                   bson:"image_webp"`
 	ImageJpeg string        `json:"-"                   bson:"image_jpeg"`
 	ImageUrl  string        `json:"image_url,omitempty" bson:"-"`

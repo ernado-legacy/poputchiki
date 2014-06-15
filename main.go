@@ -38,7 +38,7 @@ var (
 	redisAddr          = ":6379"
 	weedHost           = "msk1.cydev.ru"
 	weedPort           = 9333
-	weedUrl            = fmt.Sprintf("http://%s:%s", weedHost, weedPort)
+	weedUrl            = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 )
 
 func getHash(password string) string {
@@ -285,7 +285,7 @@ func main() {
 	redisAddr = *redisAddrF
 	mongoHost = *mongoHostF
 	weedHost = *weedHostF
-	weedUrl = fmt.Sprintf("http://%s:%s", weedHost, weedPort)
+	weedUrl = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 	salt = *saltF
 	a := NewApp()
 	defer a.Close()

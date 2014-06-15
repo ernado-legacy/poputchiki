@@ -243,6 +243,7 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	}
 	t, err := tokens.Generate(user)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(t)
@@ -281,16 +282,19 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 		return Render(ErrorUserNotFound)
 	}
 
-	userUpdated := &User{}
-	decoder.Decode(userUpdated)
+	e := decoder.Decode(user)
+	if e != nil {
+		log.Println(e)
+		return Render(ErrorBadRequest)
+	}
+	user.Id = user.Id
+	user.Balance = user.Balance
+	user.Password = user.Password
+	user.LastAction = user.LastAction
 
-	userUpdated.Id = user.Id
-	userUpdated.Balance = user.Balance
-	userUpdated.Password = user.Password
-	userUpdated.LastAction = user.LastAction
-
-	err := db.Update(userUpdated)
+	err := db.Update(user)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(user)

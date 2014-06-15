@@ -24,7 +24,7 @@ func TestWeedUrl(t *testing.T) {
 				urlChan <- url
 			}()
 			select {
-			case <-time.After(100 * time.Nanosecond):
+			case <-time.After(200 * time.Nanosecond):
 				So(true, ShouldBeFalse)
 			case url := <-urlChan:
 				So(url, ShouldEqual, "msk1.cydev.ru:8080/5,0a87c48712af")
