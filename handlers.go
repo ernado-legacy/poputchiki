@@ -723,7 +723,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	}
 
 	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
-	progress := make(chan float32, 4)
+	progress := make(chan float32)
 	go realtimeProgress(progress, realtime, t)
 	p, err := uploader.Upload(length, f, progress)
 
@@ -744,8 +744,6 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 		newPhoto.ImageUrl = p.ImageWebp.Url
 		newPhoto.ThumbnailUrl = p.ThumbnailWebp.Url
 	}
-	log.Println(newPhoto)
-
 	return newPhoto, err
 }
 
@@ -849,4 +847,30 @@ func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept 
 	}
 
 	return Render(result)
+}
+
+func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
+	var media interface{}
+	request := &StripeItemRequest{}
+	if decoder.Decode(request) != nil {
+		return Render(ErrorBadRequest)
+	}
+	switch request.Type {
+	case "video":
+		media = db.GetVideo(request.Id)
+	case "audio":
+		media = db.GetAudio(request.Id)
+	case "photo":
+		media, _ = db.GetPhoto(request.Id)
+	default:
+		return Render(ErrorBadRequest)
+	}
+	if media == nil {
+		return Render(ErrorUserNotFound)
+	}
+	s, err := db.AddStripeItem(t.Id, media)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(s)
 }

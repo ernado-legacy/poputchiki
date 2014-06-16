@@ -305,6 +305,26 @@ func (db *DB) AddVideo(video *Video) (*Video, error) {
 	return video, db.video.Insert(video)
 }
 
+func (db *DB) AddAudio(audio *Audio) (*Audio, error) {
+	return audio, db.audio.Insert(audio)
+}
+
+func (db *DB) GetAudio(id bson.ObjectId) *Audio {
+	a := &Audio{}
+	if db.audio.FindId(id).One(a) != nil {
+		return nil
+	}
+	return a
+}
+
+func (db *DB) GetVideo(id bson.ObjectId) *Video {
+	v := &Video{}
+	if db.video.FindId(id).One(v) != nil {
+		return nil
+	}
+	return v
+}
+
 func (db *DB) AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error {
 	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": photo}}}
 	_, err := db.albums.Find(bson.M{"_id": album, "user": user}).Apply(change, &Album{})
@@ -368,7 +388,7 @@ func (db *DB) GetStripe(count, offset int) ([]*StripeItem, error) {
 	if count == 0 {
 		count = STRIPE_COUNT
 	}
-	return s, db.stripe.Find(nil).Skip(offset).Limit(count).All(&s)
+	return s, db.stripe.Find(nil).Sort("-time").Skip(offset).Limit(count).All(&s)
 }
 
 func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {

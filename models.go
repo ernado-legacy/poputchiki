@@ -362,3 +362,8 @@ type Audio struct {
 	Time        time.Time     `json:"time"                  bson:"time"`
 	Duration    int64         `json:"duration"              bson:"duration"`
 }
+
+type StripeItemRequest struct {
+	Id   bson.ObjectId `json:"id"`
+	Type string        `json:"string"`
+}

@@ -72,6 +72,9 @@ type UserDB interface {
 
 	AddFile(file *File) (*File, error)
 	AddVideo(video *Video) (*Video, error)
+	GetVideo(id bson.ObjectId) *Video
+	AddAudio(audio *Audio) (*Audio, error)
+	GetAudio(id bson.ObjectId) *Audio
 
 	AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem, error)
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
