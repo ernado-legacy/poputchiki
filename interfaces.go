@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ernado/gotok"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 )
@@ -79,13 +80,7 @@ type UserDB interface {
 	Search(q *SearchQuery, count, offset int) ([]*User, error)
 }
 
-type TokenStorage interface {
-	Get(hexToken string) (*Token, error)
-	Generate(user *User) (*Token, error)
-	Remove(token *Token) error
-}
-
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
-	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *Token) (int, []byte)
+	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte)
 }

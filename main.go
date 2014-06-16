@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/coreos/go-etcd/etcd"
+	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki-api/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
@@ -139,11 +141,11 @@ func NewApp() *Application {
 
 	runtime.GOMAXPROCS(processes)
 	var db UserDB
-	var tokenStorage TokenStorage
+	var tokenStorage gotok.Storage
 	var realtime RealtimeInterface
 	db = NewDatabase(session)
 	p := newPool()
-	tokenStorage = &TokenStorageMemory{session.DB(dbName).C(tokenCollection), make(map[string]bson.ObjectId)}
+	tokenStorage = gotok.New(session.DB(dbName).C(tokenCollection))
 	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
 
 	m := martini.Classic()
@@ -158,7 +160,7 @@ func NewApp() *Application {
 	// m.Use(DataBase())
 	m.Map(tokenStorage)
 	m.Map(realtime)
-	m.Map(NewAdapter())
+	m.Map(weed.NewAdapter(weedUrl))
 	m.Map(db)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)

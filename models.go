@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ernado/poputchiki-api/weed"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
@@ -200,7 +201,7 @@ func diff(t1, t2 time.Time) (years int) {
 	return
 }
 
-func (u *User) SetAvatarUrl(adapter *WeedAdapter, db UserDB, webp WebpAccept) {
+func (u *User) SetAvatarUrl(adapter *weed.Adapter, db UserDB, webp WebpAccept) {
 	photo, err := db.GetPhoto(u.Avatar)
 	if err == nil {
 		suffix := ".jpg"
@@ -214,7 +215,7 @@ func (u *User) SetAvatarUrl(adapter *WeedAdapter, db UserDB, webp WebpAccept) {
 	}
 }
 
-func (u *User) Prepare(adapter *WeedAdapter, db UserDB, webp WebpAccept) {
+func (u *User) Prepare(adapter *weed.Adapter, db UserDB, webp WebpAccept) {
 	u.SetAvatarUrl(adapter, db, webp)
 	now := time.Now()
 	defer func() {

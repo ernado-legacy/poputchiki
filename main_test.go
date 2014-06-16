@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ernado/gotok"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"io/ioutil"
@@ -18,12 +19,6 @@ import (
 	"testing"
 	"time"
 )
-
-// func TestEtcd(t *testing.T) {
-// 	Convey("etcd connect", t, func() {
-// 		So(loadConfig(), ShouldBeNil)
-// 	})
-// }
 
 func TestDBMethods(t *testing.T) {
 	dbName = "poputchiki_dev_db"
@@ -279,7 +274,7 @@ func TestUpload(t *testing.T) {
 		// reading response
 		So(res.Code, ShouldEqual, http.StatusOK)
 		tokenBody, _ := ioutil.ReadAll(res.Body)
-		token := &Token{}
+		token := &gotok.Token{}
 		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
 
 		res = httptest.NewRecorder()
@@ -362,7 +357,7 @@ func TestMethods(t *testing.T) {
 	a.DropDatabase()
 
 	var tokenBody []byte
-	var token1 Token
+	var token1 gotok.Token
 
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		res := httptest.NewRecorder()
@@ -558,7 +553,7 @@ func TestMethods(t *testing.T) {
 		})
 		Convey("Returned token must be valid", func() {
 			// parsing registration token
-			t := Token{}
+			t := gotok.Token{}
 			err := json.Unmarshal(tokenBody, &t)
 
 			// validating
@@ -591,7 +586,7 @@ func TestMethods(t *testing.T) {
 
 		// tokens for second user
 		var tokenBody2 []byte
-		var token2 Token
+		var token2 gotok.Token
 
 		Convey("Registration with other credentials should be possible", func() {
 			res = httptest.NewRecorder()

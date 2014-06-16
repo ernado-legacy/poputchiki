@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ernado/gotok"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/websocket"
 	"labix.org/v2/mgo/bson"
@@ -10,6 +11,12 @@ import (
 	"reflect"
 	"strings"
 	"time"
+)
+
+const (
+	TOKEN_REDIS_KEY = "tokens"
+	TOKEN_URL_PARM  = "token"
+	REDIS_SEPARATOR = ":"
 )
 
 var upgrader = websocket.Upgrader{
@@ -59,7 +66,7 @@ func chackOrigin(r *http.Request) bool {
 	return true
 }
 
-func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, t *Token) (int, []byte) {
+func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte) {
 	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
 	_, ok := w.(http.Hijacker)
 	if !ok {

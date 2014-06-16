@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ernado/cymedia/photo"
+	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki-api/weed"
 	"github.com/rainycape/magick"
 	"io"
 	"labix.org/v2/mgo/bson"
@@ -53,7 +56,7 @@ const (
 	FILTER_GROWTH_MAX        = "growthmax"
 )
 
-func GetUser(db UserDB, t *Token, id bson.ObjectId, webp WebpAccept, adapter *WeedAdapter) (int, []byte) {
+func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	log.Println("TEST")
 	userChannel := make(chan *User)
 	go func() {
@@ -232,7 +235,7 @@ func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime Realtime
 	return Render("added to guests")
 }
 
-func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
+func Login(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
 	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
 	user := db.GetUsername(username)
 	if user == nil {
@@ -241,7 +244,7 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	if user.Password != getHash(password) {
 		return Render(ErrorAuth)
 	}
-	t, err := tokens.Generate(user)
+	t, err := tokens.Generate(user.Id)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -249,14 +252,14 @@ func Login(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 	return Render(t)
 }
 
-func Logout(db UserDB, r *http.Request, tokens TokenStorage, t *Token) (int, []byte) {
+func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (int, []byte) {
 	if err := tokens.Remove(t); err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render("logged out")
 }
 
-func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
+func Register(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
 	u := UserFromForm(r)
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
@@ -268,7 +271,7 @@ func Register(db UserDB, r *http.Request, tokens TokenStorage) (int, []byte) {
 		return Render(ErrorBadRequest) // todo: change error name
 	}
 
-	t, err := tokens.Generate(u)
+	t, err := tokens.Generate(u.Id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
@@ -306,7 +309,7 @@ func Must(err error) {
 	}
 }
 
-func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *Token, realtime RealtimeInterface) (int, []byte) {
+func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
 	origin := t.Id
 	now := time.Now()
@@ -339,7 +342,7 @@ func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *Token
 	return Render("message sent")
 }
 
-func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
+func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	message, err := db.GetMessage(id)
 	if err != nil {
 		log.Println(err)
@@ -354,7 +357,7 @@ func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int,
 	return Render("message removed")
 }
 
-func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
+func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	messages, err := db.GetMessagesFromUser(t.Id, origin)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -365,7 +368,7 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *To
 	return Render(messages)
 }
 
-func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept, adapter *WeedAdapter) (int, []byte) {
+func UploadVideo(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept, adapter *weed.Adapter) (int, []byte) {
 	// c := weedo.NewClient(weedHost, weedPort)
 	id := bson.NewObjectId()
 	video := Video{Id: id, User: t.Id, Time: time.Now()}
@@ -643,8 +646,8 @@ func UploadVideo(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
-func uploadToWeed(adapter *WeedAdapter, reader io.Reader, t, format string) (string, string, int64, error) {
-	fid, size, err := adapter.client.AssignUpload(t+"."+format, t+"/"+format, reader)
+func uploadToWeed(adapter *weed.Adapter, reader io.Reader, t, format string) (string, string, int64, error) {
+	fid, size, err := adapter.Client().AssignUpload(t+"."+format, t+"/"+format, reader)
 	if err != nil {
 		log.Println(t, format, err)
 		return "", "", size, err
@@ -658,7 +661,7 @@ func uploadToWeed(adapter *WeedAdapter, reader io.Reader, t, format string) (str
 	return fid, purl, size, nil
 }
 
-func uploadImageToWeed(adapter *WeedAdapter, image *magick.Image, format string) (string, string, int64, error) {
+func uploadImageToWeed(adapter *weed.Adapter, image *magick.Image, format string) (string, string, int64, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
@@ -671,7 +674,7 @@ func uploadImageToWeed(adapter *WeedAdapter, image *magick.Image, format string)
 	return uploadToWeed(adapter, encodeReader, "image", format)
 }
 
-func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *Token) {
+func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *gotok.Token) {
 	defer progressWriter.Close()
 	var p float32
 	var read int64
@@ -691,7 +694,23 @@ func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progr
 	}
 }
 
-func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *WeedAdapter) (*Photo, error) {
+func realtimeProgress(progress chan float32, realtime RealtimeInterface, t *gotok.Token) {
+	message := ProgressMessage{t.Id, 0.0}
+	for currentProgress := range progress {
+		message.Progress = currentProgress
+		realtime.Push(t.Id, message)
+	}
+}
+
+func convert(input interface{}, output interface{}) error {
+	inputJson, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(inputJson, output)
+}
+
+func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -703,107 +722,34 @@ func uploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 		return nil, errors.New("bad request")
 	}
 
-	progressReader, progressWriter := io.Pipe()
-	decodeReader := io.TeeReader(f, progressWriter)
+	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
+	progress := make(chan float32, 4)
+	go realtimeProgress(progress, realtime, t)
+	p, err := uploader.Upload(length, f, progress)
 
-	// download progress goroutine
-	go pushProgress(length, 10, progressWriter, progressReader, realtime, t)
-
-	// trying to decode image while receiving it
-	im, err := magick.Decode(decodeReader)
-	if err != nil {
-		return nil, err
+	c := func(input *photo.File) File {
+		output := &File{}
+		output.Id = bson.NewObjectId()
+		output.User = t.Id
+		convert(input, output)
+		db.AddFile(output)
+		return *output
 	}
 
-	height := float64(im.Height())
-	width := float64(im.Width())
-	max := float64(PHOTO_MAX_SIZE)
-
-	// calculating scale-down ratio
-	ratio := max / width
-	if height > width {
-		ratio = max / height
-	}
-
-	// image dimensions is smaller than maximum
-	if height < max && width < max {
-		ratio = 1.0
-	}
-
-	// preparing variables for concurrent uploading/processing
-	failed := false
-	var photoWebp, photoJpeg File
-	var purlJpeg, purlWebp string
-	var thumbWebp, thumbJpeg File
-	var thumbPurlJpeg, thumbPurlWebp string
-
-	wg := new(sync.WaitGroup)
-	wg.Add(6)
-
-	// generating abpstract upload function
-	upload := func(image *magick.Image, url *string, photo *File, extension, format string) {
-		defer wg.Done()
-		fid, purl, size, err := uploadImageToWeed(adapter, image, extension)
-		*url = purl
-		if err != nil {
-			failed = true
-			return
-		}
-		*photo = File{Id: bson.NewObjectId(), Fid: fid, Time: time.Now(), User: t.Id, Type: format, Size: size}
-		go db.AddFile(photo)
-	}
-
-	// resize image and upload to weedfs
-	go func() {
-		defer wg.Done()
-		resized, err := im.Resize(int(width*ratio), int(height*ratio), magick.FBox)
-		if err != nil {
-			failed = true
-			return
-		}
-		go upload(resized, &purlWebp, &photoWebp, WEBP, WEBP_FORMAT)
-		go upload(resized, &purlJpeg, &photoJpeg, JPEG, JPEG_FORMAT)
-	}()
-
-	// make thumbnail and upload to weedfs
-	go func() {
-		defer wg.Done()
-		thumbnail, err := im.CropToRatio(1.0, magick.CSCenter)
-		if err != nil {
-			failed = true
-			return
-		}
-		thumbnail, err = thumbnail.Resize(THUMB_SIZE, THUMB_SIZE, magick.FBox)
-		if err != nil {
-			failed = true
-			return
-		}
-		go upload(thumbnail, &thumbPurlWebp, &thumbWebp, WEBP, WEBP_FORMAT)
-		go upload(thumbnail, &thumbPurlJpeg, &thumbJpeg, JPEG, JPEG_FORMAT)
-	}()
-	wg.Wait()
-
-	if failed {
-		return nil, errors.New("failed")
-	}
-
-	photo, err := db.AddPhoto(t.Id, photoJpeg, photoWebp, thumbJpeg, thumbWebp, BLANK)
-	photo.ImageUrl = purlJpeg
-	photo.ThumbnailUrl = thumbPurlJpeg
-
-	if err != nil {
-		return nil, err
-	}
+	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), BLANK)
+	newPhoto.ImageUrl = p.ImageJpeg.Url
+	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
 
 	if bool(webpAccept) {
-		photo.ImageUrl = purlWebp
-		photo.ThumbnailUrl = thumbPurlWebp
+		newPhoto.ImageUrl = p.ImageWebp.Url
+		newPhoto.ThumbnailUrl = p.ThumbnailWebp.Url
 	}
+	log.Println(newPhoto)
 
-	return photo, err
+	return newPhoto, err
 }
 
-func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
+func UploadPhotoToAlbum(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -814,7 +760,7 @@ func UploadPhotoToAlbum(r *http.Request, t *Token, realtime RealtimeInterface, d
 	return Render(photo)
 }
 
-func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
+func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -822,7 +768,7 @@ func UploadPhoto(r *http.Request, t *Token, realtime RealtimeInterface, db UserD
 	return Render(photo)
 }
 
-func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []byte) {
+func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(status); err != nil {
@@ -835,7 +781,7 @@ func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token) (int, []b
 	return Render(status)
 }
 
-func AddAlbum(db UserDB, t *Token, decoder *json.Decoder) (int, []byte) {
+func AddAlbum(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
 	album := &Album{}
 	if err := decoder.Decode(album); err != nil {
 		log.Println(err)
@@ -850,7 +796,7 @@ func AddAlbum(db UserDB, t *Token, decoder *json.Decoder) (int, []byte) {
 	return Render(album)
 }
 
-func GetStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+func GetStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -858,14 +804,14 @@ func GetStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	return Render(status)
 }
 
-func RemoveStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+func RemoveStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	if err := db.RemoveStatusSecure(t.Id, id); err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render("ok")
 }
 
-func GetCurrentStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
+func GetCurrentStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetCurrentStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -873,7 +819,7 @@ func GetCurrentStatus(db UserDB, t *Token, id bson.ObjectId) (int, []byte) {
 	return Render(status)
 }
 
-func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decoder *json.Decoder) (int, []byte) {
+func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
 	status := &StatusUpdate{}
 	if err := decoder.Decode(status); err != nil {
 		return Render(ErrorBadRequest)
@@ -885,7 +831,7 @@ func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *Token, decode
 	return Render(status)
 }
 
-func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *WeedAdapter) (int, []byte) {
+func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)

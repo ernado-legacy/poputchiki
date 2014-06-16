@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ernado/gotok"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -60,7 +61,7 @@ func PaginationWrapper(c martini.Context, r *http.Request) {
 	c.Map(p)
 }
 
-func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter) {
+func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w http.ResponseWriter) {
 	var hexToken string
 	q := r.URL.Query()
 
@@ -75,7 +76,7 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w htt
 	if err == nil {
 		hexToken = tCookie.Value
 	}
-	tokenChannel := make(chan *Token)
+	tokenChannel := make(chan *gotok.Token)
 	errorChannel := make(chan error)
 	go func() {
 		token, err := tokens.Get(hexToken)
@@ -100,7 +101,7 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w htt
 	}
 }
 
-func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *Token) {
+func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token) {
 	if t.Id != id {
 		log.Println(t.Id.Hex(), id)
 		code, data := Render(ErrorNotAllowed)
@@ -156,7 +157,7 @@ func JsonEncoderWrapper(r *http.Request, c martini.Context) {
 	c.Map(json.NewDecoder(r.Body))
 }
 
-func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.ResponseWriter, parms martini.Params) {
+func IdWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w http.ResponseWriter, parms martini.Params) {
 	hexId := parms["id"]
 	if !bson.IsObjectIdHex(hexId) {
 		code, data := Render(ErrorBadId)
@@ -166,7 +167,7 @@ func IdWrapper(c martini.Context, r *http.Request, tokens TokenStorage, w http.R
 	c.Map(bson.ObjectIdHex(hexId))
 }
 
-func NeedAuth(res http.ResponseWriter, t *Token) {
+func NeedAuth(res http.ResponseWriter, t *gotok.Token) {
 	if t == nil {
 		code, resp := Render(ErrorAuth)
 		res.WriteHeader(code)
