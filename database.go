@@ -434,3 +434,4 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 
 	return statuses, nil
 }
+

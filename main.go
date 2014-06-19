@@ -168,6 +168,7 @@ func NewApp() *Application {
 		r.Post("/logout", NeedAuth, Logout)
 	})
 	m.Group("/api", func(r martini.Router) {
+		r.Get("/token", GetToken)
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)

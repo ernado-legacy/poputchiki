@@ -874,3 +874,7 @@ func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byt
 	}
 	return Render(s)
 }
+
+func GetToken(t *gotok.Token) (int, []byte) {
+	return Render(t)
+}
