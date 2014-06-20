@@ -841,7 +841,7 @@ func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept 
 		return Render(ErrorBackend)
 	}
 
-	log.Println(query)
+	log.Println("query", len(result))
 	for key, _ := range result {
 		result[key].Prepare(adapter, db, webpAccept)
 	}
@@ -873,6 +873,20 @@ func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byt
 		return Render(ErrorBackend)
 	}
 	return Render(s)
+}
+
+func GetStripe(db UserDB, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+	stripe, err := db.GetStripe(pagination.Count, pagination.Offset)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	for _, v := range stripe {
+		if err := v.Prepare(adapter, webp, video, audio); err != nil {
+			return Render(ErrorBackend)
+		}
+	}
+	return Render(stripe)
 }
 
 func GetToken(t *gotok.Token) (int, []byte) {

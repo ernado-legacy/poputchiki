@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/ernado/poputchiki-api/weed"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -228,7 +229,77 @@ func (u *User) Prepare(adapter *weed.Adapter, db UserDB, webp WebpAccept) {
 	}
 }
 
-// func (v *Video) SetUrl(c *weedo.Client)
+func (p Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
+	var err error
+	if webp {
+		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailWebp)
+		if err != nil {
+			return err
+		}
+		p.ImageUrl, err = adapter.GetUrl(p.ImageWebp)
+	} else {
+		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailJpeg)
+		if err != nil {
+			return err
+		}
+		p.ImageUrl, err = adapter.GetUrl(p.ImageJpeg)
+	}
+	return err
+}
+
+func (v Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, _ AudioAccept) error {
+	var err error
+	if video == VA_WEBM {
+		v.VideoUrl, err = adapter.GetUrl(v.VideoWebm)
+	} else if video == VA_MP4 {
+		v.VideoUrl, err = adapter.GetUrl(v.VideoMpeg)
+	}
+	if err != nil {
+		return err
+	}
+	if webp {
+		v.ThumbnailUrl, err = adapter.GetUrl(v.ThumbnailWebp)
+	} else {
+		v.ThumbnailUrl, err = adapter.GetUrl(v.ThumbnailJpeg)
+	}
+	return err
+}
+
+func (audio Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a AudioAccept) error {
+	var err error
+	if a == AA_ACC {
+		audio.AudioUrl, err = adapter.GetUrl(audio.AudioAac)
+	} else if a == AA_OGG {
+		audio.AudioUrl, err = adapter.GetUrl(audio.AudioOgg)
+	}
+	return err
+}
+
+func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+	var err error
+	if webp {
+		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageWebp)
+	} else {
+		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageJpeg)
+	}
+	if err != nil {
+		return err
+	}
+
+	var media PrepareInterface
+	switch stripe.Type {
+	case "video":
+		media = stripe.Media.(Video)
+	case "audio":
+		media = stripe.Media.(Audio)
+	case "photo":
+		media = stripe.Media.(Photo)
+	default:
+		return errors.New("bad type")
+	}
+
+	return media.Prepare(adapter, webp, video, audio)
+}
 
 type Guest struct {
 	Id    bson.ObjectId `json:"id"    bson:"_id"`
@@ -355,7 +426,7 @@ type Video struct {
 type Audio struct {
 	Id          bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`
-	AudioMp3    string        `json:"-"                     bson:"audio_mp3"`
+	AudioAac    string        `json:"-"                     bson:"audio_aac"`
 	AudioOgg    string        `json:"-"                     bson:"audio_ogg"`
 	AudioUrl    string        `json:"url"                   bson:"-"`
 	Description string        `json:"description,omitempty" bson:"description,omitempty"`
@@ -365,5 +436,5 @@ type Audio struct {
 
 type StripeItemRequest struct {
 	Id   bson.ObjectId `json:"id"`
-	Type string        `json:"string"`
+	Type string        `json:"type"`
 }

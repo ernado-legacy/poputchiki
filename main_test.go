@@ -360,6 +360,7 @@ func TestMethods(t *testing.T) {
 	var token1 gotok.Token
 
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
+
 		res := httptest.NewRecorder()
 		// sending registration request
 		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
@@ -369,6 +370,7 @@ func TestMethods(t *testing.T) {
 		// reading response
 		tokenBody, _ = ioutil.ReadAll(res.Body)
 		So(res.Code, ShouldEqual, http.StatusOK)
+
 		Convey("User GET error handling", func() {
 			Convey("400 Bad request", func() {
 				res := httptest.NewRecorder()
@@ -473,6 +475,7 @@ func TestMethods(t *testing.T) {
 			u.Id = token1.Id
 			u.Name = firstname
 			u.Phone = phone
+			u.Sex = "male"
 			uJson, err := json.Marshal(u)
 			uReader := bytes.NewReader(uJson)
 			So(err, ShouldBeNil)
@@ -496,6 +499,27 @@ func TestMethods(t *testing.T) {
 				So(u.Name, ShouldEqual, firstname)
 				So(u.Phone, ShouldEqual, phone)
 				a.DropDatabase()
+			})
+			Convey("Search", func() {
+				res := httptest.NewRecorder()
+				err := json.Unmarshal(tokenBody, &token1)
+				So(err, ShouldEqual, nil)
+				reqUrl := fmt.Sprintf("/api/search/?sex=male&token=%s", token1.Token)
+				req, _ := http.NewRequest("GET", reqUrl, nil)
+				a.ServeHTTP(res, req)
+				a.DropDatabase()
+				So(res.Code, ShouldEqual, http.StatusOK)
+				users := []*User{}
+				userBody, _ := ioutil.ReadAll(res.Body)
+				err = json.Unmarshal(userBody, &users)
+				So(err, ShouldBeNil)
+				found := false
+				for _, value := range users {
+					if value.Name == firstname {
+						found = true
+					}
+				}
+				So(found, ShouldBeTrue)
 			})
 		})
 

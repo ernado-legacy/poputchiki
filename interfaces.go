@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki-api/weed"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 )
@@ -86,4 +87,8 @@ type UserDB interface {
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
 	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte)
+}
+
+type PrepareInterface interface {
+	Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error
 }
