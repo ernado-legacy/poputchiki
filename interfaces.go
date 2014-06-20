@@ -82,6 +82,7 @@ type UserDB interface {
 	GetStripe(count, offset int) ([]*StripeItem, error)
 
 	Search(q *SearchQuery, count, offset int) ([]*User, error)
+	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
 }
 
 type RealtimeInterface interface {

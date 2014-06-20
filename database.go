@@ -412,7 +412,7 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 	query := q.ToBson()
 	u := []*User{}
 	query["statusupdate"] = bson.M{"$exists": true}
-	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(u); err != nil {
+	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
 		return statuses, err
 	}
 	users := make([]bson.ObjectId, len(u))
@@ -430,8 +430,8 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 	for i, user := range u {
 		statuses[i].ImageJpeg = user.AvatarJpeg
 		statuses[i].ImageWebp = user.AvatarWebp
+		statuses[i].Name = user.Name
 	}
 
 	return statuses, nil
 }
-

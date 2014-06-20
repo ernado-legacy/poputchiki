@@ -275,6 +275,15 @@ func (audio Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a
 	return err
 }
 
+func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error) {
+	if webp {
+		u.ImageUrl, err = adapter.GetUrl(u.ImageWebp)
+	} else {
+		u.ImageUrl, err = adapter.GetUrl(u.ImageJpeg)
+	}
+	return err
+}
+
 func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
 	var err error
 	if webp {
@@ -344,14 +353,16 @@ type LoginCredentials struct {
 }
 
 type StatusUpdate struct {
-	Id        bson.ObjectId `json:"id"       bson:"_id"`
-	User      bson.ObjectId `json:"user"     bson:"user"`
-	Time      time.Time     `json:"time"     bson:"time"`
-	Text      string        `json:"text"     bson:"text"`
-	ImageWebp string        `json:"-"        bson:"image_webp"`
-	ImageJpeg string        `json:"-"        bson:"image_jpeg"`
-	ImageUrl  string        `json:"url"      bson:"-"`
-	Comments  []Comment     `json:"comments" bson:"comments"`
+	Id        bson.ObjectId `json:"id"            bson:"_id"`
+	User      bson.ObjectId `json:"user"          bson:"user"`
+	Name      string        `json:"name"          bson:"-"`
+	Age       int           `json:"age,omitempty" bson:"-"`
+	Time      time.Time     `json:"time"          bson:"time"`
+	Text      string        `json:"text"          bson:"text"`
+	ImageWebp string        `json:"-"             bson:"image_webp"`
+	ImageJpeg string        `json:"-"             bson:"image_jpeg"`
+	ImageUrl  string        `json:"url"           bson:"-"`
+	Comments  []Comment     `json:"comments"      bson:"comments"`
 }
 
 type StripeItem struct {

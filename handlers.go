@@ -841,9 +841,27 @@ func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept 
 		return Render(ErrorBackend)
 	}
 
-	log.Println("query", len(result))
 	for key, _ := range result {
 		result[key].Prepare(adapter, db, webpAccept)
+	}
+
+	return Render(result)
+}
+
+func SearchStatuses(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	query, err := NewQuery(r.URL.Query())
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBadRequest)
+	}
+	result, err := db.SearchStatuses(query, pagination.Count, pagination.Offset)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	for key, _ := range result {
+		result[key].Prepare(adapter, webpAccept)
 	}
 
 	return Render(result)

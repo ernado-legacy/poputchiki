@@ -199,6 +199,14 @@ func TestDBMethods(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(s1.Text, ShouldEqual, text)
 				})
+				Convey("Searchable", func() {
+					query := &SearchQuery{}
+					query.Sex = "male"
+					statuses, err := db.SearchStatuses(query, 1, 0)
+					So(err, ShouldBeNil)
+					So(len(statuses), ShouldEqual, 1)
+					So(statuses[0].Id, ShouldEqual, s.Id)
+				})
 				Convey("Actual", func() {
 					newText := "status actual"
 					_, err := db.AddStatus(id, newText)
