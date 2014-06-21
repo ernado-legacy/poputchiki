@@ -303,25 +303,27 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 }
 
 func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
-	// user := db.Get(id)
-	// if user == nil {
-	// 	return Render(ErrorUserNotFound)
-	// }
-
 	query := bson.M{}
+	// decoding json to map
 	e := decoder.Decode(&query)
 	if e != nil {
 		log.Println(e)
 		return Render(ErrorBadRequest)
 	}
+	// removing read-only fields
 	for _, v := range UserReadonlyFields {
 		delete(query, v)
+	}
+	// checking fields
+	if len(query) == 0 {
+		return Render(ErrorBadRequest)
 	}
 	_, err := db.Update(id, query)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
+	// returning updated user
 	return Render(db.Get(id))
 }
 

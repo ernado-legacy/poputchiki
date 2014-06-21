@@ -25,7 +25,7 @@ const (
 	WEIGHT_MAX    = 1000
 )
 
-var UserReadonlyFields = []string{"id", "last_action", "balance", "age", "phone_confirmed", "email_confirmed", "blacklist", "favorites"}
+var UserReadonlyFields = []string{"_id", "last_action", "balance", "age", "phone_confirmed", "email_confirmed", "blacklist", "favorites"}
 
 type User struct {
 	Id             bson.ObjectId   `json:"id"                     bson:"_id"`
