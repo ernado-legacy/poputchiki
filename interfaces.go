@@ -88,6 +88,8 @@ type UserDB interface {
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
 	GetConfirmationToken(token string) *EmailConfirmationToken
 	NewConfirmationTokenValue(id bson.ObjectId, token string) *EmailConfirmationToken
+	ConfirmEmail(id bson.ObjectId) error
+	ConfirmPhone(id bson.ObjectId) error
 
 	UpdateAllStatuses() (*mgo.ChangeInfo, error)
 	SetLastActionNow(id bson.ObjectId) error

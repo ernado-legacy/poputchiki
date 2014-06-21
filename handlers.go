@@ -959,6 +959,11 @@ func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens 
 	if err != nil {
 		return Render(ErrorBackend)
 	}
+	err = db.ConfirmEmail(userToken.Id)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
 	http.SetCookie(w, userToken.GetCookie())
 	return Render("email подтвержден")
 }
@@ -978,6 +983,11 @@ func ConfirmPhone(db UserDB, args martini.Params, w http.ResponseWriter, tokens 
 	}
 	userToken, err := tokens.Generate(tok.User)
 	if err != nil {
+		return Render(ErrorBackend)
+	}
+	err = db.ConfirmPhone(userToken.Id)
+	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	http.SetCookie(w, userToken.GetCookie())

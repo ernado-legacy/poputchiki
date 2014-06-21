@@ -483,3 +483,11 @@ func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
 	query := bson.M{"online": true, "lastaction": bson.M{"$lte": t}}
 	return db.users.UpdateAll(query, bson.M{"$set": bson.M{"online": false}})
 }
+
+func (db *DB) ConfirmEmail(id bson.ObjectId) error {
+	return db.users.UpdateId(id, bson.M{"$set": bson.M{"email_confirmed": true}})
+}
+
+func (db *DB) ConfirmPhone(id bson.ObjectId) error {
+	return db.users.UpdateId(id, bson.M{"$set": bson.M{"phone_confirmed": true}})
+}
