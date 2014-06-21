@@ -303,27 +303,26 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 }
 
 func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
-	user := db.Get(id)
-	if user == nil {
-		return Render(ErrorUserNotFound)
-	}
+	// user := db.Get(id)
+	// if user == nil {
+	// 	return Render(ErrorUserNotFound)
+	// }
 
-	e := decoder.Decode(user)
+	query := bson.M{}
+	e := decoder.Decode(&query)
 	if e != nil {
 		log.Println(e)
 		return Render(ErrorBadRequest)
 	}
-	user.Id = user.Id
-	user.Balance = user.Balance
-	user.Password = user.Password
-	user.LastAction = user.LastAction
-
-	err := db.Update(user)
+	for _, v := range UserReadonlyFields {
+		delete(query, v)
+	}
+	_, err := db.Update(id, query)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	return Render(user)
+	return Render(db.Get(id))
 }
 
 func Must(err error) {

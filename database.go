@@ -55,9 +55,13 @@ func (db *DB) Add(user *User) error {
 	return db.users.Insert(user)
 }
 
-func (db *DB) Update(user *User) error {
-	_, err := db.users.UpsertId(user.Id, &user)
-	return err
+func (db *DB) Update(id bson.ObjectId, update bson.M) (*User, error) {
+	u := &User{}
+	change := mgo.Change{Update: bson.M{"$set": update}}
+
+	_, err := db.users.FindId(id).Apply(change, u)
+
+	return u, err
 }
 
 func (db *DB) Get(id bson.ObjectId) *User {
