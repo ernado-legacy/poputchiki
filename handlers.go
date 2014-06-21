@@ -5,10 +5,13 @@ import unsafe "unsafe"
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ernado/cymedia/photo"
+	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki-api/weed"
 	"github.com/go-martini/martini"
@@ -17,6 +20,7 @@ import (
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -945,4 +949,47 @@ func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens 
 	}
 	http.SetCookie(w, userToken.GetCookie())
 	return Render("email подтвержден")
+}
+
+func ConfirmPhone(db UserDB, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+	codeStr := args["token"]
+	if codeStr == BLANK {
+		return Render(ErrorBadRequest)
+	}
+	h := sha256.New()
+	h.Sum([]byte(codeStr))
+	h.Sum([]byte(salt))
+	val := hex.EncodeToString(h.Sum(nil))
+	tok := db.GetConfirmationToken(val)
+	if tok == nil {
+		return Render(ErrorBadRequest)
+	}
+	userToken, err := tokens.Generate(tok.User)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	http.SetCookie(w, userToken.GetCookie())
+	return Render("телефон подтвержден")
+}
+
+func ConfirmPhoneStart(db UserDB, t *gotok.Token) (int, []byte) {
+	code := rand.Intn(999)
+	codeStr := fmt.Sprintf("%03d", code)
+	h := sha256.New()
+	h.Sum([]byte(codeStr))
+	h.Sum([]byte(salt))
+	token := hex.EncodeToString(h.Sum(nil))
+	db.NewConfirmationTokenValue(t.Id, token)
+	u := db.Get(t.Id)
+	if u == nil {
+		return Render(ErrorBackend)
+	}
+	client := gosmsru.Client{}
+	client.Key = smsKey
+	phone := u.Phone
+	err := client.Send(phone, codeStr)
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+	return Render("ok")
 }

@@ -459,6 +459,13 @@ type EmailConfirmationToken struct {
 	Token string        `bson:"token"`
 }
 
+type PhoneConfirmationToken struct {
+	Id    bson.ObjectId `bson:"_id"`
+	User  bson.ObjectId `bson:"user"`
+	Time  time.Time     `bson:"time"`
+	Token string        `bson:"token"`
+}
+
 type ConfirmationMail struct {
 	Destination string
 	Mail        string

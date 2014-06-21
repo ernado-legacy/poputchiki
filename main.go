@@ -42,6 +42,7 @@ var (
 	redisAddr            = ":6379"
 	mailKey              = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
 	mailDomain           = "mg.cydev.ru"
+	smsKey               = "nil"
 	weedHost             = "msk1.cydev.ru"
 	weedPort             = 9333
 	weedUrl              = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
@@ -173,6 +174,8 @@ func NewApp() *Application {
 	m.Map(db)
 
 	m.Get("/api/confirm/email/:token", ConfirmEmail)
+	m.Get("/api/confirm/phone/start", ConfirmPhoneStart)
+	m.Get("/api/confirm/phone/:token", ConfirmPhone)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
@@ -297,6 +300,7 @@ func main() {
 	flag.BoolVar(&production, "production", false, "environment")
 	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
 	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")
+	flag.StringVar(&smsKey, "sms-key", "80df3a7d-4c8c-ffb4-b197-4dc850443bba", "mailgun domain")
 	flag.Parse()
 	projectName = *projectNameF
 	dbName = projectName

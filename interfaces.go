@@ -86,6 +86,7 @@ type UserDB interface {
 
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
 	GetConfirmationToken(token string) *EmailConfirmationToken
+	NewConfirmationTokenValue(id bson.ObjectId, token string) *EmailConfirmationToken
 }
 
 type RealtimeInterface interface {

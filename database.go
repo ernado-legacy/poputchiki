@@ -438,12 +438,12 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 	return statuses, nil
 }
 
-func (db *DB) NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken {
+func (db *DB) NewConfirmationTokenValue(id bson.ObjectId, token string) *EmailConfirmationToken {
 	t := &EmailConfirmationToken{}
 	t.Id = bson.NewObjectId()
 	t.User = id
 	t.Time = time.Now()
-	t.Token = gotok.Generate(id).Token
+	t.Token = token
 	err := db.conftokens.Insert(t)
 	log.Println("[NewConfirmationToken]", "inserted", t.Token)
 	if err != nil {
@@ -451,6 +451,10 @@ func (db *DB) NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken {
 		return nil
 	}
 	return t
+}
+
+func (db *DB) NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken {
+	return db.NewConfirmationTokenValue(id, gotok.Generate(id).Token)
 }
 
 func (db *DB) GetConfirmationToken(token string) *EmailConfirmationToken {
