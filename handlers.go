@@ -311,8 +311,19 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 		return Render(ErrorBadRequest)
 	}
 	// removing read-only fields
-	for _, v := range UserReadonlyFields {
-		delete(query, v)
+	isWriteable := func(key string) bool {
+		for _, v := range UserWritableFields {
+			if key == v {
+				return true
+			}
+		}
+		return false
+	}
+
+	for k := range query {
+		if !isWriteable(k) {
+			delete(query, k)
+		}
 	}
 	// checking fields
 	if len(query) == 0 {

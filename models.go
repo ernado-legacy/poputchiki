@@ -25,15 +25,16 @@ const (
 	WEIGHT_MAX    = 1000
 )
 
-var UserReadonlyFields = []string{"_id", "last_action", "balance", "age", "phone_confirmed", "email_confirmed", "blacklist", "favorites"}
+var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
+	"city", "country", "weight", "growth", "destinations", "sex"}
 
 type User struct {
 	Id             bson.ObjectId   `json:"id"                     bson:"_id"`
-	Name           string          `json:"name"                   bson:"name,omitempty"`
-	Sex            string          `json:"sex,omitempty"          bson:"sex"`
-	Email          string          `json:"email,omitempty"        bson:"email"`
+	Name           string          `json:"name,omitempty"         bson:"name,omitempty"`
+	Sex            string          `json:"sex,omitempty"          bson:"sex,omitempty"`
+	Email          string          `json:"email,omitempty"        bson:"email,omitempty"`
 	EmailConfirmed bool            `json:"email_confirmed"        bson:"email_confirmed"`
-	Phone          string          `json:"phone,omitempty"        bson:"phone"`
+	Phone          string          `json:"phone,omitempty"        bson:"phone,omitempty"`
 	PhoneConfirmed bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
 	Password       string          `json:"-"                      bson:"password"`
 	Online         bool            `json:"online,omitempty"       bson:"online,omitempty"`
