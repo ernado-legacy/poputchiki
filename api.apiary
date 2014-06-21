@@ -6,6 +6,7 @@ HOST: http://www.google.com
 # Group Аутентификация и логин
 Методы аутентификации и управление сессией для **Poputchiki api**
 
+
 ## Token [/api/auth/register]
 + Model (application/json)
     Токен, содержащий в себе id пользователя и значение token
@@ -31,6 +32,11 @@ HOST: http://www.google.com
 + Response 200 (application/json)
         [Token][]
 
+## Token [/api/token]
+### Получить токен [GET]
++ Response 200 (application/json)
+        [Token][]
+
 ## Выход [/api/auth/logout]
 ### Завершение сессии [POST]
 + Response 200
@@ -47,31 +53,35 @@ HOST: http://www.google.com
             [
                 {
                     "id": "536a40ae67188e1496c09862",
-                    "firstname": "Ivan",
-                    "secondname": "Ivanov",
-                    "email": "ivanivanov@yandex.ru",                                        // private
-                    "phone": "+79181112233",                                                // private
+                    "name": "Ivan",
                     "online": true,
-                    "avatar_url": "http://cdn1.poputchiki.ru:8080/7,126489.webp"
-                    "balance": 106,                                                         // private
-                    "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
-                    "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
-                    "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
-                    "countries": ["Russia", "Ukraine", "USA"]
+                    "age": 21,                                                             
+                    "city": "Москва",
+                    "country": "Россия",
+                    "weight": 80,
+                    "growth": 181,
+                    "sex":"male",
+                    "avatar_url": "msk1.cydev.ru:8080/3,1231321.webp"                      
+                    "countries":  ["Россия", "Украина", "США"]
+                    "destinations": ["США"],
+                    "last_action": "2014-06-04T14:09:44.306190209+04:00",         
+                    "sesons": ["spring", "autumn", "summer", "winter"]
                 },
                 {
                     "id": "536a40ae67188e1496c09862",
-                    "firstname": "Vasia",
-                    "secondname": "Petrov",
-                    "email": "ivanpetrov@yandex.ru",                                        // private
-                    "phone": "+79181111233",                                                // private
-                    "online": false,
-                    "avatar_url": "http://cdn1.poputchiki.ru:8080/7,112489.webp"
-                    "balance": 106,                                                         // private
-                    "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
-                    "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
-                    "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
-                    "countries": ["Russia", "Ukraine", "USA"]
+                    "name": "Ivan",
+                    "online": true,
+                    "age": 21,                                                             
+                    "city": "Москва",
+                    "country": "Россия",
+                    "weight": 80,
+                    "growth": 181,
+                    "sex":"male",
+                    "avatar_url": "msk1.cydev.ru:8080/3,1231321.webp"                      
+                    "countries": ["Россия", "Украина", "США"]
+                    "destinations": ["США"],
+                    "last_action": "2014-06-04T14:09:44.306190209+04:00",  
+                    "sesons": ["spring", "autumn", "summer", "winter"]
                 }
             ]
 
@@ -84,20 +94,31 @@ HOST: http://www.google.com
     JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
 
     + Body
-
+            
             {
-                "id": "536a40ae67188e1496c09862",
-                "firstname": "Ivan",
-                "secondname": "Ivanov",
+                // readonly - доступные только для чтения
+                // private - не показываются другим юзерам
+                "id": "536a40ae67188e1496c09862",                                       // readonly
+                "name": "Ivan",
+                "age": 21,                                                              // readonly
+                "birthday": "1968-06-04",
+                "city": "Москва",
+                "country": "Россия",
+                "weight": 80,
+                "growth": 181,
+                "sex":"male",
+                "avatar": "536a40ae67188e149343242",                                    // private
+                "avatar_url": "msk1.cydev.ru:8080/3,1231321.webp"                       // readonly
                 "email": "ivanivanov@yandex.ru",                                        // private
                 "phone": "+79181112233",                                                // private
-                "online": true,
-                "avatar_url": "http://cdn1.poputchiki.ru:8080/7,126489.webp"
-                "balance": 106,                                                         // private
-                "last_action": "2014-06-04T14:09:44.306190209+04:00",                   
+                "online": true,                                                         // readonly
+                "balance": 106,                                                         // private, readonly
+                "last_action": "2014-06-04T14:09:44.306190209+04:00",                   // readonly
                 "favorites": ["536a40ae671a8e1d96c0e862", "536a40ae67188e1496c09862"],  // private
                 "blacklist": ["536a40ae671a8e1d96c0e862"],                              // private
-                "countries": ["Russia", "Ukraine", "USA"]
+                "countries": ["Russia", "Ukraine", "USA"],
+                "destinations": ["USA"],
+                "sesons": ["spring", "autumn", "summer", "winter"]
             }
 
 ### Получить юзера [GET]
@@ -318,3 +339,48 @@ HOST: http://www.google.com
 
 ### Удалить [DELETE]
 + Response 200
+
+# Group Промо-лента
+## StripeItemRequest [/nonexistent/stripeitem/request]
++ Model (application/json)
+    JSON representation of stripe item put request
+
+    + Body
+    
+            {
+                id: "538f1aa336c4533d18000103",
+                type: "video" // audio, photo
+            }
+
+## StripeItem [/nonexistent/stripeitem/]
++ Model (application/json)
+    JSON representation of stripe item
+
+    + Body
+    
+            {
+                id: "538f1aa336c4533d18000103",
+                user: "538f1aa336c453555aee5101",
+                name: "Alex",
+                age: 28,
+                image_url: "http://msk1.poputchiki.ru:8080/6,09cd6e994055.webp",
+                type: "video",
+                media: {
+                    id: "538f1aa336c4533d18000103",
+                    user: "538f1aa336c453555aee5101",
+                    url: "http://localhost:8080/3,09cb7d6eaa19.webm",
+                    thumbnail_url: "http://msk1.poputchiki.ru:8080/6,09cd6e994055.webp",
+                    description: "видео",
+                    time: "2014-06-04T17:09:55.848603356+04:00",
+                    duration: 31
+                },
+                countries: ['Россия', 'Украина'],
+                time: "2014-06-04T17:09:55.848603356+04:00"
+            }            
+            
+## Stripe [/api/stripe]
+### Добавить [PUT]
++ Request (application/json)
+    [StripeItemRequest][]
++ Response 200 (application/json)
+    [StripeItem][]
