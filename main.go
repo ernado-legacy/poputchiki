@@ -305,6 +305,9 @@ func (a *Application) InitDatabase() {
 	db.C(statusesCollection).EnsureIndex(index)
 	db.C(filesCollection).EnsureIndex(index)
 	db.C(stripeCollection).EnsureIndex(index)
+
+	index = mgo.Index{Key: []string{"online", "lastaction"}}
+	db.C(collection).EnsureIndex(index)
 }
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
