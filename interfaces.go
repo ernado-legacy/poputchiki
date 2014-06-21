@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki-api/weed"
+	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 )
@@ -87,6 +88,9 @@ type UserDB interface {
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
 	GetConfirmationToken(token string) *EmailConfirmationToken
 	NewConfirmationTokenValue(id bson.ObjectId, token string) *EmailConfirmationToken
+
+	UpdateAllStatuses() (*mgo.ChangeInfo, error)
+	SetLastActionNow(id bson.ObjectId) error
 }
 
 type RealtimeInterface interface {

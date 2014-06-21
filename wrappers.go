@@ -47,6 +47,11 @@ func Render(value interface{}) (int, []byte) {
 	}
 }
 
+func SetOnlineWrapper(db UserDB, t *gotok.Token) {
+	go db.SetOnline(t.Id)
+	go db.SetLastActionNow(t.Id)
+}
+
 func PaginationWrapper(c martini.Context, r *http.Request) {
 	q := r.URL.Query()
 	p := Pagination{}

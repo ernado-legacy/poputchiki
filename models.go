@@ -51,7 +51,7 @@ type User struct {
 	Growth         uint            `json:"growth,omitempty"       bson:"growth,omitempty"`
 	Destinations   []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
 	Seasons        []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
-	LastAction     time.Time       `json:"last_action,omitempty"  bson:"last_action,omitempty"`
+	LastAction     time.Time       `json:"last_action,omitempty"  bson:"lastaction,omitempty"`
 	StatusUpdate   time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
 	Favorites      []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
 	Blacklist      []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`

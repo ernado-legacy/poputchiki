@@ -58,6 +58,7 @@ type Application struct {
 	session *mgo.Session
 	p       *redis.Pool
 	m       *martini.ClassicMartini
+	db      UserDB
 }
 
 func loadConfig() error {
@@ -221,9 +222,9 @@ func NewApp() *Application {
 		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)
-	}, NeedAuth)
+	}, NeedAuth, SetOnlineWrapper)
 
-	a := &Application{session, p, m}
+	a := &Application{session, p, m, db}
 	a.InitDatabase()
 	return a
 }
@@ -233,7 +234,24 @@ func (a *Application) Close() {
 	a.p.Close()
 }
 
+func (a *Application) StatusCycle() {
+	log.Println("[updater]", "starting cycle")
+	ticker := time.NewTicker(time.Second * 1)
+	for _ = range ticker.C {
+		start := time.Now()
+		log.Println("[updater]", "updating statuses")
+		info, err := a.db.UpdateAllStatuses()
+		if err != nil {
+			log.Println("[updater]", "status update error", err)
+			return
+		}
+		duration := time.Now().Sub(start)
+		log.Println("[updater]", "updated", info.Updated, "for", duration)
+	}
+}
+
 func (a *Application) Run() {
+	go a.StatusCycle()
 	a.m.Run()
 }
 
