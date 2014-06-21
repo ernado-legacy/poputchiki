@@ -384,3 +384,17 @@ HOST: http://www.google.com
     [StripeItemRequest][]
 + Response 200 (application/json)
     [StripeItem][]
+
+# Group Подтверждение телефона
+## Action [/api/confirm/phone/start]
+### Начать проверку [GET]
++ Response 200
+
+## Action [/api/confirm/phone/{token}]
+
++ Parameters
+    + token (required, string, `056`) ... Проверочный код
+
+### Подтвердить [GET]
++ Response 200
+
