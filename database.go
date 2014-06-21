@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/ernado/gotok"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -16,16 +17,17 @@ const (
 )
 
 type DB struct {
-	users    *mgo.Collection
-	guests   *mgo.Collection
-	messages *mgo.Collection
-	statuses *mgo.Collection
-	photo    *mgo.Collection
-	albums   *mgo.Collection
-	files    *mgo.Collection
-	video    *mgo.Collection
-	audio    *mgo.Collection
-	stripe   *mgo.Collection
+	users      *mgo.Collection
+	guests     *mgo.Collection
+	messages   *mgo.Collection
+	statuses   *mgo.Collection
+	photo      *mgo.Collection
+	albums     *mgo.Collection
+	files      *mgo.Collection
+	video      *mgo.Collection
+	audio      *mgo.Collection
+	stripe     *mgo.Collection
+	conftokens *mgo.Collection
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -434,4 +436,18 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 	}
 
 	return statuses, nil
+}
+
+func (db *DB) NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken {
+	t := &EmailConfirmationToken{}
+	t.Id = bson.NewObjectId()
+	t.User = id
+	t.Time = time.Now()
+	t.Token = gotok.Generate(id).Token
+	err := db.conftokens.Insert(t)
+	if err != nil {
+		log.Println("[NewConfirmationToken]", err)
+		return nil
+	}
+	return t
 }

@@ -20,27 +20,28 @@ import (
 )
 
 var (
-	salt               = "salt"
-	projectName        = "poputchiki"
-	dbName             = projectName
-	collection         = "users"
-	guestsCollection   = "guests"
-	messagesCollection = "messages"
-	statusesCollection = "statuses"
-	photoCollection    = "photo"
-	albumsCollection   = "albums"
-	filesCollection    = "files"
-	videoCollection    = "audio"
-	audioCollection    = "video"
-	stripeCollection   = "stripe"
-	tokenCollection    = "tokens"
-	mongoHost          = "localhost"
-	processes          = runtime.NumCPU()
-	redisName          = projectName
-	redisAddr          = ":6379"
-	weedHost           = "msk1.cydev.ru"
-	weedPort           = 9333
-	weedUrl            = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	salt                 = "salt"
+	projectName          = "poputchiki"
+	dbName               = projectName
+	collection           = "users"
+	guestsCollection     = "guests"
+	messagesCollection   = "messages"
+	statusesCollection   = "statuses"
+	photoCollection      = "photo"
+	albumsCollection     = "albums"
+	filesCollection      = "files"
+	videoCollection      = "audio"
+	conftokensCollection = "conftokens"
+	audioCollection      = "video"
+	stripeCollection     = "stripe"
+	tokenCollection      = "tokens"
+	mongoHost            = "localhost"
+	processes            = runtime.NumCPU()
+	redisName            = projectName
+	redisAddr            = ":6379"
+	weedHost             = "msk1.cydev.ru"
+	weedPort             = 9333
+	weedUrl              = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 )
 
 func getHash(password string) string {
@@ -114,7 +115,8 @@ func NewDatabase(session *mgo.Session) UserDB {
 	vcoll := db.C(videoCollection)
 	aucoll := db.C(audioCollection)
 	stcoll := db.C(stripeCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll}
+	ctcoll := db.C(conftokensCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll}
 }
 
 func DataBase() martini.Handler {
@@ -231,6 +233,7 @@ func (a *Application) DropDatabase() {
 	a.session.DB(dbName).C(statusesCollection).DropCollection()
 	a.session.DB(dbName).C(stripeCollection).DropCollection()
 	a.session.DB(dbName).C(tokenCollection).DropCollection()
+	a.session.DB(dbName).C(conftokensCollection).DropCollection()
 	a.InitDatabase()
 }
 

@@ -83,6 +83,8 @@ type UserDB interface {
 
 	Search(q *SearchQuery, count, offset int) ([]*User, error)
 	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
+
+	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
 }
 
 type RealtimeInterface interface {

@@ -449,3 +449,10 @@ type StripeItemRequest struct {
 	Id   bson.ObjectId `json:"id"`
 	Type string        `json:"type"`
 }
+
+type EmailConfirmationToken struct {
+	Id    bson.ObjectId `bson:"_id"`
+	User  bson.ObjectId `bson:"user"`
+	Time  time.Time     `bson:"time"`
+	Token string        `bson:"image_webp"`
+}
