@@ -85,6 +85,7 @@ type UserDB interface {
 	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
 
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
+	GetConfirmationToken(token string) *EmailConfirmationToken
 }
 
 type RealtimeInterface interface {
@@ -94,4 +95,13 @@ type RealtimeInterface interface {
 
 type PrepareInterface interface {
 	Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error
+}
+
+// mgClient := mailgun.New(mailKey)
+// message := ConfirmationMail{}
+// message.Destination = u.Email
+// message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
+// _, err = mgClient.Send(message)
+type MailSender interface {
+	Send()
 }

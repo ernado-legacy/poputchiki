@@ -36,9 +36,12 @@ var (
 	stripeCollection     = "stripe"
 	tokenCollection      = "tokens"
 	mongoHost            = "localhost"
+	production           = false
 	processes            = runtime.NumCPU()
 	redisName            = projectName
 	redisAddr            = ":6379"
+	mailKey              = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
+	mailDomain           = "mg.cydev.ru"
 	weedHost             = "msk1.cydev.ru"
 	weedPort             = 9333
 	weedUrl              = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
@@ -152,6 +155,10 @@ func NewApp() *Application {
 
 	m := martini.Classic()
 
+	if production {
+		martini.Env = martini.Prod
+	}
+
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -164,6 +171,8 @@ func NewApp() *Application {
 	m.Map(realtime)
 	m.Map(weed.NewAdapter(weedUrl))
 	m.Map(db)
+
+	m.Get("/api/confirm/email/:token", ConfirmEmail)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
@@ -285,6 +294,9 @@ func main() {
 	mongoHostF := flag.String("mongo", "localhost", "mongo host")
 	redisAddrF := flag.String("redis", ":6379", "redis host")
 	weedHostF := flag.String("weed", "msk1.cydev.ru", "weed host")
+	flag.BoolVar(&production, "production", false, "environment")
+	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
+	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")
 	flag.Parse()
 	projectName = *projectNameF
 	dbName = projectName

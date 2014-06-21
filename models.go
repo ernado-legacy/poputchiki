@@ -26,31 +26,33 @@ const (
 )
 
 type User struct {
-	Id           bson.ObjectId   `json:"id"                     bson:"_id"`
-	Name         string          `json:"name"              		bson:"name,omitempty"`
-	Sex          string          `json:"sex,omitempty"          bson:"sex"`
-	Email        string          `json:"email,omitempty"        bson:"email"`
-	Phone        string          `json:"phone,omitempty"        bson:"phone"`
-	Password     string          `json:"-"                      bson:"password"`
-	Online       bool            `json:"online,omitempty"       bson:"online,omitempty"`
-	AvatarUrl    string          `json:"avatar_url,omitempty"   bson:"-"`
-	Avatar       bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
-	AvatarWebp   string          `json:"-"                      bson:"image_webp,omitempty"`
-	AvatarJpeg   string          `json:"-"                      bson:"image_jpeg,omitempty"`
-	Balance      uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
-	Age          int             `json:"age,omitempty"          bson:"-"`
-	Birthday     time.Time       `json:"birthday,omitempty"     bson:"birthday,omitempty"`
-	City         string          `json:"city,omitempty"         bson:"city,omitempty"`
-	Country      string          `json:"country,omitempty"      bson:"country,omitempty"`
-	Weight       uint            `json:"weight,omitempty"       bson:"weight,omitempty"`
-	Growth       uint            `json:"growth,omitempty"       bson:"growth,omitempty"`
-	Destinations []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
-	Seasons      []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
-	LastAction   time.Time       `json:"last_action,omitempty"  bson:"last_action,omitempty"`
-	StatusUpdate time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
-	Favorites    []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
-	Blacklist    []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
-	Countries    []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
+	Id             bson.ObjectId   `json:"id"                     bson:"_id"`
+	Name           string          `json:"name"                   bson:"name,omitempty"`
+	Sex            string          `json:"sex,omitempty"          bson:"sex"`
+	Email          string          `json:"email,omitempty"        bson:"email"`
+	EmailConfirmed bool            `json:"email_confirmed"        bson:"email_confirmed"`
+	Phone          string          `json:"phone,omitempty"        bson:"phone"`
+	PhoneConfirmed bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
+	Password       string          `json:"-"                      bson:"password"`
+	Online         bool            `json:"online,omitempty"       bson:"online,omitempty"`
+	AvatarUrl      string          `json:"avatar_url,omitempty"   bson:"-"`
+	Avatar         bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
+	AvatarWebp     string          `json:"-"                      bson:"image_webp,omitempty"`
+	AvatarJpeg     string          `json:"-"                      bson:"image_jpeg,omitempty"`
+	Balance        uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
+	Age            int             `json:"age,omitempty"          bson:"-"`
+	Birthday       time.Time       `json:"birthday,omitempty"     bson:"birthday,omitempty"`
+	City           string          `json:"city,omitempty"         bson:"city,omitempty"`
+	Country        string          `json:"country,omitempty"      bson:"country,omitempty"`
+	Weight         uint            `json:"weight,omitempty"       bson:"weight,omitempty"`
+	Growth         uint            `json:"growth,omitempty"       bson:"growth,omitempty"`
+	Destinations   []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
+	Seasons        []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
+	LastAction     time.Time       `json:"last_action,omitempty"  bson:"last_action,omitempty"`
+	StatusUpdate   time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
+	Favorites      []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
+	Blacklist      []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
+	Countries      []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
 }
 
 // additional user info
@@ -454,5 +456,43 @@ type EmailConfirmationToken struct {
 	Id    bson.ObjectId `bson:"_id"`
 	User  bson.ObjectId `bson:"user"`
 	Time  time.Time     `bson:"time"`
-	Token string        `bson:"image_webp"`
+	Token string        `bson:"token"`
+}
+
+type ConfirmationMail struct {
+	Destination string
+	Mail        string
+}
+
+func (mail ConfirmationMail) From() string {
+	return "noreply@" + mailDomain
+}
+
+func (mail ConfirmationMail) To() []string {
+	return []string{mail.Destination}
+}
+func (mail ConfirmationMail) Cc() []string {
+	return []string{}
+}
+
+func (mail ConfirmationMail) Bcc() []string {
+	return []string{}
+}
+func (mail ConfirmationMail) Subject() string {
+	return "confirmation"
+}
+func (mail ConfirmationMail) Html() string {
+	return ""
+}
+func (mail ConfirmationMail) Text() string {
+	return mail.Mail
+}
+func (mail ConfirmationMail) Headers() map[string]string {
+	return map[string]string{}
+}
+func (mail ConfirmationMail) Options() map[string]string {
+	return map[string]string{}
+}
+func (mail ConfirmationMail) Variables() map[string]string {
+	return map[string]string{}
 }

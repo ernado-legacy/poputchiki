@@ -11,7 +11,9 @@ import (
 	"github.com/ernado/cymedia/photo"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki-api/weed"
+	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
+	"github.com/riobard/go-mailgun"
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -235,7 +237,7 @@ func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime Realtime
 	return Render("added to guests")
 }
 
-func Login(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
+func Login(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
 	user := db.GetUsername(username)
 	if user == nil {
@@ -249,6 +251,7 @@ func Login(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
+	http.SetCookie(w, t.GetCookie())
 	return Render(t)
 }
 
@@ -259,7 +262,7 @@ func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (i
 	return Render("logged out")
 }
 
-func Register(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
+func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	u := UserFromForm(r)
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
@@ -275,7 +278,23 @@ func Register(db UserDB, r *http.Request, tokens gotok.Storage) (int, []byte) {
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
+	confTok := db.NewConfirmationToken(u.Id)
+	if confTok == nil {
+		return Render(ErrorBackend)
+	}
+	go func() {
+		mgClient := mailgun.New(mailKey)
+		message := ConfirmationMail{}
+		message.Destination = u.Email
+		message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
+		log.Println("[email]", message.From(), message.To(), message.Text())
+		_, err = mgClient.Send(message)
+		log.Println(message)
+		if err != nil {
+			log.Println("[email]", err)
+		}
+	}()
+	http.SetCookie(w, t.GetCookie())
 	return Render(t)
 }
 
@@ -909,4 +928,21 @@ func GetStripe(db UserDB, adapter *weed.Adapter, pagination Pagination, webp Web
 
 func GetToken(t *gotok.Token) (int, []byte) {
 	return Render(t)
+}
+
+func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+	token := args["token"]
+	if token == BLANK {
+		return Render(ErrorBadRequest)
+	}
+	tok := db.GetConfirmationToken(token)
+	if tok == nil {
+		return Render(ErrorBadRequest)
+	}
+	userToken, err := tokens.Generate(tok.User)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	http.SetCookie(w, userToken.GetCookie())
+	return Render("email подтвержден")
 }

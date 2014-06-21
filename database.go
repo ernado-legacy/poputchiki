@@ -445,8 +445,25 @@ func (db *DB) NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken {
 	t.Time = time.Now()
 	t.Token = gotok.Generate(id).Token
 	err := db.conftokens.Insert(t)
+	log.Println("[NewConfirmationToken]", "inserted", t.Token)
 	if err != nil {
 		log.Println("[NewConfirmationToken]", err)
+		return nil
+	}
+	return t
+}
+
+func (db *DB) GetConfirmationToken(token string) *EmailConfirmationToken {
+	t := &EmailConfirmationToken{}
+	selector := bson.M{"token": token}
+	log.Println("[GetConfirmationToken]", "searching", token)
+	if err := db.conftokens.Find(selector).One(t); err != nil {
+		log.Println("[GetConfirmationToken]", err)
+		return nil
+	}
+
+	if err := db.conftokens.Remove(selector); err != nil {
+		log.Println("[GetConfirmationToken]", "[remove]", err)
 		return nil
 	}
 	return t

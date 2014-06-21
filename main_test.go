@@ -37,7 +37,7 @@ func TestDBMethods(t *testing.T) {
 			u.Id = bson.NewObjectId()
 			id := u.Id
 			u.Birthday = time.Now().AddDate(-25, 0, 0)
-			u.Email = "test@test.te"
+			u.Email = "test@" + mailDomain
 			u.Sex = SEX_MALE
 			u.Growth = 180
 			u.Seasons = []string{SEASON_SUMMER, SEASON_SPRING}
@@ -258,7 +258,7 @@ func TestDBMethods(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	username := "test@test.ru"
+	username := "test@" + mailDomain
 	password := "secretsecret"
 	redisName = "poputchiki_test_upload"
 	dbName = "poputchiki_dev_upload"
@@ -349,7 +349,7 @@ func TestRealtime(t *testing.T) {
 }
 
 func TestMethods(t *testing.T) {
-	username := "test@test.ru"
+	username := "m@cydev.ru"
 	password := "secretsecret"
 	firstname := "Ivan"
 	secondname := "Pupkin"
