@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	STRIPE_COUNT   = 20
-	SEARCH_COUNT   = 40
-	OfflineTimeout = 60 * 5 * time.Second
+	STRIPE_COUNT = 20
+	SEARCH_COUNT = 40
 )
 
 type DB struct {
@@ -481,7 +480,6 @@ func (db *DB) GetConfirmationToken(token string) *EmailConfirmationToken {
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
 	// change := mgo.Change{Update: bson.M{"$set": bson.M{"online": false}}}
 	t := time.Now().Add(-OfflineTimeout)
-	log.Println("less than", t)
 	query := bson.M{"online": true, "lastaction": bson.M{"$lte": t}}
 	return db.users.UpdateAll(query, bson.M{"$set": bson.M{"online": false}})
 }

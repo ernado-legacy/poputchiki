@@ -46,6 +46,8 @@ var (
 	weedHost             = "msk1.cydev.ru"
 	weedPort             = 9333
 	weedUrl              = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	OfflineTimeout       = 60 * 5 * time.Second
+	OfflineUpdateTick    = 5 * time.Second
 )
 
 func getHash(password string) string {
@@ -236,7 +238,7 @@ func (a *Application) Close() {
 
 func (a *Application) StatusCycle() {
 	log.Println("[updater]", "starting cycle")
-	ticker := time.NewTicker(time.Second * 1)
+	ticker := time.NewTicker(OfflineUpdateTick)
 	for _ = range ticker.C {
 		start := time.Now()
 		log.Println("[updater]", "updating statuses")
