@@ -129,22 +129,6 @@ func NewDatabase(session *mgo.Session) UserDB {
 	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll}
 }
 
-func DataBase() martini.Handler {
-	session, err := mgo.Dial(mongoHost)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return func(c martini.Context) {
-		var db UserDB
-		s := session.Clone()
-		db = NewDatabase(s)
-		// defer s.Close()
-		c.Map(db)
-		c.Next()
-	}
-}
-
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
 	if err != nil {
