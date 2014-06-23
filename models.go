@@ -36,6 +36,8 @@ type User struct {
 	EmailConfirmed bool            `json:"email_confirmed"        bson:"email_confirmed"`
 	Phone          string          `json:"phone,omitempty"        bson:"phone,omitempty"`
 	PhoneConfirmed bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
+	IsSponsor      bool            `json:"is_sponsor"             bson:"is_sponsor"`
+	IsHost         bool            `json:"is_host"                bson:"is_host"`
 	Password       string          `json:"-"                      bson:"password"`
 	Online         bool            `json:"online,omitempty"       bson:"online,omitempty"`
 	AvatarUrl      string          `json:"avatar_url,omitempty"   bson:"-"`
