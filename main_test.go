@@ -43,6 +43,45 @@ func TestDBMethods(t *testing.T) {
 			u.Seasons = []string{SEASON_SUMMER, SEASON_SPRING}
 			err = db.Add(&u)
 			So(err, ShouldBeNil)
+
+			Convey("Offline timeout", func() {
+				timedOut := time.Now().Add(-OfflineTimeout - time.Second)
+				So(db.SetOnline(id), ShouldNotBeNil)
+				_, err := db.Update(id, bson.M{"lastaction": timedOut})
+				So(err, ShouldBeNil)
+				user := db.Get(id)
+				So(user.Online, ShouldBeTrue)
+				So(user.LastAction.Unix(), ShouldAlmostEqual, timedOut.Unix())
+				_, err = db.UpdateAllStatuses()
+				So(err, ShouldBeNil)
+				user = db.Get(id)
+				So(user.Online, ShouldBeFalse)
+			})
+
+			Convey("Confirmation", func() {
+				token := db.NewConfirmationToken(id)
+				So(token, ShouldNotBeNil)
+
+				token1 := db.GetConfirmationToken(token.Token)
+				So(token1, ShouldNotBeNil)
+
+				token2 := db.GetConfirmationToken(token.Token)
+				So(token2, ShouldBeNil)
+
+				Convey("Phone", func() {
+					So(db.ConfirmPhone(id), ShouldBeNil)
+					user := db.Get(id)
+					So(user, ShouldNotBeNil)
+					So(user.PhoneConfirmed, ShouldBeTrue)
+				})
+				Convey("Email", func() {
+					So(db.ConfirmEmail(id), ShouldBeNil)
+					user := db.Get(id)
+					So(user, ShouldNotBeNil)
+					So(user.EmailConfirmed, ShouldBeTrue)
+				})
+			})
+
 			Convey("Balance update", func() {
 				So(db.IncBalance(id, 100), ShouldBeNil)
 				So(db.DecBalance(id, 50), ShouldBeNil)
@@ -250,8 +289,12 @@ func TestDBMethods(t *testing.T) {
 			})
 			Convey("Add photo", func() {
 				i := File{Id: bson.NewObjectId(), User: id}
-				_, err := db.AddPhoto(id, i, i, i, i, "test")
+				p, err := db.AddPhoto(id, i, i, i, i, "test")
 				So(err, ShouldBeNil)
+				Convey("Remove", func() {
+					err := db.RemovePhoto(id, p.Id)
+					So(err, ShouldBeNil)
+				})
 			})
 		})
 	})

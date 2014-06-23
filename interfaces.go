@@ -71,6 +71,7 @@ type UserDB interface {
 
 	AddAlbum(user bson.ObjectId, album *Album) (*Album, error)
 	AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error
+	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 
 	AddFile(file *File) (*File, error)
 	AddVideo(video *Video) (*Video, error)
