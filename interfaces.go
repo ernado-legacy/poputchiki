@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/ernado/gotok"
-	"github.com/ernado/poputchiki-api/weed"
+	"github.com/ernado/weed"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"net/http"

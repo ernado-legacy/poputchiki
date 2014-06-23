@@ -13,7 +13,7 @@ import (
 	"github.com/ernado/cymedia/photo"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
-	"github.com/ernado/poputchiki-api/weed"
+	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
 	"github.com/riobard/go-mailgun"

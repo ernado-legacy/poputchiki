@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ernado/poputchiki-api/weed"
+	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
