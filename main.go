@@ -20,37 +20,38 @@ import (
 )
 
 var (
-	salt                 = "salt"
-	projectName          = "poputchiki"
-	dbName               = projectName
-	dbCity               = "countries"
-	collection           = "users"
-	citiesCollection     = "cities"
-	countriesCollection  = "countries"
-	guestsCollection     = "guests"
-	messagesCollection   = "messages"
-	statusesCollection   = "statuses"
-	photoCollection      = "photo"
-	albumsCollection     = "albums"
-	filesCollection      = "files"
-	videoCollection      = "audio"
-	conftokensCollection = "conftokens"
-	audioCollection      = "video"
-	stripeCollection     = "stripe"
-	tokenCollection      = "tokens"
-	mongoHost            = "localhost"
-	production           = false
-	processes            = runtime.NumCPU()
-	redisName            = projectName
-	redisAddr            = ":6379"
-	mailKey              = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
-	mailDomain           = "mg.cydev.ru"
-	smsKey               = "nil"
-	weedHost             = "msk1.cydev.ru"
-	weedPort             = 9333
-	weedUrl              = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
-	OfflineTimeout       = 60 * 5 * time.Second
-	OfflineUpdateTick    = 5 * time.Second
+	salt                      = "salt"
+	projectName               = "poputchiki"
+	dbName                    = projectName
+	dbCity                    = "countries"
+	collection                = "users"
+	citiesCollection          = "cities"
+	countriesCollection       = "countries"
+	guestsCollection          = "guests"
+	messagesCollection        = "messages"
+	statusesCollection        = "statuses"
+	photoCollection           = "photo"
+	albumsCollection          = "albums"
+	filesCollection           = "files"
+	videoCollection           = "audio"
+	conftokensCollection      = "conftokens"
+	audioCollection           = "video"
+	stripeCollection          = "stripe"
+	tokenCollection           = "tokens"
+	mongoHost                 = "localhost"
+	production                = false
+	processes                 = runtime.NumCPU()
+	redisName                 = projectName
+	redisAddr                 = ":6379"
+	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
+	mailDomain                = "mg.cydev.ru"
+	smsKey                    = "nil"
+	weedHost                  = "msk1.cydev.ru"
+	weedPort                  = 9333
+	weedUrl                   = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	OfflineTimeout            = 60 * 5 * time.Second
+	OfflineUpdateTick         = 5 * time.Second
+	PromoCost            uint = 50
 )
 
 func getHash(password string) string {

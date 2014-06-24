@@ -809,6 +809,12 @@ func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (in
 	}
 	status, err := db.AddStatus(t.Id, status.Text)
 	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	err = db.DecBalance(t.Id, PromoCost)
+	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(status)
