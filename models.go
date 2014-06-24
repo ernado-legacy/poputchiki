@@ -347,12 +347,6 @@ type ProgressMessage struct {
 type MessageSendBlacklisted struct {
 	Id bson.ObjectId `json:"id"`
 }
-type Comment struct {
-	Id   bson.ObjectId `json:"id"   bson:"_id"`
-	User bson.ObjectId `json:"user" bson:"user"`
-	Text string        `json:"text" bson:"text"`
-	Time time.Time     `json:"time" bson:"time"`
-}
 
 type LoginCredentials struct {
 	Email    string `json:"email"`
@@ -369,7 +363,7 @@ type StatusUpdate struct {
 	ImageWebp string        `json:"-"             bson:"image_webp"`
 	ImageJpeg string        `json:"-"             bson:"image_jpeg"`
 	ImageUrl  string        `json:"url"           bson:"-"`
-	Comments  []Comment     `json:"comments"      bson:"comments"`
+	Likes     int           `json:"likes"         bson:"likes"`
 }
 
 type StripeItem struct {
@@ -403,16 +397,6 @@ type Image struct {
 	Url string        `json:"url"          bson:"url,omitempty"`
 }
 
-type Album struct {
-	Id        bson.ObjectId   `json:"id,omitempty"          bson:"_id,omitempty"`
-	User      bson.ObjectId   `json:"user,omitempty"        bson:"user"`
-	ImageWebp string          `json:"-"                     bson:"image_webp"`
-	ImageJpeg string          `json:"-"                     bson:"image_jpeg"`
-	ImageUrl  string          `json:"image_url,omitempty"   bson:"-"`
-	Time      time.Time       `json:"time"              bson:"time"`
-	Photo     []bson.ObjectId `json:"photo,omitempty"       bson:"photo,omitempty"`
-}
-
 type Photo struct {
 	Id            bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
 	User          bson.ObjectId `json:"user"                  bson:"user"`
@@ -423,6 +407,7 @@ type Photo struct {
 	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
+	Likes         int           `json:"likes"                 bson:"likes"`
 	Time          time.Time     `json:"time"                  bson:"time"`
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }
@@ -438,6 +423,7 @@ type Video struct {
 	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
 	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
 	Time          time.Time     `json:"time"                  bson:"time"`
+	Likes         int           `json:"likes"                 bson:"likes"`
 	Duration      int64         `json:"duration"              bson:"duration"`
 }
 
@@ -507,4 +493,11 @@ func (mail ConfirmationMail) Options() map[string]string {
 }
 func (mail ConfirmationMail) Variables() map[string]string {
 	return map[string]string{}
+}
+
+type Like struct {
+	Id     bson.ObjectId `json:"id"     bson:"_id"`
+	User   bson.ObjectId `json:"user"   bson:"user"`
+	Target bson.ObjectId `json:"target" bson:"target"`
+	Time   time.Time     `json:"time"   bson:"time"`
 }

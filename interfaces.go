@@ -59,18 +59,9 @@ type UserDB interface {
 	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
 	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
 	// api/status/:id/comment/:id
-	AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error)
-	RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error
-	UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error
-
 	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
-	// api/photo/:id/comment
-	AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, c *Comment) error
-
-	AddAlbum(user bson.ObjectId, album *Album) (*Album, error)
-	AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 
 	AddFile(file *File) (*File, error)

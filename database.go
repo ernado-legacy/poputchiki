@@ -226,30 +226,6 @@ func (db *DB) AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error) {
 	return p, err
 }
 
-func (db *DB) AddCommentToStatus(user bson.ObjectId, status bson.ObjectId, text string) (*Comment, error) {
-	c := &Comment{bson.NewObjectId(), user, text, time.Now()}
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
-	u := &StatusUpdate{}
-	_, err := db.statuses.FindId(status).Apply(change, u)
-	return c, err
-}
-
-func (db *DB) RemoveCommentFromStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
-	change := mgo.Change{Update: bson.M{"$pull": bson.M{"comments": bson.M{"_id": id}}}}
-	query := bson.M{"comments._id": id, "user": user}
-	u := &StatusUpdate{}
-	_, err := db.statuses.Find(query).Apply(change, u)
-	return err
-}
-
-func (db *DB) UpdateCommentToStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) error {
-	change := mgo.Change{Update: bson.M{"$set": bson.M{"comments.$.text": text}}}
-	query := bson.M{"comments._id": id, "user": user}
-	u := &StatusUpdate{}
-	_, err := db.statuses.Find(query).Apply(change, u)
-	return err
-}
-
 func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error) {
 	s := &StatusUpdate{}
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
@@ -296,13 +272,6 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 	return p, err
 }
 
-func (db *DB) AddAlbum(user bson.ObjectId, album *Album) (*Album, error) {
-	album.User = user
-	album.Time = time.Now()
-	album.Id = bson.NewObjectId()
-	return album, db.albums.Insert(album)
-}
-
 func (db *DB) AddFile(file *File) (*File, error) {
 	return file, db.files.Insert(file)
 }
@@ -329,23 +298,6 @@ func (db *DB) GetVideo(id bson.ObjectId) *Video {
 		return nil
 	}
 	return v
-}
-
-func (db *DB) AddPhotoToAlbum(user bson.ObjectId, album bson.ObjectId, photo bson.ObjectId) error {
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"photo": photo}}}
-	_, err := db.albums.Find(bson.M{"_id": album, "user": user}).Apply(change, &Album{})
-
-	return err
-}
-
-func (db *DB) AddCommentToPhoto(user bson.ObjectId, photo bson.ObjectId, c *Comment) error {
-	c.User = user
-	c.Id = bson.NewObjectId()
-	c.Time = time.Now()
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"comments": c}}}
-	p := &Photo{}
-	_, err := db.photo.FindId(photo).Apply(change, p)
-	return err
 }
 
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {

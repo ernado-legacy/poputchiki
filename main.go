@@ -206,8 +206,6 @@ func NewApp() *Application {
 		}, IdWrapper)
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
-		r.Post("/album/:id/photo", IdWrapper, UploadPhotoToAlbum)
-		r.Put("/album", AddAlbum)
 		r.Post("/video", UploadVideo)
 		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)

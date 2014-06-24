@@ -782,17 +782,6 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return newPhoto, err
 }
 
-func UploadPhotoToAlbum(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, albumId bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
-	if err != nil {
-		return Render(ErrorBackend)
-	}
-	if db.AddPhotoToAlbum(t.Id, albumId, photo.Id) != nil {
-		return Render(ErrorBackend)
-	}
-	return Render(photo)
-}
-
 func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err != nil {
@@ -818,21 +807,6 @@ func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (in
 		return Render(ErrorBackend)
 	}
 	return Render(status)
-}
-
-func AddAlbum(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
-	album := &Album{}
-	if err := decoder.Decode(album); err != nil {
-		log.Println(err)
-		return Render(ErrorBadRequest)
-	}
-	album, err := db.AddAlbum(t.Id, album)
-	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
-
-	return Render(album)
 }
 
 func GetStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
