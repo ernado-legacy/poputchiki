@@ -890,6 +890,11 @@ func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byt
 	if decoder.Decode(request) != nil {
 		return Render(ErrorBadRequest)
 	}
+
+	err := db.DecBalance(t.Id, PromoCost)
+	if err != nil {
+		return Render(ErrorInsufficentFunds)
+	}
 	switch request.Type {
 	case "video":
 		media = db.GetVideo(request.Id)
