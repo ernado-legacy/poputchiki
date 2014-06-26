@@ -508,3 +508,16 @@ func (mail ConfirmationMail) Options() map[string]string {
 func (mail ConfirmationMail) Variables() map[string]string {
 	return map[string]string{}
 }
+
+type Like struct {
+	Id     bson.ObjectId `json"id"     bson:"_id"`
+	User   bson.ObjectId `json"user"   bson:"user"`
+	Target bson.ObjectId `json"target" bson:"target"`
+	Time   time.Time     `json"time"   bson:"time"`
+}
+
+type Transaction struct {
+	Id    int           `bson:"_id"`
+	Value int           `bson:"value"`
+	User  bson.ObjectId `bson:"user"`
+}
