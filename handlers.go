@@ -996,6 +996,10 @@ func ConfirmPhoneStart(db UserDB, t *gotok.Token) (int, []byte) {
 	return Render("ok")
 }
 
+func GenerateTransaction() {
+
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }

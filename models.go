@@ -501,3 +501,9 @@ type Like struct {
 	Target bson.ObjectId `json:"target" bson:"target"`
 	Time   time.Time     `json:"time"   bson:"time"`
 }
+
+type Transaction struct {
+	Id    int           `bson:"_id"`
+	Value int           `bson:"value"`
+	User  bson.ObjectId `bson:"user"`
+}
