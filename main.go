@@ -214,6 +214,9 @@ func NewApp() *Application {
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
 		r.Post("/video", UploadVideo)
+		r.Post("/video/:id/like", IdWrapper, LikeVideo)
+		r.Get("/video/:id/like", IdWrapper, GetLikersVideo)
+		r.Delete("/video/:id/like", IdWrapper, RestoreLikeVideo)
 		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)

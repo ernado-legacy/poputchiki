@@ -398,17 +398,18 @@ type Image struct {
 }
 
 type Photo struct {
-	Id            bson.ObjectId `json:"id,omitempty"          bson:"_id,omitempty"`
-	User          bson.ObjectId `json:"user"                  bson:"user"`
-	ImageWebp     string        `json:"-"                     bson:"image_webp"`
-	ImageJpeg     string        `json:"-"                     bson:"image_jpeg"`
-	ImageUrl      string        `json:"url"                   bson:"-"`
-	ThumbnailWebp string        `json:"-"                     bson:"thumbnail_webp"`
-	ThumbnailJpeg string        `json:"-"                     bson:"thumbnail_jpeg"`
-	ThumbnailUrl  string        `json:"thumbnail_url"         bson:"-"`
-	Description   string        `json:"description,omitempty" bson:"description,omitempty"`
-	Likes         int           `json:"likes"                 bson:"likes"`
-	Time          time.Time     `json:"time"                  bson:"time"`
+	Id            bson.ObjectId   `json:"id,omitempty"          bson:"_id,omitempty"`
+	User          bson.ObjectId   `json:"user"                  bson:"user"`
+	ImageWebp     string          `json:"-"                     bson:"image_webp"`
+	ImageJpeg     string          `json:"-"                     bson:"image_jpeg"`
+	ImageUrl      string          `json:"url"                   bson:"-"`
+	ThumbnailWebp string          `json:"-"                     bson:"thumbnail_webp"`
+	ThumbnailJpeg string          `json:"-"                     bson:"thumbnail_jpeg"`
+	ThumbnailUrl  string          `json:"thumbnail_url"         bson:"-"`
+	Description   string          `json:"description,omitempty" bson:"description,omitempty"`
+	Likes         int             `json:"likes"                 bson:"likes"`
+	Time          time.Time       `json:"time"                  bson:"time"`
+	LikedUsers    []bson.ObjectId `bson:"liked_users"`
 	// Comments    []Comment     `json:"comments,omitempty"    bson:"comments,omitempty"`
 }
 
@@ -496,7 +497,7 @@ func (mail ConfirmationMail) Variables() map[string]string {
 }
 
 type Like struct {
-	Id     bson.ObjectId `json:"id"     bson:"_id"`
+	Id     string        `json:"id"     bson:"_id"`
 	User   bson.ObjectId `json:"user"   bson:"user"`
 	Target bson.ObjectId `json:"target" bson:"target"`
 	Time   time.Time     `json:"time"   bson:"time"`

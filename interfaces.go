@@ -65,8 +65,13 @@ type UserDB interface {
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 
 	AddFile(file *File) (*File, error)
+
 	AddVideo(video *Video) (*Video, error)
 	GetVideo(id bson.ObjectId) *Video
+	AddLikeVideo(user bson.ObjectId, target bson.ObjectId) error
+	RemoveLikeVideo(user bson.ObjectId, target bson.ObjectId) error
+	GetLikesVideo(id bson.ObjectId) []*User
+
 	AddAudio(audio *Audio) (*Audio, error)
 	GetAudio(id bson.ObjectId) *Audio
 

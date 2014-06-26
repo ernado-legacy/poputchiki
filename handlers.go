@@ -1027,6 +1027,31 @@ func RobokassaSuccessHandler(db UserDB, r *http.Request, handler *TransactionHan
 	return Render(transaction)
 }
 
+func LikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+	err := db.AddLikeVideo(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(db.GetVideo(id))
+}
+
+func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+	err := db.RemoveLikeVideo(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(db.GetVideo(id))
+}
+
+func GetLikersVideo(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+	likers := db.GetLikesVideo(id)
+	for k := range likers {
+		likers[k].Prepare(adapter, db, webp)
+		likers[k].CleanPrivate()
+	}
+	return Render(likers)
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
