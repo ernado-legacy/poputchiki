@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ernado/cymedia/photo"
+	"github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/weed"
@@ -24,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -996,8 +998,33 @@ func ConfirmPhoneStart(db UserDB, t *gotok.Token) (int, []byte) {
 	return Render("ok")
 }
 
-func GenerateTransaction() {
+func GetTransactionUrl(db UserDB, args martini.Params, t *gotok.Token, handler *TransactionHandler) (int, []byte) {
+	value, err := strconv.Atoi(args["value"])
+	if err != nil || value <= 0 {
+		return Render(ErrorBadRequest)
+	}
 
+	url, transaction, err := handler.Start(t.Id, value, robokassaDescription)
+	log.Println(value, transaction, gorobokassa.CRC(value, transaction.Id, robokassaPassword1))
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	return Render(url)
+}
+
+func RobokassaSuccessHandler(db UserDB, r *http.Request, handler *TransactionHandler) (int, []byte) {
+	transaction, err := handler.Close(r)
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+
+	err = db.IncBalance(transaction.User, uint(transaction.Value))
+	if err != nil {
+		log.Println("[CRITICAL ERROR]", "transaction", transaction)
+		return Render(ErrorBadRequest)
+	}
+	return Render(transaction)
 }
 
 func init() {

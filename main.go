@@ -39,6 +39,10 @@ var (
 	stripeCollection          = "stripe"
 	tokenCollection           = "tokens"
 	mongoHost                 = "localhost"
+	robokassaLogin            = "login"
+	robokassaPassword1        = "pwd1"
+	robokassaPassword2        = "pwd1"
+	robokassaDescription      = "Пополнение счета Попутчики.ру"
 	production                = false
 	processes                 = runtime.NumCPU()
 	redisName                 = projectName
@@ -163,6 +167,7 @@ func NewApp() *Application {
 	m.Map(realtime)
 	m.Map(weed.NewAdapter(weedUrl))
 	m.Map(db)
+	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))
 
 	m.Get("/api/confirm/email/:token", ConfirmEmail)
 	m.Get("/api/confirm/phone/start", ConfirmPhoneStart)
@@ -173,6 +178,8 @@ func NewApp() *Application {
 		r.Post("/logout", NeedAuth, Logout)
 	})
 	m.Group("/api", func(r martini.Router) {
+		r.Post("/pay/:value", GetTransactionUrl)
+		r.Get("/pay/success", RobokassaSuccessHandler)
 		r.Get("/token", GetToken)
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)

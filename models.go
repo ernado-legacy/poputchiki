@@ -503,7 +503,10 @@ type Like struct {
 }
 
 type Transaction struct {
-	Id    int           `bson:"_id"`
-	Value int           `bson:"value"`
-	User  bson.ObjectId `bson:"user"`
+	Id          int           `bson:"_id"`
+	User        bson.ObjectId `bson:"user"`
+	Value       int           `bson:"value"`
+	Description string        `bson:"description"`
+	Time        time.Time     `bson:"time"`
+	Closed      bool          `bson:"closed"`
 }
