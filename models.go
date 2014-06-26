@@ -510,10 +510,10 @@ func (mail ConfirmationMail) Variables() map[string]string {
 }
 
 type Like struct {
-	Id     bson.ObjectId `json"id"     bson:"_id"`
-	User   bson.ObjectId `json"user"   bson:"user"`
-	Target bson.ObjectId `json"target" bson:"target"`
-	Time   time.Time     `json"time"   bson:"time"`
+	Id     bson.ObjectId `json:"id" bson:"_id"`
+	User   bson.ObjectId `json:"user" bson:"user"`
+	Target bson.ObjectId `json:"target" bson:"target"`
+	Time   time.Time     `json:"time" bson:"time"`
 }
 
 type Transaction struct {
