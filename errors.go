@@ -15,6 +15,7 @@ var (
 	ErrorAuth             = Error{http.StatusUnauthorized, "Not authenticated"}
 	ErrorMarshal          = Error{http.StatusInternalServerError, "Unable to unmarshal data"}
 	ErrorUserNotFound     = Error{http.StatusNotFound, "User not found"}
+	ErrorObjectNotFound   = Error{http.StatusNotFound, "Object not found"}
 	ErrorBadId            = Error{http.StatusBadRequest, "Bad user id"}
 	ErrorBadRequest       = Error{http.StatusBadRequest, "Bad request"}
 	ErrorInsufficentFunds = Error{http.StatusPaymentRequired, "Insufficent funds"}
