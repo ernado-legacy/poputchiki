@@ -1,4 +1,4 @@
-FROM cydev.ru:5000/media
+FROM cydev/media
 
 #
 ADD ssh/known_hosts /root/.ssh/known_hosts
