@@ -1,6 +1,5 @@
 FROM cydev.ru:5000/media
 
-# ssh config
 ADD ssh/known_hosts /root/.ssh/known_hosts
 ADD ssh/id_rsa /root/.ssh/id_rsa
 ADD ssh/id_rsa.pub /root/.ssh/id_rsa.pub
