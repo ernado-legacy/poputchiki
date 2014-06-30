@@ -14,7 +14,5 @@ def update():
         run('git pull origin master')
         run('sed "s/VERSION/%s/g" Dockerfile.template > Dockerfile' % ver)
         run('docker build -t cydev/kafe .')
-        run('docker stop kafe')
-        run('docker rm kafe')
         run('~/poputchiki.sh')
         run('docker restart nginx')
