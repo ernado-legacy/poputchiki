@@ -1,8 +1,9 @@
 FROM cydev.ru:5000/media
 
-ADD .netrc /.netrc
-RUN version=alpha go get github.com/ernado/poputchiki
-RUN version=VERSION go get -u github.com/ernado/poputchiki
-RUN go install github.com/ernado/poputchiki
+ENV ROOT /go/src/github.com/ernado/poputchiki
+RUN mkdir -p /go/src/github.com/ernado/poputchiki
+RUN git clone github.com:ernado/poputchiki.git github.com/ernado/poputchiki
+RUN cd $ROOT && version=VERSION git pull
+RUN cd $ROOT && go get .
 
 ENTRYPOINT ["/go/bin/poputchiki"]
