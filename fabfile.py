@@ -9,9 +9,6 @@ def update():
     ver = local('git rev-parse HEAD', capture=True)
     with cd(root):
         remote_ver = run('git rev-parse HEAD')
-        if ver == remote_ver:
-            print('production already updated')
-            return
         print('updating production to version %s' % ver)
         run('git reset --hard')
         run('git pull origin master')
