@@ -8,8 +8,8 @@ RUN chmod 700 /root/.ssh/id_rsa
 RUN cp -R /root/.ssh /
 
 ENV ROOT /go/src/github.com/ernado/poputchiki
-RUN mkdir -p /go/src/github.com/ernado/poputchiki
-RUN git clone git@github.com:ernado/poputchiki.git github.com/ernado/poputchiki
+RUN mkdir -p $ROOT
+RUN git clone git@github.com:ernado/poputchiki.git $ROOT
 RUN cd $ROOT && version=VERSION git pull
 RUN cd $ROOT && go get .
 
