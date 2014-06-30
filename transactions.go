@@ -15,6 +15,7 @@ const (
 	TR_COLLECTION = TR_REDIS_KEY
 )
 
+// handle creation and closing transactions
 type TransactionHandler struct {
 	transactions *mgo.Collection
 	pool         *redis.Pool
