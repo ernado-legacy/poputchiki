@@ -177,8 +177,8 @@ func NewApp() *Application {
 		r.Post("/login", Login)
 		r.Post("/logout", NeedAuth, Logout)
 	})
+	m.Get("/api", Index)
 	m.Group("/api", func(r martini.Router) {
-		r.Get("", Index)
 		r.Post("/pay/:value", GetTransactionUrl)
 		r.Get("/pay/success", RobokassaSuccessHandler)
 		r.Get("/token", GetToken)
