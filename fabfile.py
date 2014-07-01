@@ -13,6 +13,6 @@ def update():
         run('git reset --hard')
         run('git pull origin master')
         run('sed "s/VERSION/%s/g" Dockerfile.template > Dockerfile' % ver)
-        run('docker build -t cydev/kafe .')
+        run('docker build -t cydev/poputchiki .')
         run('~/poputchiki.sh')
         run('docker restart nginx')
