@@ -64,6 +64,10 @@ const (
 	FILTER_GROWTH_MAX        = "growthmax"
 )
 
+func Index() (int, []byte) {
+	return Render("ok")
+}
+
 func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	log.Println("TEST")
 	userChannel := make(chan *User)
