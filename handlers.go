@@ -1,7 +1,5 @@
 package main
 
-import unsafe "unsafe"
-
 import (
 	"bufio"
 	"bytes"
