@@ -99,7 +99,7 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w ht
 		http.Error(w, string(data), code) // todo: set content-type
 	case token := <-tokenChannel:
 		c.Map(token)
-	case <-time.After(time.Millisecond * 5):
+	case <-time.After(time.Second * 5):
 		log.Println("token system timed out")
 		code, data := Render(ErrorBackend)
 		http.Error(w, string(data), code) // todo: set content-type
