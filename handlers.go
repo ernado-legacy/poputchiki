@@ -76,11 +76,9 @@ func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapt
 	}()
 
 	var user *User
-	const infoSize = unsafe.Sizeof(User{})
-	log.Println(infoSize)
 
 	select {
-	case <-time.After(time.Millisecond * 500):
+	case <-time.After(time.Second * 5):
 		log.Println("database get timed out")
 		return Render(ErrorBackend)
 	case u := <-userChannel:
