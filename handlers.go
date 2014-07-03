@@ -64,6 +64,10 @@ const (
 	FILTER_GROWTH_MAX        = "growthmax"
 )
 
+var (
+	ErrBadRequest = errors.New("bad request")
+)
+
 func Index() (int, []byte) {
 	return Render("ok")
 }
@@ -754,12 +758,12 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
-		return nil, err
+		return nil, ErrBadRequest
 	}
 
 	length := r.ContentLength
 	if length > 1024*1024*PHOTO_MAX_MEGABYTES {
-		return nil, errors.New("bad request")
+		return nil, ErrBadRequest
 	}
 
 	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
@@ -789,6 +793,9 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 
 func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
+	if err == ErrBadRequest {
+		return Render(ErrorBadRequest)
+	}
 	if err != nil {
 		return Render(ErrorBackend)
 	}
