@@ -239,12 +239,12 @@ func (a *Application) StatusCycle() {
 	for _ = range ticker.C {
 		start := time.Now()
 		// log.Println("[updater]", "updating statuses")
-		info, err := a.db.UpdateAllStatuses()
+		_, err := a.db.UpdateAllStatuses()
 		if err != nil {
 			log.Println("[updater]", "status update error", err)
 			return
 		}
-		duration := time.Now().Sub(start)
+		// duration := time.Now().Sub(start)
 		// log.Println("[updater]", "updated", info.Updated, "for", duration)
 	}
 }
