@@ -2,9 +2,7 @@ image: radrydzewski/go:1.2
 env:
   - GOPATH=/var/cache/drone
 script:
-  - go get .
-  - go build
-  - go test -v
+  - echo hello
 services:
   - redis 
   - bradrydzewski/mongodb:2.4
