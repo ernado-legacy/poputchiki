@@ -162,7 +162,6 @@ func NewApp() *Application {
 	m.Use(AudioWrapper)
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
-	// m.Use(DataBase())
 	m.Map(tokenStorage)
 	m.Map(realtime)
 	m.Map(weed.NewAdapter(weedUrl))
