@@ -220,6 +220,7 @@ func NewApp() *Application {
 		r.Post("/photo", UploadPhoto)
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)
+		r.Get("/photo", SearchPhoto)
 	}, NeedAuth, SetOnlineWrapper)
 
 	a := &Application{session, p, m, db}

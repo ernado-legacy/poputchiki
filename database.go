@@ -394,6 +394,33 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 	return statuses, nil
 }
 
+func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
+	if count == 0 {
+		count = SEARCH_COUNT
+	}
+
+	photos := []*Photo{}
+	query := q.ToBson()
+	u := []*User{}
+	query["statusupdate"] = bson.M{"$exists": true}
+	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
+		return photos, err
+	}
+	users := make([]bson.ObjectId, len(u))
+	for i, user := range u {
+		users[i] = user.Id
+	}
+
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).All(&photos); err != nil {
+		return photos, err
+	}
+	if len(photos) != len(users) {
+		return photos, errors.New("unexpected length")
+	}
+
+	return photos, nil
+}
+
 func (db *DB) NewConfirmationTokenValue(id bson.ObjectId, token string) *EmailConfirmationToken {
 	t := &EmailConfirmationToken{}
 	t.Id = bson.NewObjectId()

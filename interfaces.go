@@ -63,6 +63,7 @@ type UserDB interface {
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
+	SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error)
 
 	AddFile(file *File) (*File, error)
 
