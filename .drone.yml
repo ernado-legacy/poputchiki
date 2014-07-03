@@ -1,12 +1,6 @@
 image: radrydzewski/go:1.2
-env:
-  - GOPATH=/var/cache/drone
 script:
   - echo hello
 services:
   - redis 
   - bradrydzewski/mongodb:2.4
-notify:
-  email:
-    recipients:
-      - ernado@ya.ru
