@@ -7,7 +7,7 @@ script:
   - go test -v
 services:
   - redis 
-  - bradrydzewski/mongodb
+  - bradrydzewski/mongodb:2.4
 notify:
   email:
     recipients:
