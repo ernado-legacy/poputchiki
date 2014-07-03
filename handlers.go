@@ -1,5 +1,7 @@
 package main
 
+import unsafe "unsafe"
+
 import (
 	"bufio"
 	"bytes"
@@ -67,16 +69,17 @@ func Index() (int, []byte) {
 }
 
 func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	log.Println("TEST")
 	userChannel := make(chan *User)
 	go func() {
 		userChannel <- db.Get(id)
 	}()
 
 	var user *User
+	const infoSize = unsafe.Sizeof(User{})
+	log.Println(infoSize)
 
 	select {
-	case <-time.After(time.Second * 5):
+	case <-time.After(time.Millisecond * 500):
 		log.Println("database get timed out")
 		return Render(ErrorBackend)
 	case u := <-userChannel:
