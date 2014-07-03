@@ -237,7 +237,7 @@ func (a *Application) StatusCycle() {
 	log.Println("[updater]", "starting cycle")
 	ticker := time.NewTicker(OfflineUpdateTick)
 	for _ = range ticker.C {
-		start := time.Now()
+		// start := time.Now()
 		// log.Println("[updater]", "updating statuses")
 		_, err := a.db.UpdateAllStatuses()
 		if err != nil {
