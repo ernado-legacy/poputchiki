@@ -894,6 +894,28 @@ func SearchStatuses(db UserDB, pagination Pagination, r *http.Request, webpAccep
 	return Render(result)
 }
 
+func SearchPhoto(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	query, err := NewQuery(r.URL.Query())
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBadRequest)
+	}
+	result, err := db.SearchPhoto(query, pagination.Count, pagination.Offset)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	var video VideoAccept
+	var audio AudioAccept
+
+	for key, _ := range result {
+		result[key].Prepare(adapter, webpAccept, video, audio)
+	}
+
+	return Render(result)
+}
+
 func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
