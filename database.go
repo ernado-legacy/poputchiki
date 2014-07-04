@@ -232,7 +232,7 @@ func (db *DB) SetLastActionNow(id bson.ObjectId) error {
 }
 
 func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (messages []*Message, err error) {
-	err = db.messages.Find(bson.M{"user": userReciever, "origin": userOrigin}).All(&messages)
+	err = db.messages.Find(bson.M{"user": userReciever, "chat": userOrigin}).All(&messages)
 	return messages, err
 }
 
