@@ -58,9 +58,7 @@ func (db *DB) Add(user *User) error {
 func (db *DB) Update(id bson.ObjectId, update bson.M) (*User, error) {
 	u := &User{}
 	change := mgo.Change{Update: bson.M{"$set": update}}
-
 	_, err := db.users.FindId(id).Apply(change, u)
-
 	return u, err
 }
 
@@ -162,6 +160,35 @@ func (db *DB) GetMessage(id bson.ObjectId) (*Message, error) {
 	message := Message{}
 	err := db.messages.FindId(id).One(&message)
 	return &message, err
+}
+
+func (db *DB) GetChats(id bson.ObjectId) ([]*User, error) {
+	var users []*User
+	var ids []bson.ObjectId
+	var result []bson.M
+
+	// preparing query
+	match := bson.M{"$match": bson.M{"user": id}}
+	sort := bson.M{"$sort": bson.M{"time": -1}}
+	group := bson.M{"$group": bson.M{"_id": bson.M{"chat": "$chat"}}}
+	project := bson.M{"$project": bson.M{"_id": "$_id.chat"}}
+	pipeline := []bson.M{match, sort, group, project}
+	pipe := db.messages.Pipe(pipeline)
+
+	iter := pipe.Iter()
+	iter.All(&result)
+
+	// processing result
+	for _, v := range result {
+		switch uid := v["_id"].(type) {
+		case bson.ObjectId:
+			ids = append(ids, uid)
+		default:
+			continue
+		}
+	}
+
+	return users, db.users.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&users)
 }
 
 func (db *DB) SetOnlineStatus(id bson.ObjectId, status bool) error {

@@ -319,6 +319,7 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 		log.Println(e)
 		return Render(ErrorBadRequest)
 	}
+
 	// removing read-only fields
 	isWriteable := func(key string) bool {
 		for _, v := range UserWritableFields {
@@ -332,13 +333,41 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 	for k := range query {
 		if !isWriteable(k) {
 			delete(query, k)
+			log.Println(id, "was trying to edit", k)
 		}
 	}
+
+	log.Println(query)
 	// checking fields
 	if len(query) == 0 {
 		return Render(ErrorBadRequest)
 	}
-	_, err := db.Update(id, query)
+
+	user := &User{}
+	err := convert(query, user)
+	if err != nil {
+		return Render(ErrorBadRequest)
+	}
+
+	newQuery := bson.M{}
+	tmp, err := bson.Marshal(user)
+	if err != nil {
+		log.Println("unable to marchal", err)
+		return Render(ErrorBadRequest)
+	}
+	err = bson.Unmarshal(tmp, &newQuery)
+	if err != nil {
+		log.Println("unable to unmarchal", err)
+		return Render(ErrorBadRequest)
+	}
+
+	for k := range newQuery {
+		_, ok := query[k]
+		if !ok {
+			delete(newQuery, k)
+		}
+	}
+	_, err = db.Update(id, newQuery)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -410,6 +439,18 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *go
 		return Render(ErrorUserNotFound)
 	}
 	return Render(messages)
+}
+
+func GetChats(db UserDB, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	users, err := db.GetChats(id)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	for k := range users {
+		users[k].Prepare(adapter, db, webp)
+	}
+	return Render(users)
 }
 
 func UploadVideo(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept, adapter *weed.Adapter) (int, []byte) {

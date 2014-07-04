@@ -187,6 +187,7 @@ func NewApp() *Application {
 
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
+			r.Get("/chats", GetChats)
 
 			r.Group("", func(d martini.Router) {
 				d.Patch("", Update)
