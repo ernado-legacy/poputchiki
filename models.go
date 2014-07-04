@@ -326,6 +326,7 @@ type Guest struct {
 
 type Message struct {
 	Id          bson.ObjectId `json:"id"          bson:"_id"`
+	Chat        bson.ObjectId `bson:"chat"`
 	User        bson.ObjectId `json:"user"        bson:"user"`
 	Origin      bson.ObjectId `json:"origin"      bson:"origin"`
 	Destination bson.ObjectId `json:"destination" bson:"destination"`

@@ -362,8 +362,8 @@ func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *gotok
 		return Render(ErrorBadRequest)
 	}
 
-	m1 := Message{bson.NewObjectId(), origin, origin, destination, now, text}
-	m2 := Message{bson.NewObjectId(), destination, origin, destination, now, text}
+	m1 := Message{bson.NewObjectId(), origin, origin, origin, destination, now, text}
+	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, now, text}
 
 	go func() {
 		u := db.Get(destination)
