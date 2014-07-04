@@ -60,6 +60,7 @@ type UserDB interface {
 	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
 	// api/status/:id/comment/:id
 	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
+
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
