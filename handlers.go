@@ -320,7 +320,7 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 		return Render(ErrorBadRequest)
 	}
 
-	// removing read-only fields
+	// removes fields
 	isWriteable := func(key string) bool {
 		for _, v := range UserWritableFields {
 			if key == v {
@@ -330,43 +330,49 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 		return false
 	}
 
+	// removing read-only fields
 	for k := range query {
 		if !isWriteable(k) {
 			delete(query, k)
 			log.Println(id, "was trying to edit", k)
 		}
 	}
-
-	log.Println(query)
-	// checking fields
+	// checking field count
 	if len(query) == 0 {
 		return Render(ErrorBadRequest)
 	}
 
+	// encoding to user - checking type & field existance
 	user := &User{}
 	err := convert(query, user)
 	if err != nil {
 		return Render(ErrorBadRequest)
 	}
 
+	// encoding back to query object
+	// marshalling to bson
 	newQuery := bson.M{}
 	tmp, err := bson.Marshal(user)
 	if err != nil {
 		log.Println("unable to marchal", err)
 		return Render(ErrorBadRequest)
 	}
+	// unmarshalling to bson map
 	err = bson.Unmarshal(tmp, &newQuery)
 	if err != nil {
 		log.Println("unable to unmarchal", err)
 		return Render(ErrorBadRequest)
 	}
 
+	// removing fields, that dont exist in initial query
 	for k := range newQuery {
 		_, ok := query[k]
 		if !ok {
 			delete(newQuery, k)
 		}
 	}
+
+	// updating user
 	_, err = db.Update(id, newQuery)
 	if err != nil {
 		log.Println(err)
