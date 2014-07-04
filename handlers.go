@@ -1089,6 +1089,7 @@ func GetLikersVideo(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp Web
 	return Render(likers)
 }
 
+// init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
