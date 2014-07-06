@@ -275,11 +275,32 @@ func TestDBMethods(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(photo.Likes, ShouldEqual, 1)
 
+					likers := db.GetLikesPhoto(photo.Id)
+					found := false
+
+					for _, liker := range likers {
+						if liker.Id == id {
+							found = true
+						}
+					}
+
+					So(found, ShouldBeTrue)
+
 					Convey("Unlike", func() {
 						So(db.RemoveLikePhoto(id, p.Id), ShouldBeNil)
 						photo, err := db.GetPhoto(p.Id)
 						So(err, ShouldBeNil)
 						So(photo.Likes, ShouldEqual, 0)
+						likers := db.GetLikesPhoto(photo.Id)
+						found := false
+
+						for _, liker := range likers {
+							if liker.Id == id {
+								found = true
+							}
+						}
+
+						So(found, ShouldBeFalse)
 					})
 				})
 
