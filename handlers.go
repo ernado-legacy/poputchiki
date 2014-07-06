@@ -120,18 +120,20 @@ func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 }
 
 // AddToBlacklist adds target user to blacklist of user
-// see AddToFavorites
 func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
+	// check existance
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
+	// get target id from form data
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
+	// check that target exists
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
@@ -144,17 +146,20 @@ func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 // RemoveFromBlacklist removes target user from blacklist of another user
 func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
+	// check existance
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
+	// get target id from form data
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
+	// check that target exists
 	if friend == nil {
-		return Render(ErrorObjectNotFound)
+		return Render(ErrorUserNotFound)
 	}
 	if err := db.RemoveFromBlacklist(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
