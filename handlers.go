@@ -301,7 +301,7 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 	if confTok == nil {
 		return Render(ErrorBackend)
 	}
-	// anync send email to user
+	// anyncronously send email to user
 	go func() {
 		mgClient := mailgun.New(mailKey)
 		message := ConfirmationMail{}
