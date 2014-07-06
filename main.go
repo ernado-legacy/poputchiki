@@ -222,6 +222,9 @@ func NewApp() *Application {
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)
 		r.Get("/photo", SearchPhoto)
+		r.Post("/photo/:id/like", IdWrapper, LikePhoto)
+		r.Get("/photo/:id/like", IdWrapper, GetLikersPhoto)
+		r.Delete("/photo/:id/like", IdWrapper, RestoreLikePhoto)
 	}, NeedAuth, SetOnlineWrapper)
 
 	a := &Application{session, p, m, db}

@@ -1136,6 +1136,31 @@ func GetLikersVideo(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp Web
 	return Render(likers)
 }
 
+func LikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+	err := db.AddLikePhoto(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(db.GetVideo(id))
+}
+
+func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+	err := db.RemoveLikePhoto(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(db.GetVideo(id))
+}
+
+func GetLikersPhoto(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+	likers := db.GetLikesPhoto(id)
+	for k := range likers {
+		likers[k].Prepare(adapter, db, webp)
+		likers[k].CleanPrivate()
+	}
+	return Render(likers)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
