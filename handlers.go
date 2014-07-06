@@ -154,7 +154,7 @@ func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 	favId := bson.ObjectIdHex(hexId)
 	friend := db.Get(favId)
 	if friend == nil {
-		return Render(ErrorUserNotFound)
+		return Render(ErrorObjectNotFound)
 	}
 	if err := db.RemoveFromBlacklist(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
