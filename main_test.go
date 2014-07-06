@@ -268,6 +268,21 @@ func TestDBMethods(t *testing.T) {
 					err := db.RemovePhoto(id, p.Id)
 					So(err, ShouldBeNil)
 				})
+
+				Convey("Search", func() {
+					query := &SearchQuery{}
+					query.Sex = "male"
+					photos, err := db.SearchPhoto(query, 1, 0)
+					So(err, ShouldBeNil)
+
+					found := false
+					for k := range photos {
+						if photos[k].Id == p.Id {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+				})
 			})
 		})
 	})

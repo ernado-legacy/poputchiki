@@ -428,9 +428,9 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 
 	photos := []*Photo{}
 	query := q.ToBson()
+	log.Println("query:", query)
 	u := []*User{}
-	query["statusupdate"] = bson.M{"$exists": true}
-	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
+	if err := db.users.Find(query).Skip(offset).Limit(count).All(&u); err != nil {
 		return photos, err
 	}
 	users := make([]bson.ObjectId, len(u))
