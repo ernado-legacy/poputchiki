@@ -269,6 +269,20 @@ func TestDBMethods(t *testing.T) {
 					So(err, ShouldBeNil)
 				})
 
+				Convey("Like", func() {
+					So(db.AddLikePhoto(id, p.Id), ShouldBeNil)
+					photo, err := db.GetPhoto(p.Id)
+					So(err, ShouldBeNil)
+					So(photo.Likes, ShouldEqual, 1)
+
+					Convey("Unlike", func() {
+						So(db.RemoveLikePhoto(id, p.Id), ShouldBeNil)
+						photo, err := db.GetPhoto(p.Id)
+						So(err, ShouldBeNil)
+						So(photo.Likes, ShouldEqual, 0)
+					})
+				})
+
 				Convey("Search", func() {
 					query := &SearchQuery{}
 					query.Sex = "male"
