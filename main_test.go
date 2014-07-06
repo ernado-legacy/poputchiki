@@ -319,6 +319,47 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeTrue)
 				})
 			})
+			Convey("Add video", func() {
+				video := &Video{}
+				video.Id = bson.NewObjectId()
+				video.User = id
+				v, err := db.AddVideo(video)
+				So(err, ShouldBeNil)
+
+				Convey("Like", func() {
+					So(db.AddLikeVideo(id, v.Id), ShouldBeNil)
+					video := db.GetVideo(v.Id)
+					So(video.Likes, ShouldEqual, 1)
+
+					likers := db.GetLikesVideo(video.Id)
+					found := false
+
+					for _, liker := range likers {
+						if liker.Id == id {
+							found = true
+						}
+					}
+
+					So(found, ShouldBeTrue)
+
+					Convey("Unlike", func() {
+						So(db.RemoveLikeVideo(id, v.Id), ShouldBeNil)
+						video := db.GetVideo(v.Id)
+						So(err, ShouldBeNil)
+						So(video.Likes, ShouldEqual, 0)
+						likers := db.GetLikesVideo(video.Id)
+						found := false
+
+						for _, liker := range likers {
+							if liker.Id == id {
+								found = true
+							}
+						}
+
+						So(found, ShouldBeFalse)
+					})
+				})
+			})
 		})
 	})
 }
