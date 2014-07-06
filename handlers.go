@@ -1,7 +1,5 @@
 package main
 
-import unsafe "unsafe"
-
 import (
 	"bufio"
 	"bytes"
@@ -65,34 +63,21 @@ const (
 )
 
 var (
-	ErrBadRequest = errors.New("bad request")
+	ErrBadRequest = errors.New("bad request") // internal bad request error
 )
 
+// simple handler for testing the api from cyvisor
 func Index() (int, []byte) {
 	return Render("ok")
 }
 
+// GetUser handler for getting full user information
 func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	userChannel := make(chan *User)
-	go func() {
-		userChannel <- db.Get(id)
-	}()
-
-	var user *User
-	const infoSize = unsafe.Sizeof(User{})
-	log.Println(infoSize)
-
-	select {
-	case <-time.After(time.Millisecond * 500):
-		log.Println("database get timed out")
-		return Render(ErrorBackend)
-	case u := <-userChannel:
-		user = u
-	}
-
+	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
+	// checking for blacklist
 	for _, u := range user.Blacklist {
 		if u == t.Id {
 			return Render(ErrorBlacklisted)
@@ -102,42 +87,40 @@ func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapt
 	if t == nil || t.Id != id {
 		user.CleanPrivate()
 	}
-
-	ok := make(chan time.Time)
-	go func() {
-		user.Prepare(adapter, db, webp)
-		ok <- time.Now()
-	}()
-	select {
-	case <-time.After(time.Millisecond * 70):
-		log.Println("prepare")
-	case <-ok:
-		return Render(user)
-	}
-
+	// preparing for rendering to json
+	user.Prepare(adapter, db, webp)
 	return Render(user)
 }
 
+// AddToFavorites adds target user to favorites of user
 func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
+	// check user existance
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
+	// get target user id from form
 	hexId := r.FormValue(FORM_TARGET)
 	if !bson.IsObjectIdHex(hexId) {
 		return Render(ErrorBadId)
 	}
+	// convert it to bson.ObjectId
 	favId := bson.ObjectIdHex(hexId)
+	// get target user from database
 	friend := db.Get(favId)
+	// check for esistance
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
+	// add to favorites
 	if err := db.AddToFavorites(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
 	}
 	return Render("updated")
 }
 
+// AddToBlacklist adds target user to blacklist of user
+// see AddToFavorites
 func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
@@ -158,6 +141,7 @@ func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 	return Render("added to blacklist")
 }
 
+// RemoveFromBlacklist removes target user from blacklist of another user
 func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
@@ -178,6 +162,7 @@ func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 	return Render("removed")
 }
 
+// RemoveFromFavorites removes target user from favorites of another user
 func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
@@ -198,27 +183,35 @@ func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 	return Render("removed")
 }
 
-func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+// GetFavorites returns list of users in favorites of target user
+func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	favorites := db.GetFavorites(id)
+	// check for existance
 	if favorites == nil {
-		return Render(ErrorUserNotFound)
+		return Render(ErrorObjectNotFound)
 	}
+	// clean private fields and prepare data
 	for key, _ := range favorites {
 		favorites[key].CleanPrivate()
+		favorites[key].Prepare(adapter, db, webp)
 	}
 	return Render(favorites)
 }
 
-func GetGuests(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+// GetFavorites returns list of users in guests of target user
+func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	guests, err := db.GetAllGuests(id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
+	// check for existance
 	if guests == nil {
-		return Render(ErrorUserNotFound) // todo: rename error
+		return Render(ErrorObjectNotFound)
 	}
+	// clean private fields and prepare data
 	for key, _ := range guests {
 		guests[key].CleanPrivate()
+		guests[key].Prepare(adapter, db, webp)
 	}
 	return Render(guests)
 }
@@ -250,6 +243,8 @@ func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime Realtime
 	return Render("added to guests")
 }
 
+// Login checks the provided credentials and return token for user, setting appropriate
+// auth cookies
 func Login(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
 	user := db.GetUsername(username)
@@ -268,6 +263,7 @@ func Login(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Stora
 	return Render(t)
 }
 
+// Logout ends the current session and makes current token unusable
 func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (int, []byte) {
 	if err := tokens.Remove(t); err != nil {
 		return Render(ErrorBackend)
@@ -275,26 +271,32 @@ func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (i
 	return Render("logged out")
 }
 
+// Register checks the provided credentials, add new user with that credentials to
+// database and returns new authorisation token, setting the appropriate cookies
 func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+	// load user data from form
 	u := UserFromForm(r)
+	// check that email is unique
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
 		return Render(ErrorBadRequest) // todo: change error name
 	}
-
+	// add to database
 	if err := db.Add(u); err != nil {
 		log.Println(err)
-		return Render(ErrorBadRequest) // todo: change error name
+		return Render(ErrorBackend)
 	}
-
+	// generate token
 	t, err := tokens.Generate(u.Id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
+	// generate confirmation token for email confirmation
 	confTok := db.NewConfirmationToken(u.Id)
 	if confTok == nil {
 		return Render(ErrorBackend)
 	}
+	// anync send email to user
 	go func() {
 		mgClient := mailgun.New(mailKey)
 		message := ConfirmationMail{}
@@ -311,6 +313,7 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 	return Render(t)
 }
 
+// Update updates user information with provided key-value document
 func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
 	query := bson.M{}
 	// decoding json to map
@@ -1008,10 +1011,12 @@ func GetStripe(db UserDB, adapter *weed.Adapter, pagination Pagination, webp Web
 	return Render(stripe)
 }
 
+// GetToken returns active token body
 func GetToken(t *gotok.Token) (int, []byte) {
 	return Render(t)
 }
 
+// ConfirmEmail verifies and deletes confirmation token, sets confirmation flag to user
 func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	token := args["token"]
 	if token == BLANK {
