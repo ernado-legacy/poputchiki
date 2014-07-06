@@ -15,4 +15,3 @@ def update():
         run('sed "s/VERSION/%s/g" Dockerfile.template > Dockerfile' % ver)
         run('docker build -t cydev/poputchiki .')
         run('~/poputchiki.sh')
-        run('docker restart nginx')

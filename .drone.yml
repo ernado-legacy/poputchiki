@@ -1,6 +1,3 @@
 image: radrydzewski/go:1.2
 script:
   - echo hello
-services:
-  - redis 
-  - bradrydzewski/mongodb:2.4
