@@ -66,6 +66,8 @@ type UserDB interface {
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 	SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error)
+	AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error
+	RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 
 	AddFile(file *File) (*File, error)
 
