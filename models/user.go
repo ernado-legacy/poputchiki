@@ -11,22 +11,15 @@ import (
 	"time"
 )
 
-func getHash(password, salt string) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(password + salt))
-	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-}
-
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
 }
 
 const (
-	FormEmail      = "email"
-	FormPassword   = "password"
-	FormFirstname  = "firstname"
-	FormSecondname = "secondname"
-	FormPhone      = "phone"
+	FormEmail     = "email"     // email field
+	FormPassword  = "password"  // password field
+	FormFirstname = "firstname" // user name field
+	FormPhone     = "phone"
 )
 
 type User struct {
@@ -59,6 +52,12 @@ type User struct {
 	Favorites      []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
 	Blacklist      []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
 	Countries      []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
+}
+
+func getHash(password, salt string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(password + salt))
+	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
 func UserFromForm(r *http.Request, salt string) *User {
@@ -97,6 +96,17 @@ func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept)
 		url, _ := adapter.GetUrl(fid)
 		u.AvatarUrl = url + suffix
 	}
+}
+
+// diff in years between two times
+func diff(t1, t2 time.Time) (years int) {
+	t2 = t2.AddDate(0, 0, 1) // advance t2 to make the range inclusive
+
+	for t1.AddDate(years, 0, 0).Before(t2) {
+		years++
+	}
+	years--
+	return
 }
 
 func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept) {

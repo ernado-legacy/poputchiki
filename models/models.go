@@ -5,20 +5,10 @@ import (
 	"time"
 )
 
-// additional user info
+// UserInfo additional user information
 type UserInfo struct {
 	Id    bson.ObjectId `json:"id"     bson:"_id"`
 	About string        `json:"about"  bson:"about"`
-}
-
-func diff(t1, t2 time.Time) (years int) {
-	t2 = t2.AddDate(0, 0, 1) // advance t2 to make the range inclusive
-
-	for t1.AddDate(years, 0, 0).Before(t2) {
-		years++
-	}
-	years--
-	return
 }
 
 type Guest struct {
