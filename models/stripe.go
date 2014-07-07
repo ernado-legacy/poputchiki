@@ -47,3 +47,8 @@ func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video 
 
 	return media.Prepare(adapter, webp, video, audio)
 }
+
+type StripeItemRequest struct {
+	Id   bson.ObjectId `json:"id"`
+	Type string        `json:"type"`
+}

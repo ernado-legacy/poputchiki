@@ -22,6 +22,19 @@ const (
 	FormPhone     = "phone"
 )
 
+// UserInfo additional user information
+type UserInfo struct {
+	Id    bson.ObjectId `json:"id"     bson:"_id"`
+	About string        `json:"about"  bson:"about"`
+}
+
+type Guest struct {
+	Id    bson.ObjectId `json:"id"    bson:"_id"`
+	User  bson.ObjectId `json:"user"  bson:"user"`
+	Guest bson.ObjectId `json:"guest" bson:"guest"`
+	Time  time.Time     `json:"time"  bson:"time"`
+}
+
 type User struct {
 	Id             bson.ObjectId   `json:"id"                     bson:"_id,omitempty"`
 	Name           string          `json:"name,omitempty"         bson:"name,omitempty"`
