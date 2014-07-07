@@ -37,7 +37,7 @@ type SearchQuery struct {
 	Text         string
 }
 
-// NewQuery returns query object with parsed field from url params
+// NewQuery returns query object with parsed fields from url params
 func NewQuery(q url.Values) (*SearchQuery, error) {
 	nQ := make(map[string]interface{})
 	for key, value := range q {
