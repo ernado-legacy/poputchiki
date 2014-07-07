@@ -80,3 +80,15 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 
 	return photos, nil
 }
+
+func (db *DB) AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error {
+	return db.AddLike(db.photo, user, target)
+}
+
+func (db *DB) RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error {
+	return db.RemoveLike(db.photo, user, target)
+}
+
+func (db *DB) GetLikesPhoto(id bson.ObjectId) []*User {
+	return db.GetLikes(db.photo, id)
+}

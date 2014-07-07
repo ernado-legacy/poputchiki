@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -60,4 +61,37 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	query := bson.M{"_id": id, "user": user}
 	err := db.statuses.Remove(query)
 	return err
+}
+
+func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.StatusUpdate, error) {
+	if count == 0 {
+		count = searchCount
+	}
+
+	statuses := []*models.StatusUpdate{}
+	query := q.ToBson()
+	u := []*models.User{}
+	query["statusupdate"] = bson.M{"$exists": true}
+	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
+		return statuses, err
+	}
+	users := make([]bson.ObjectId, len(u))
+	for i, user := range u {
+		users[i] = user.Id
+	}
+
+	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": users}}).All(&statuses); err != nil {
+		return statuses, err
+	}
+	if len(statuses) != len(users) {
+		return statuses, errors.New("unexpected length")
+	}
+
+	for i, user := range u {
+		statuses[i].ImageJpeg = user.AvatarJpeg
+		statuses[i].ImageWebp = user.AvatarWebp
+		statuses[i].Name = user.Name
+	}
+
+	return statuses, nil
 }
