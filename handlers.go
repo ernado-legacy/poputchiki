@@ -284,6 +284,7 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 	// check that email is unique
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
+		log.Println(u.Email, "already registered")
 		return Render(ErrorBadRequest) // todo: change error name
 	}
 	// add to database
@@ -347,6 +348,7 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 	}
 	// checking field count
 	if len(query) == 0 {
+		log.Println("no fields to change")
 		return Render(ErrorBadRequest)
 	}
 
@@ -354,6 +356,7 @@ func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder)
 	user := &User{}
 	err := convert(query, user)
 	if err != nil {
+		log.Println("unable to convert", err)
 		return Render(ErrorBadRequest)
 	}
 

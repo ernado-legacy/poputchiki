@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/ernado/gotok"
+
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
@@ -50,7 +51,7 @@ var (
 	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
 	mailDomain                = "mg.cydev.ru"
 	smsKey                    = "nil"
-	weedHost                  = "msk1.cydev.ru"
+	weedHost                  = "127.0.0.1"
 	weedPort                  = 9333
 	weedUrl                   = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 	OfflineTimeout            = 60 * 5 * time.Second
@@ -320,7 +321,7 @@ func main() {
 	projectNameF := flag.String("name", "poputchiki", "project name")
 	mongoHostF := flag.String("mongo", "localhost", "mongo host")
 	redisAddrF := flag.String("redis", ":6379", "redis host")
-	weedHostF := flag.String("weed", "msk1.cydev.ru", "weed host")
+	weedHostF := flag.String("weed", "127.0.0.1", "weed host")
 	flag.BoolVar(&production, "production", false, "environment")
 	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
 	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")

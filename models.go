@@ -26,7 +26,8 @@ const (
 )
 
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
-	"city", "country", "weight", "growth", "destinations", "sex"}
+	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
+}
 
 type User struct {
 	Id             bson.ObjectId   `json:"id"                     bson:"_id,omitempty"`
