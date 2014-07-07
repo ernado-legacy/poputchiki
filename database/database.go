@@ -276,56 +276,6 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 	return messages, err
 }
 
-func (db *DB) AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error) {
-	p := &StatusUpdate{}
-	p.Id = bson.NewObjectId()
-	p.Text = text
-	p.Time = time.Now()
-	p.User = u
-
-	if err := db.statuses.Insert(p); err != nil {
-		return nil, err
-	}
-
-	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": time.Now()}}}
-	_, err := db.users.FindId(u).Apply(update, &User{})
-
-	return p, err
-}
-
-func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error) {
-	s := &StatusUpdate{}
-	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
-	query := bson.M{"_id": id, "user": user}
-	_, err := db.statuses.Find(query).Apply(change, s)
-	s.Text = text
-	return s, err
-}
-
-func (db *DB) GetStatus(id bson.ObjectId) (status *StatusUpdate, err error) {
-	status = &StatusUpdate{}
-	err = db.statuses.FindId(id).One(status)
-	return status, err
-}
-
-func (db *DB) GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error) {
-	status = &StatusUpdate{}
-	err = db.statuses.Find(bson.M{"user": user}).Sort("-time").Limit(1).One(status)
-	return status, err
-}
-
-func (db *DB) GetLastStatuses(count int) (status []*StatusUpdate, err error) {
-	status = []*StatusUpdate{}
-	err = db.statuses.Find(nil).Sort("-time").Limit(count).All(&status)
-	return status, err
-}
-
-func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
-	query := bson.M{"_id": id, "user": user}
-	err := db.statuses.Remove(query)
-	return err
-}
-
 func (db *DB) AddFile(file *File) (*File, error) {
 	return file, db.files.Insert(file)
 }
