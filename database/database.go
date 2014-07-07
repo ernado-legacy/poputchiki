@@ -343,10 +343,6 @@ func (db *DB) AddFile(file *File) (*File, error) {
 	return file, db.files.Insert(file)
 }
 
-func (db *DB) AddVideo(video *Video) (*Video, error) {
-	return video, db.video.Insert(video)
-}
-
 func (db *DB) AddAudio(audio *Audio) (*Audio, error) {
 	return audio, db.audio.Insert(audio)
 }
@@ -357,14 +353,6 @@ func (db *DB) GetAudio(id bson.ObjectId) *Audio {
 		return nil
 	}
 	return a
-}
-
-func (db *DB) GetVideo(id bson.ObjectId) *Video {
-	v := &Video{}
-	if db.video.FindId(id).Select(bson.M{"liked_users": 0}).One(v) != nil {
-		return nil
-	}
-	return v
 }
 
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
@@ -566,14 +554,6 @@ func (db *DB) AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error {
 	return db.AddLike(db.photo, user, target)
 }
 
-func (db *DB) AddLikeVideo(user bson.ObjectId, target bson.ObjectId) error {
-	return db.AddLike(db.video, user, target)
-}
-
-func (db *DB) RemoveLikeVideo(user bson.ObjectId, target bson.ObjectId) error {
-	return db.RemoveLike(db.video, user, target)
-}
-
 func (db *DB) RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error {
 	return db.RemoveLike(db.photo, user, target)
 }
@@ -598,10 +578,6 @@ func (db *DB) GetLikes(coll *mgo.Collection, id bson.ObjectId) []*User {
 
 func (db *DB) GetLikesPhoto(id bson.ObjectId) []*User {
 	return db.GetLikes(db.photo, id)
-}
-
-func (db *DB) GetLikesVideo(id bson.ObjectId) []*User {
-	return db.GetLikes(db.video, id)
 }
 
 // {ObjectIdHex("53ac5de136c4536687000007") ObjectIdHex("53a5932a36c4531911000002") 13,09c5e0640517 10,09c64a9a818f http://msk1.cydev.ru:8080/13,09c5e0640517.webm 10,09c739840627 12,09c8f5df8949 http://msk1.cydev.ru:8080/10,09c739840627.webp  2014-06-26 21:52:33.085479286 +0400 MSK 0 35}
