@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
@@ -132,7 +133,7 @@ func NewDatabase(session *mgo.Session) models.DataBase {
 	aucoll := db.C(audioCollection)
 	stcoll := db.C(stripeCollection)
 	ctcoll := db.C(conftokensCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll}
+	return database.New(coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, OfflineTimeout)
 }
 
 func NewApp() *Application {

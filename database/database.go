@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"errors"
@@ -13,22 +13,28 @@ import (
 )
 
 const (
-	STRIPE_COUNT = 20
-	SEARCH_COUNT = 40
+	stripeCount = 20
+	searchCount = 40
 )
 
 type DB struct {
-	users      *mgo.Collection
-	guests     *mgo.Collection
-	messages   *mgo.Collection
-	statuses   *mgo.Collection
-	photo      *mgo.Collection
-	albums     *mgo.Collection
-	files      *mgo.Collection
-	video      *mgo.Collection
-	audio      *mgo.Collection
-	stripe     *mgo.Collection
-	conftokens *mgo.Collection
+	users          *mgo.Collection
+	guests         *mgo.Collection
+	messages       *mgo.Collection
+	statuses       *mgo.Collection
+	photo          *mgo.Collection
+	albums         *mgo.Collection
+	files          *mgo.Collection
+	video          *mgo.Collection
+	audio          *mgo.Collection
+	stripe         *mgo.Collection
+	conftokens     *mgo.Collection
+	salt           string
+	offlineTimeout time.Duration
+}
+
+func New(coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll *mgo.Collection, salt string, OfflineTimeout time.Duration) *DB {
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, OfflineTimeout}
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -53,7 +59,7 @@ func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 }
 
 func (db *DB) Salt() string {
-	return salt
+	return db.salt
 }
 
 func (db *DB) Add(user *User) error {
@@ -376,14 +382,14 @@ func (db *DB) GetStripeItem(id bson.ObjectId) (*StripeItem, error) {
 func (db *DB) GetStripe(count, offset int) ([]*StripeItem, error) {
 	s := []*StripeItem{}
 	if count == 0 {
-		count = STRIPE_COUNT
+		count = stripeCount
 	}
 	return s, db.stripe.Find(nil).Sort("-time").Skip(offset).Limit(count).All(&s)
 }
 
 func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
 	if count == 0 {
-		count = SEARCH_COUNT
+		count = searchCount
 	}
 
 	query := q.ToBson()
@@ -395,7 +401,7 @@ func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
 
 func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error) {
 	if count == 0 {
-		count = SEARCH_COUNT
+		count = searchCount
 	}
 
 	statuses := []*StatusUpdate{}
@@ -428,7 +434,7 @@ func (db *DB) SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate
 
 func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 	if count == 0 {
-		count = SEARCH_COUNT
+		count = searchCount
 	}
 
 	photos := []*Photo{}
@@ -490,7 +496,7 @@ func (db *DB) GetConfirmationToken(token string) *EmailConfirmationToken {
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
 	// change := mgo.Change{Update: bson.M{"$set": bson.M{"online": false}}}
-	t := time.Now().Add(-OfflineTimeout)
+	t := time.Now().Add(-db.offlineTimeout)
 	query := bson.M{"online": true, "lastaction": bson.M{"$lte": t}}
 	return db.users.UpdateAll(query, bson.M{"$set": bson.M{"online": false}})
 }
