@@ -44,7 +44,7 @@ func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {
 	return db.photo.Remove(bson.M{"_id": id, "user": user})
 }
 
-// Updates photo description and return updated object; TODO: test; TODO: check photo.id != id
+// Updates photo description and return updated object
 func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) {
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"description": photo.Description}}}
 	p := &Photo{}
