@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/ernado/gotok"
-
+	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
@@ -69,7 +69,7 @@ type Application struct {
 	session *mgo.Session
 	p       *redis.Pool
 	m       *martini.ClassicMartini
-	db      UserDB
+	db      models.DataBase
 }
 
 func loadConfig() error {
@@ -119,7 +119,7 @@ func newPool() *redis.Pool {
 	}
 }
 
-func NewDatabase(session *mgo.Session) UserDB {
+func NewDatabase(session *mgo.Session) models.DataBase {
 	db := session.DB(dbName)
 	coll := db.C(collection)
 	gcoll := db.C(guestsCollection)
@@ -142,9 +142,9 @@ func NewApp() *Application {
 	}
 
 	runtime.GOMAXPROCS(processes)
-	var db UserDB
+	var db models.DataBase
+	var realtime models.RealtimeInterface
 	var tokenStorage gotok.Storage
-	var realtime RealtimeInterface
 	db = NewDatabase(session)
 	p := newPool()
 	tokenStorage = gotok.New(session.DB(dbName).C(tokenCollection))

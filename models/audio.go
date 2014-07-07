@@ -19,9 +19,9 @@ type Audio struct {
 
 func (audio Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a AudioAccept) error {
 	var err error
-	if a == AA_ACC {
+	if a == AaAac {
 		audio.AudioUrl, err = adapter.GetUrl(audio.AudioAac)
-	} else if a == AA_OGG {
+	} else if a == AaOgg {
 		audio.AudioUrl, err = adapter.GetUrl(audio.AudioOgg)
 	}
 	return err

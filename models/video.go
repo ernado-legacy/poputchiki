@@ -23,9 +23,9 @@ type Video struct {
 
 func (v Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, _ AudioAccept) error {
 	var err error
-	if video == VA_WEBM {
+	if video == VaWebm {
 		v.VideoUrl, err = adapter.GetUrl(v.VideoWebm)
-	} else if video == VA_MP4 {
+	} else if video == VaMp4 {
 		v.VideoUrl, err = adapter.GetUrl(v.VideoMpeg)
 	}
 	if err != nil {

@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"labix.org/v2/mgo/bson"
-	"log"
 	"net/url"
 	"strconv"
 	"time"
@@ -14,8 +13,8 @@ const (
 	SEASON_WINTER = "winter"
 	SEASON_AUTUMN = "autumn"
 	SEASON_SPRING = "spring"
-	sexMale       = "male"
-	sexFemale     = "female"
+	SexMale       = "male"
+	SexFemale     = "female"
 	ageMax        = 100
 	ageMin        = 18
 	growthMax     = 300
@@ -69,7 +68,7 @@ func NewQuery(q url.Values) (*SearchQuery, error) {
 // ToBson converts search query to bson map
 func (q *SearchQuery) ToBson() bson.M {
 	query := []bson.M{}
-	if q.Sex != BLANK && (q.Sex == sexMale || q.Sex == sexFemale) {
+	if q.Sex != "" && (q.Sex == SexMale || q.Sex == SexFemale) {
 		query = append(query, bson.M{"sex": q.Sex})
 	}
 	if len(q.Seasons) > 0 {
@@ -111,18 +110,15 @@ func (q *SearchQuery) ToBson() bson.M {
 		query = append(query, bson.M{"weight": bson.M{"$gte": q.WeightMin, "$lte": q.WeightMax}})
 	}
 
-	if q.City != BLANK {
+	if q.City != "" {
 		query = append(query, bson.M{"city": q.City})
 	}
 
-	if q.Country != BLANK && q.City == BLANK {
+	if q.Country != "" && q.City == "" {
 		query = append(query, bson.M{"country": q.Country})
 	}
 
-	fullQuery := bson.M{"$and": query}
-	m, _ := json.Marshal(fullQuery)
-	log.Println(string(m))
-	return fullQuery
+	return bson.M{"$and": query}
 }
 
 type Pagination struct {

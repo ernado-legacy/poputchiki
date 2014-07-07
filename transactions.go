@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ernado/gorobokassa"
+	"github.com/ernado/poputchiki/models"
 	"github.com/garyburd/redigo/redis"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -54,28 +55,28 @@ func (t *TransactionHandler) getID() (int, error) {
 	return redis.Int(c.Do("INCR", strings.Join(key, REDIS_SEPARATOR)))
 }
 
-func (t *TransactionHandler) getURL(transaction *Transaction) string {
+func (t *TransactionHandler) getURL(transaction *models.Transaction) string {
 	return t.client.URL(transaction.Id, transaction.Value, transaction.Description)
 }
 
-func (t *TransactionHandler) Start(id bson.ObjectId, value int, description string) (string, *Transaction, error) {
+func (t *TransactionHandler) Start(id bson.ObjectId, value int, description string) (string, *models.Transaction, error) {
 	tID, err := t.getID()
 	if err != nil {
 		return "", nil, err
 	}
-	transaction := &Transaction{tID, id, value, description, time.Now(), false}
+	transaction := &models.Transaction{tID, id, value, description, time.Now(), false}
 	if err = t.transactions.Insert(transaction); err != nil {
 		return "", nil, err
 	}
 	return t.getURL(transaction), transaction, nil
 }
 
-func (t *TransactionHandler) Close(r *http.Request) (*Transaction, error) {
+func (t *TransactionHandler) Close(r *http.Request) (*models.Transaction, error) {
 	invoiceID, _, err := t.client.ResultInvoice(r)
 	if err != nil {
 		return nil, err
 	}
-	transaction := new(Transaction)
+	transaction := new(models.Transaction)
 	selector := bson.M{"_id": invoiceID, "closed": false}
 	err = t.transactions.Find(selector).One(transaction)
 	if err != nil {

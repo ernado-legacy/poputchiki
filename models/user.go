@@ -22,11 +22,11 @@ var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday"
 }
 
 const (
-	FORM_EMAIL      = "email"
-	FORM_PASSWORD   = "password"
-	FORM_FIRSTNAME  = "firstname"
-	FORM_SECONDNAME = "secondname"
-	FORM_PHONE      = "phone"
+	FormEmail      = "email"
+	FormPassword   = "password"
+	FormFirstname  = "firstname"
+	FormSecondname = "secondname"
+	FormPhone      = "phone"
 )
 
 type User struct {
@@ -64,10 +64,10 @@ type User struct {
 func UserFromForm(r *http.Request, salt string) *User {
 	u := User{}
 	u.Id = bson.NewObjectId()
-	u.Email = r.FormValue(FORM_EMAIL)
-	u.Password = getHash(r.FormValue(FORM_PASSWORD), salt)
-	u.Phone = r.FormValue(FORM_PHONE)
-	u.Name = r.FormValue(FORM_FIRSTNAME)
+	u.Email = r.FormValue(FormEmail)
+	u.Password = getHash(r.FormValue(FormPassword), salt)
+	u.Phone = r.FormValue(FormPhone)
+	u.Name = r.FormValue(FormFirstname)
 	return &u
 }
 

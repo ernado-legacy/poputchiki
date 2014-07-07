@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ernado/gotok"
+	. "github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"io/ioutil"
@@ -38,7 +39,7 @@ func TestDBMethods(t *testing.T) {
 			id := u.Id
 			u.Birthday = time.Now().AddDate(-25, 0, 0)
 			u.Email = "test@" + mailDomain
-			u.Sex = SEX_MALE
+			u.Sex = SexMale
 			u.Growth = 180
 			u.Seasons = []string{SEASON_SUMMER, SEASON_SPRING}
 			err = db.Add(&u)
@@ -131,7 +132,7 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeFalse)
 				})
 				Convey("Sex", func() {
-					result, err := db.Search(&SearchQuery{Sex: SEX_MALE}, 0, 0)
+					result, err := db.Search(&SearchQuery{Sex: SexMale}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -140,7 +141,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{Sex: SEX_FEMALE}, 0, 0)
+					result, err = db.Search(&SearchQuery{Sex: SexFemale}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {

@@ -12,6 +12,7 @@ import (
 	"github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
+	. "github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
@@ -72,7 +73,7 @@ func Index() (int, []byte) {
 }
 
 // GetUser handler for getting full user information
-func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -93,7 +94,7 @@ func GetUser(db UserDB, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapt
 }
 
 // AddToFavorites adds target user to favorites of user
-func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+func AddToFavorites(db DataBase, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	// check user existance
 	if user == nil {
@@ -120,7 +121,7 @@ func AddToFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 }
 
 // AddToBlacklist adds target user to blacklist of user
-func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+func AddToBlacklist(db DataBase, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	// check existance
 	if user == nil {
@@ -144,7 +145,7 @@ func AddToBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) 
 }
 
 // RemoveFromBlacklist removes target user from blacklist of another user
-func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+func RemoveFromBlacklist(db DataBase, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	// check existance
 	if user == nil {
@@ -168,7 +169,7 @@ func RemoveFromBlacklist(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 }
 
 // RemoveFromFavorites removes target user from favorites of another user
-func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []byte) {
+func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -189,7 +190,7 @@ func RemoveFromFavorites(db UserDB, id bson.ObjectId, r *http.Request) (int, []b
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	favorites := db.GetFavorites(id)
 	// check for existance
 	if favorites == nil {
@@ -204,7 +205,7 @@ func GetFavorites(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept,
 }
 
 // GetFavorites returns list of users in guests of target user
-func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	guests, err := db.GetAllGuests(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -221,7 +222,7 @@ func GetGuests(db UserDB, id bson.ObjectId, r *http.Request, webp WebpAccept, ad
 	return Render(guests)
 }
 
-func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime RealtimeInterface) (int, []byte) {
+func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime RealtimeInterface) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -250,7 +251,7 @@ func AddToGuests(db UserDB, id bson.ObjectId, r *http.Request, realtime Realtime
 
 // Login checks the provided credentials and return token for user, setting appropriate
 // auth cookies
-func Login(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
 	user := db.GetUsername(username)
 	if user == nil {
@@ -269,7 +270,7 @@ func Login(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Stora
 }
 
 // Logout ends the current session and makes current token unusable
-func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (int, []byte) {
+func Logout(db DataBase, r *http.Request, tokens gotok.Storage, t *gotok.Token) (int, []byte) {
 	if err := tokens.Remove(t); err != nil {
 		return Render(ErrorBackend)
 	}
@@ -278,9 +279,9 @@ func Logout(db UserDB, r *http.Request, tokens gotok.Storage, t *gotok.Token) (i
 
 // Register checks the provided credentials, add new user with that credentials to
 // database and returns new authorisation token, setting the appropriate cookies
-func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	// load user data from form
-	u := UserFromForm(r)
+	u := UserFromForm(r, db.Salt())
 	// check that email is unique
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
@@ -320,7 +321,7 @@ func Register(db UserDB, r *http.Request, w http.ResponseWriter, tokens gotok.St
 }
 
 // Update updates user information with provided key-value document
-func Update(db UserDB, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
+func Update(db DataBase, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
 	query := bson.M{}
 	// decoding json to map
 	e := decoder.Decode(&query)
@@ -399,12 +400,12 @@ func Must(err error) {
 	}
 }
 
-func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+func SendMessage(db DataBase, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
 	text := r.FormValue(FORM_TEXT)
 	origin := t.Id
 	now := time.Now()
 
-	if text == BLANK {
+	if text == "" {
 		return Render(ErrorBadRequest)
 	}
 
@@ -432,7 +433,7 @@ func SendMessage(db UserDB, destination bson.ObjectId, r *http.Request, t *gotok
 	return Render("message sent")
 }
 
-func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
+func RemoveMessage(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	message, err := db.GetMessage(id)
 	if err != nil {
 		log.Println(err)
@@ -447,7 +448,7 @@ func RemoveMessage(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token)
 	return Render("message removed")
 }
 
-func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
+func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	messages, err := db.GetMessagesFromUser(t.Id, origin)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -458,7 +459,7 @@ func GetMessagesFromUser(db UserDB, origin bson.ObjectId, r *http.Request, t *go
 	return Render(messages)
 }
 
-func GetChats(db UserDB, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	users, err := db.GetChats(id)
 	if err != nil {
 		log.Println(err)
@@ -470,7 +471,7 @@ func GetChats(db UserDB, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapte
 	return Render(users)
 }
 
-func UploadVideo(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, videoAccept VideoAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadVideo(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, videoAccept VideoAccept, adapter *weed.Adapter) (int, []byte) {
 	// c := weedo.NewClient(weedHost, weedPort)
 	id := bson.NewObjectId()
 	video := Video{Id: id, User: t.Id, Time: time.Now()}
@@ -731,10 +732,10 @@ func UploadVideo(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 		video.VideoMpeg = fileMp4.Fid
 		video.VideoWebm = fileWebm.Fid
 		log.Println("video accept", videoAccept)
-		if videoAccept == VA_MP4 {
+		if videoAccept == VaMp4 {
 			video.VideoUrl = fileMp4.Url + ".mp4"
 		}
-		if videoAccept == VA_WEBM {
+		if videoAccept == VaWebm {
 			video.VideoUrl = fileWebm.Url + ".webm"
 		}
 		log.Println("video transcoded", video)
@@ -812,7 +813,7 @@ func convert(input interface{}, output interface{}) error {
 	return json.Unmarshal(inputJson, output)
 }
 
-func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
+func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -838,7 +839,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 		return *output
 	}
 
-	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), BLANK)
+	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
 	newPhoto.ImageUrl = p.ImageJpeg.Url
 	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
 
@@ -849,7 +850,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db UserDB, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err == ErrBadRequest {
 		return Render(ErrorBadRequest)
@@ -860,7 +861,7 @@ func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return Render(photo)
 }
 
-func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
+func AddStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(status); err != nil {
@@ -879,7 +880,7 @@ func AddStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token) (in
 	return Render(status)
 }
 
-func GetStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
+func GetStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -887,14 +888,14 @@ func GetStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	return Render(status)
 }
 
-func RemoveStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
+func RemoveStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	if err := db.RemoveStatusSecure(t.Id, id); err != nil {
 		return Render(ErrorBackend)
 	}
 	return Render("ok")
 }
 
-func GetCurrentStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte) {
+func GetCurrentStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetCurrentStatus(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -902,7 +903,7 @@ func GetCurrentStatus(db UserDB, t *gotok.Token, id bson.ObjectId) (int, []byte)
 	return Render(status)
 }
 
-func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
+func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
 	status := &StatusUpdate{}
 	if err := decoder.Decode(status); err != nil {
 		return Render(ErrorBadRequest)
@@ -914,7 +915,7 @@ func UpdateStatus(db UserDB, id bson.ObjectId, r *http.Request, t *gotok.Token, 
 	return Render(status)
 }
 
-func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchPeople(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)
@@ -933,7 +934,7 @@ func SearchPeople(db UserDB, pagination Pagination, r *http.Request, webpAccept 
 	return Render(result)
 }
 
-func SearchStatuses(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)
@@ -952,7 +953,7 @@ func SearchStatuses(db UserDB, pagination Pagination, r *http.Request, webpAccep
 	return Render(result)
 }
 
-func SearchPhoto(db UserDB, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)
@@ -974,7 +975,7 @@ func SearchPhoto(db UserDB, pagination Pagination, r *http.Request, webpAccept W
 	return Render(result)
 }
 
-func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
+func AddStripeItem(db DataBase, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
 	if decoder.Decode(request) != nil {
@@ -1005,7 +1006,7 @@ func AddStripeItem(db UserDB, t *gotok.Token, decoder *json.Decoder) (int, []byt
 	return Render(s)
 }
 
-func GetStripe(db UserDB, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	stripe, err := db.GetStripe(pagination.Count, pagination.Offset)
 	if err != nil {
 		log.Println(err)
@@ -1025,9 +1026,9 @@ func GetToken(t *gotok.Token) (int, []byte) {
 }
 
 // ConfirmEmail verifies and deletes confirmation token, sets confirmation flag to user
-func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func ConfirmEmail(db DataBase, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	token := args["token"]
-	if token == BLANK {
+	if token == "" {
 		return Render(ErrorBadRequest)
 	}
 	tok := db.GetConfirmationToken(token)
@@ -1047,9 +1048,9 @@ func ConfirmEmail(db UserDB, args martini.Params, w http.ResponseWriter, tokens 
 	return Render("email подтвержден")
 }
 
-func ConfirmPhone(db UserDB, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func ConfirmPhone(db DataBase, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
 	codeStr := args["token"]
-	if codeStr == BLANK {
+	if codeStr == "" {
 		return Render(ErrorBadRequest)
 	}
 	h := sha256.New()
@@ -1073,7 +1074,7 @@ func ConfirmPhone(db UserDB, args martini.Params, w http.ResponseWriter, tokens 
 	return Render("телефон подтвержден")
 }
 
-func ConfirmPhoneStart(db UserDB, t *gotok.Token) (int, []byte) {
+func ConfirmPhoneStart(db DataBase, t *gotok.Token) (int, []byte) {
 	code := rand.Intn(999)
 	codeStr := fmt.Sprintf("%03d", code)
 	h := sha256.New()
@@ -1095,7 +1096,7 @@ func ConfirmPhoneStart(db UserDB, t *gotok.Token) (int, []byte) {
 	return Render("ok")
 }
 
-func GetTransactionUrl(db UserDB, args martini.Params, t *gotok.Token, handler *TransactionHandler) (int, []byte) {
+func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler *TransactionHandler) (int, []byte) {
 	value, err := strconv.Atoi(args["value"])
 	if err != nil || value <= 0 {
 		return Render(ErrorBadRequest)
@@ -1110,7 +1111,7 @@ func GetTransactionUrl(db UserDB, args martini.Params, t *gotok.Token, handler *
 	return Render(url)
 }
 
-func RobokassaSuccessHandler(db UserDB, r *http.Request, handler *TransactionHandler) (int, []byte) {
+func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionHandler) (int, []byte) {
 	transaction, err := handler.Close(r)
 	if err != nil {
 		return Render(ErrorBadRequest)
@@ -1124,7 +1125,7 @@ func RobokassaSuccessHandler(db UserDB, r *http.Request, handler *TransactionHan
 	return Render(transaction)
 }
 
-func LikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.AddLikeVideo(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -1132,7 +1133,7 @@ func LikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
 	return Render(db.GetVideo(id))
 }
 
-func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.RemoveLikeVideo(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -1140,7 +1141,7 @@ func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte)
 	return Render(db.GetVideo(id))
 }
 
-func GetLikersVideo(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
 	likers := db.GetLikesVideo(id)
 	for k := range likers {
 		likers[k].Prepare(adapter, db, webp)
@@ -1149,7 +1150,7 @@ func GetLikersVideo(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp Web
 	return Render(likers)
 }
 
-func LikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.AddLikePhoto(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -1157,7 +1158,7 @@ func LikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
 	return Render(db.GetVideo(id))
 }
 
-func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte) {
+func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.RemoveLikePhoto(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -1165,7 +1166,7 @@ func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db UserDB) (int, []byte)
 	return Render(db.GetVideo(id))
 }
 
-func GetLikersPhoto(id bson.ObjectId, db UserDB, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
 	for k := range likers {
 		likers[k].Prepare(adapter, db, webp)

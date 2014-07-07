@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/ernado/gotok"
+	. "github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -49,6 +50,10 @@ func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 	}
 
 	return favorites
+}
+
+func (db *DB) Salt() string {
+	return salt
 }
 
 func (db *DB) Add(user *User) error {

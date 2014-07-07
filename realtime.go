@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki/models"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/websocket"
 	"labix.org/v2/mgo/bson"
@@ -46,7 +47,7 @@ func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
 	defer conn.Close()
 
 	t := strings.ToLower(reflect.TypeOf(event).Name())
-	e := RealtimeEvent{t, event, time.Now()}
+	e := models.RealtimeEvent{t, event, time.Now()}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
 	eJson, err := json.Marshal(e)
@@ -116,9 +117,9 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	return Render("ok")
 }
 
-func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
+func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.RealtimeEvent {
 	// creating new channel
-	c := make(chan RealtimeEvent, RELT_BUFF_SIZE)
+	c := make(chan models.RealtimeEvent, RELT_BUFF_SIZE)
 
 	conn := realtime.Conn()
 	psc := redis.PubSubConn{}
@@ -133,7 +134,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
-				e := RealtimeEvent{}
+				e := models.RealtimeEvent{}
 				err := json.Unmarshal(v.Data, &e)
 				if err != nil {
 					log.Println(err)
@@ -149,7 +150,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan RealtimeEvent {
 	return c
 }
 
-func pushAll(event RealtimeEvent, chans map[bson.ObjectId]chan RealtimeEvent) {
+func pushAll(event models.RealtimeEvent, chans map[bson.ObjectId]chan models.RealtimeEvent) {
 	for _, channel := range chans {
 		channel <- event
 	}
@@ -157,7 +158,7 @@ func pushAll(event RealtimeEvent, chans map[bson.ObjectId]chan RealtimeEvent) {
 
 func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 	log.Println("getting realtime channel")
-	c := ReltChannel{make(map[bson.ObjectId](chan RealtimeEvent)), realtime.getChannel(id)}
+	c := ReltChannel{make(map[bson.ObjectId](chan models.RealtimeEvent)), realtime.getChannel(id)}
 	go func() {
 		for event := range c.events {
 			go pushAll(event, c.chans)
@@ -168,7 +169,7 @@ func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 
 func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
 	log.Println("getting websocket channel for", id.Hex())
-	c := make(chan RealtimeEvent, RELT_WS_BUFF_SIZE)
+	c := make(chan models.RealtimeEvent, RELT_WS_BUFF_SIZE)
 	_, ok := realtime.chans[id]
 	if !ok {
 		log.Println("realtime channel not found, creating")
@@ -187,11 +188,11 @@ func (realtime *RealtimeRedis) CloseWs(c ReltWSChannel) {
 type ReltWSChannel struct {
 	id            bson.ObjectId
 	user          bson.ObjectId
-	channel       chan RealtimeEvent
+	channel       chan models.RealtimeEvent
 	subscriptions []bson.ObjectId
 }
 
 type ReltChannel struct {
-	chans  map[bson.ObjectId](chan RealtimeEvent)
-	events chan RealtimeEvent
+	chans  map[bson.ObjectId](chan models.RealtimeEvent)
+	events chan models.RealtimeEvent
 }

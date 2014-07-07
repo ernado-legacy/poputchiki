@@ -11,10 +11,6 @@ type UserInfo struct {
 	About string        `json:"about"  bson:"about"`
 }
 
-const (
-	BLANK = ""
-)
-
 func diff(t1, t2 time.Time) (years int) {
 	t2 = t2.AddDate(0, 0, 1) // advance t2 to make the range inclusive
 

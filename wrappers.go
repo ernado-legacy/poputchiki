@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki/models"
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -47,14 +48,14 @@ func Render(value interface{}) (int, []byte) {
 	}
 }
 
-func SetOnlineWrapper(db UserDB, t *gotok.Token) {
+func SetOnlineWrapper(db models.DataBase, t *gotok.Token) {
 	go db.SetOnline(t.Id)
 	go db.SetLastActionNow(t.Id)
 }
 
 func PaginationWrapper(c martini.Context, r *http.Request) {
 	q := r.URL.Query()
-	p := Pagination{}
+	p := models.Pagination{}
 
 	if len(q[QUERY_PAGINATION_COUNT]) == 1 {
 		p.Count, _ = strconv.Atoi(q[QUERY_PAGINATION_COUNT][0])
@@ -72,7 +73,7 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w ht
 
 	tStr := q.Get(TOKEN_URL_PARM)
 
-	if tStr != BLANK {
+	if tStr != "" {
 		hexToken = tStr
 	}
 
@@ -116,7 +117,7 @@ func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token)
 }
 
 func WebpWrapper(c martini.Context, r *http.Request) {
-	var accept WebpAccept
+	var accept models.WebpAccept
 	accept = false
 	cookie, err := r.Cookie("webp")
 	if err != nil {
@@ -128,32 +129,32 @@ func WebpWrapper(c martini.Context, r *http.Request) {
 		c.Map(accept)
 		return
 	}
-	accept = WebpAccept(val == 1)
+	accept = models.WebpAccept(val == 1)
 	c.Map(accept)
 }
 
 func VideoWrapper(c martini.Context, r *http.Request) {
-	var accept VideoAccept = "none"
+	var accept models.VideoAccept = "none"
 	cookie, err := r.Cookie("video")
 	if err != nil {
 		c.Map(accept)
 		return
 	}
-	if cookie.Value != BLANK {
-		accept = VideoAccept(cookie.Value)
+	if cookie.Value != "" {
+		accept = models.VideoAccept(cookie.Value)
 	}
 	c.Map(accept)
 }
 
 func AudioWrapper(c martini.Context, r *http.Request) {
-	var accept AudioAccept = "none"
+	var accept models.AudioAccept = "none"
 	cookie, err := r.Cookie("audio")
 	if err != nil {
 		c.Map(accept)
 		return
 	}
-	if cookie.Value != BLANK {
-		accept = AudioAccept(cookie.Value)
+	if cookie.Value != "" {
+		accept = models.AudioAccept(cookie.Value)
 	}
 	c.Map(accept)
 }

@@ -18,10 +18,10 @@ type VideoAccept string
 type AudioAccept string
 
 var (
-	VA_WEBM VideoAccept = "webm"
-	VA_MP4  VideoAccept = "mp4"
-	AA_ACC  AudioAccept = "acc"
-	AA_OGG  AudioAccept = "ogg"
+	VaWebm VideoAccept = "webm"
+	VaMp4  VideoAccept = "mp4"
+	AaAac  AudioAccept = "acc"
+	AaOgg  AudioAccept = "ogg"
 )
 
 type DataBase interface {
