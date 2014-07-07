@@ -29,6 +29,7 @@ var (
 )
 
 type DB struct {
+	db             *mgo.Database
 	users          *mgo.Collection
 	guests         *mgo.Collection
 	messages       *mgo.Collection
@@ -44,6 +45,58 @@ type DB struct {
 	offlineTimeout time.Duration
 }
 
+// Drop all collections of database
+func (db *DB) Drop() {
+	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
+		db.albums, db.files, db.video, db.audio, db.stripe, db.conftokens}
+
+	for k := range collections {
+		collections[k].DropCollection()
+	}
+}
+
+// Init initiates indexes
+func (database *DB) Init() {
+	index := mgo.Index{
+		Key:        []string{"email"},
+		Background: true, // See notes.
+	}
+	db := database.db
+	db.C(collection).EnsureIndex(index)
+
+	index = mgo.Index{Key: []string{"$hashed:_id"}}
+	db.C(collection).EnsureIndex(index)
+
+	index = mgo.Index{
+		Key:        []string{"guest"},
+		Background: true, // See notes.
+	}
+	db.C(guestsCollection).EnsureIndex(index)
+
+	// photo, guest, messages: hashed user index
+	index = mgo.Index{
+		Key: []string{"$hashed:user"},
+	}
+	db.C(messagesCollection).EnsureIndex(index)
+	db.C(guestsCollection).EnsureIndex(index)
+	db.C(photoCollection).EnsureIndex(index)
+	db.C(statusesCollection).EnsureIndex(index)
+	db.C(guestsCollection).EnsureIndex(index)
+	db.C(filesCollection).EnsureIndex(index)
+
+	index = mgo.Index{
+		Key:        []string{"time"},
+		Background: true,
+	}
+	db.C(messagesCollection).EnsureIndex(index)
+	db.C(statusesCollection).EnsureIndex(index)
+	db.C(filesCollection).EnsureIndex(index)
+	db.C(stripeCollection).EnsureIndex(index)
+
+	index = mgo.Index{Key: []string{"online", "lastaction"}}
+	db.C(collection).EnsureIndex(index)
+}
+
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	db := session.DB(name)
 	coll := db.C(collection)
@@ -57,7 +110,8 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	aucoll := db.C(audioCollection)
 	stcoll := db.C(stripeCollection)
 	ctcoll := db.C(conftokensCollection)
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, timeout}
+	return &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
+		stcoll, ctcoll, salt, timeout}
 }
 
 func (db *DB) Salt() string {

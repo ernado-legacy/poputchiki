@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"github.com/coreos/go-etcd/etcd"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
@@ -17,7 +16,6 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-	"strconv"
 	"time"
 )
 
@@ -26,19 +24,6 @@ var (
 	projectName               = "poputchiki"
 	dbName                    = projectName
 	dbCity                    = "countries"
-	collection                = "users"
-	citiesCollection          = "cities"
-	countriesCollection       = "countries"
-	guestsCollection          = "guests"
-	messagesCollection        = "messages"
-	statusesCollection        = "statuses"
-	photoCollection           = "photo"
-	albumsCollection          = "albums"
-	filesCollection           = "files"
-	videoCollection           = "audio"
-	conftokensCollection      = "conftokens"
-	audioCollection           = "video"
-	stripeCollection          = "stripe"
 	tokenCollection           = "tokens"
 	mongoHost                 = "localhost"
 	robokassaLogin            = "login"
@@ -71,35 +56,6 @@ type Application struct {
 	p       *redis.Pool
 	m       *martini.ClassicMartini
 	db      models.DataBase
-}
-
-func loadConfig() error {
-	c := etcd.NewClient([]string{"http://127.0.0.1:4001"})
-	_, err := c.Update("test", "test", 0)
-	if err != nil {
-		return err
-	}
-	mongo, err := c.Get("mongodb-master", false, false)
-	if err != nil {
-		return err
-	}
-	mongoHost = mongo.Node.Value
-	redisMaster, err := c.Get("redis-master", false, false)
-	if err != nil {
-		return err
-	}
-	redisAddr = redisMaster.Node.Value
-	weedMaster, err := c.Get("weed-master/host", false, false)
-	if err != nil {
-		return err
-	}
-	weedHost = weedMaster.Node.Value
-	weedMaster, err = c.Get("weed-master/port", false, false)
-	if err != nil {
-		return err
-	}
-	weedPort, err = strconv.Atoi(weedMaster.Node.Value)
-	return err
 }
 
 func newPool() *redis.Pool {
@@ -223,7 +179,6 @@ func NewApp() *Application {
 }
 
 func (a *Application) Close() {
-	// a.session.Close()
 	a.p.Close()
 }
 
@@ -231,15 +186,11 @@ func (a *Application) StatusCycle() {
 	log.Println("[updater]", "starting cycle")
 	ticker := time.NewTicker(OfflineUpdateTick)
 	for _ = range ticker.C {
-		// start := time.Now()
-		// log.Println("[updater]", "updating statuses")
 		_, err := a.db.UpdateAllStatuses()
 		if err != nil {
 			log.Println("[updater]", "status update error", err)
 			return
 		}
-		// duration := time.Now().Sub(start)
-		// log.Println("[updater]", "updated", info.Updated, "for", duration)
 	}
 }
 
@@ -249,56 +200,12 @@ func (a *Application) Run() {
 }
 
 func (a *Application) DropDatabase() {
-	a.session.DB(dbName).C(collection).DropCollection()
-	a.session.DB(dbName).C(messagesCollection).DropCollection()
-	a.session.DB(dbName).C(guestsCollection).DropCollection()
-	a.session.DB(dbName).C(filesCollection).DropCollection()
-	a.session.DB(dbName).C(statusesCollection).DropCollection()
-	a.session.DB(dbName).C(stripeCollection).DropCollection()
-	a.session.DB(dbName).C(tokenCollection).DropCollection()
-	a.session.DB(dbName).C(conftokensCollection).DropCollection()
+	a.db.Drop()
 	a.InitDatabase()
 }
 
 func (a *Application) InitDatabase() {
-	index := mgo.Index{
-		Key:        []string{"email"},
-		Background: true, // See notes.
-	}
-	db := a.session.DB(dbName)
-	db.C(collection).EnsureIndex(index)
-
-	index = mgo.Index{Key: []string{"$hashed:_id"}}
-	db.C(collection).EnsureIndex(index)
-
-	index = mgo.Index{
-		Key:        []string{"guest"},
-		Background: true, // See notes.
-	}
-	db.C(guestsCollection).EnsureIndex(index)
-
-	// photo, guest, messages: hashed user index
-	index = mgo.Index{
-		Key: []string{"$hashed:user"},
-	}
-	db.C(messagesCollection).EnsureIndex(index)
-	db.C(guestsCollection).EnsureIndex(index)
-	db.C(photoCollection).EnsureIndex(index)
-	db.C(statusesCollection).EnsureIndex(index)
-	db.C(guestsCollection).EnsureIndex(index)
-	db.C(filesCollection).EnsureIndex(index)
-
-	index = mgo.Index{
-		Key:        []string{"time"},
-		Background: true,
-	}
-	db.C(messagesCollection).EnsureIndex(index)
-	db.C(statusesCollection).EnsureIndex(index)
-	db.C(filesCollection).EnsureIndex(index)
-	db.C(stripeCollection).EnsureIndex(index)
-
-	index = mgo.Index{Key: []string{"online", "lastaction"}}
-	db.C(collection).EnsureIndex(index)
+	a.db.Init()
 }
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
