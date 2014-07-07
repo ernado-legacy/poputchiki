@@ -65,7 +65,7 @@ func NewQuery(q url.Values) (*SearchQuery, error) {
 	return query, nil
 }
 
-// ToBson converts search query to bson map
+// ToBson generates mongo query from SearchQuery
 func (q *SearchQuery) ToBson() bson.M {
 	query := []bson.M{}
 	if q.Sex != "" && (q.Sex == SexMale || q.Sex == SexFemale) {
