@@ -41,7 +41,7 @@ func TestDBMethods(t *testing.T) {
 			u.Email = "test@" + mailDomain
 			u.Sex = SexMale
 			u.Growth = 180
-			u.Seasons = []string{SEASON_SUMMER, SEASON_SPRING}
+			u.Seasons = []string{SeasonSummer, SeasonSpring}
 			err = db.Add(&u)
 			So(err, ShouldBeNil)
 
@@ -112,7 +112,7 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeFalse)
 				})
 				Convey("Season", func() {
-					result, err := db.Search(&SearchQuery{Seasons: []string{SEASON_AUTUMN, SEASON_SUMMER}}, 0, 0)
+					result, err := db.Search(&SearchQuery{Seasons: []string{SeasonAutumn, SeasonSummer}}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -121,7 +121,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{Seasons: []string{SEASON_WINTER, SEASON_AUTUMN}}, 0, 0)
+					result, err = db.Search(&SearchQuery{Seasons: []string{SeasonWinter, SeasonAutumn}}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {

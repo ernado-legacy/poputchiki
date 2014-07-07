@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	SEASON_SUMMER = "summer"
-	SEASON_WINTER = "winter"
-	SEASON_AUTUMN = "autumn"
-	SEASON_SPRING = "spring"
-	SexMale       = "male"
-	SexFemale     = "female"
-	ageMax        = 100
-	ageMin        = 18
-	growthMax     = 300
-	weightMax     = 1000
+	SeasonSummer = "summer"
+	SeasonWinter = "winter"
+	SeasonAutumn = "autumn"
+	SeasonSpring = "spring"
+	SexMale      = "male"
+	SexFemale    = "female"
+	ageMax       = 100
+	ageMin       = 18
+	growthMax    = 300
+	weightMax    = 1000
 )
 
 // SearchQuery represents filtering query for users or user-related objects
@@ -72,7 +72,15 @@ func (q *SearchQuery) ToBson() bson.M {
 		query = append(query, bson.M{"sex": q.Sex})
 	}
 	if len(q.Seasons) > 0 {
-		query = append(query, bson.M{"seasons": bson.M{"$in": q.Seasons}})
+		seasonsOk := true
+		for _, season := range q.Seasons {
+			if !(season == SeasonWinter || season == SeasonSpring || season == SeasonAutumn || season == SeasonSummer) {
+				seasonsOk = false
+			}
+		}
+		if seasonsOk {
+			query = append(query, bson.M{"seasons": bson.M{"$in": q.Seasons}})
+		}
 	}
 
 	if len(q.Destinations) > 0 {
