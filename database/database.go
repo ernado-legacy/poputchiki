@@ -17,6 +17,23 @@ const (
 	searchCount = 40
 )
 
+var (
+	collection           = "users"
+	citiesCollection     = "cities"
+	countriesCollection  = "countries"
+	guestsCollection     = "guests"
+	messagesCollection   = "messages"
+	statusesCollection   = "statuses"
+	photoCollection      = "photo"
+	albumsCollection     = "albums"
+	filesCollection      = "files"
+	videoCollection      = "audio"
+	conftokensCollection = "conftokens"
+	audioCollection      = "video"
+	stripeCollection     = "stripe"
+	tokenCollection      = "tokens"
+)
+
 type DB struct {
 	users          *mgo.Collection
 	guests         *mgo.Collection
@@ -33,8 +50,20 @@ type DB struct {
 	offlineTimeout time.Duration
 }
 
-func New(coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll *mgo.Collection, salt string, OfflineTimeout time.Duration) *DB {
-	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, OfflineTimeout}
+func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
+	db := session.DB(name)
+	coll := db.C(collection)
+	gcoll := db.C(guestsCollection)
+	mcoll := db.C(messagesCollection)
+	scoll := db.C(statusesCollection)
+	pcoll := db.C(photoCollection)
+	acoll := db.C(albumsCollection)
+	fcoll := db.C(filesCollection)
+	vcoll := db.C(videoCollection)
+	aucoll := db.C(audioCollection)
+	stcoll := db.C(stripeCollection)
+	ctcoll := db.C(conftokensCollection)
+	return &DB{coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, timeout}
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {

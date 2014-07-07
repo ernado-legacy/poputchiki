@@ -121,19 +121,7 @@ func newPool() *redis.Pool {
 }
 
 func NewDatabase(session *mgo.Session) models.DataBase {
-	db := session.DB(dbName)
-	coll := db.C(collection)
-	gcoll := db.C(guestsCollection)
-	mcoll := db.C(messagesCollection)
-	scoll := db.C(statusesCollection)
-	pcoll := db.C(photoCollection)
-	acoll := db.C(albumsCollection)
-	fcoll := db.C(filesCollection)
-	vcoll := db.C(videoCollection)
-	aucoll := db.C(audioCollection)
-	stcoll := db.C(stripeCollection)
-	ctcoll := db.C(conftokensCollection)
-	return database.New(coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll, stcoll, ctcoll, salt, OfflineTimeout)
+	return database.New(dbName, salt, OfflineTimeout, session)
 }
 
 func NewApp() *Application {
