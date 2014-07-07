@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// AddPhoto add new photo to database with provided image and thumbnail
 func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
 	// creating photo
 	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid,
@@ -22,11 +23,13 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 	return p, err
 }
 
+// GetPhoto returs photo by id
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 	p := &Photo{}
 	return p, db.photo.FindId(photo).Select(bson.M{"liked_users": 0}).One(p)
 }
 
+// GetUserPhoto returns avatar photo of user with provided user id
 func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 	p := []*Photo{}
 	err := db.photo.Find(bson.M{"user": user}).All(p)
@@ -36,6 +39,7 @@ func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 	return p, err
 }
 
+// RemovePhoto removes photo from database ensuring ownership of user
 func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {
 	return db.photo.Remove(bson.M{"_id": id, "user": user})
 }
@@ -49,6 +53,7 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 	return p, err
 }
 
+// SearchPhoto returns photo filtered by query and adjusted by count and offset
 func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 	if count == 0 {
 		count = searchCount
