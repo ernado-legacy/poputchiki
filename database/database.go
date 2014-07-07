@@ -347,14 +347,6 @@ func (db *DB) AddAudio(audio *Audio) (*Audio, error) {
 	return audio, db.audio.Insert(audio)
 }
 
-func (db *DB) GetAudio(id bson.ObjectId) *Audio {
-	a := &Audio{}
-	if db.audio.FindId(id).One(a) != nil {
-		return nil
-	}
-	return a
-}
-
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 	p := &Photo{}
 	return p, db.photo.FindId(photo).Select(bson.M{"liked_users": 0}).One(p)
