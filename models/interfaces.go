@@ -100,6 +100,8 @@ type DataBase interface {
 	UpdateAllStatuses() (*mgo.ChangeInfo, error)
 	SetLastActionNow(id bson.ObjectId) error
 
+	Init()
+	Drop()
 	Salt() string
 }
 
