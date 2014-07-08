@@ -33,8 +33,9 @@ func (db *DB) GetPlaces(start string) (places []string, err error) {
 	if err = db.countries.Find(query).Distinct("title", &countries); err != nil {
 		return
 	}
-	places = append(places, cities...)
+	sort.Strings(cities)
+	sort.Strings(countries)
 	places = append(places, countries...)
-	sort.Strings(places)
+	places = append(places, cities...)
 	return places, err
 }
