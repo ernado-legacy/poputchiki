@@ -1197,6 +1197,15 @@ func GetCities(db DataBase, req *http.Request) (int, []byte) {
 	return Render(cities)
 }
 
+func GetPlaces(db DataBase, req *http.Request) (int, []byte) {
+	start := req.URL.Query().Get("start")
+	places, err := db.GetPlaces(start)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(places)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

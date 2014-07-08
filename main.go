@@ -173,6 +173,7 @@ func NewApp() *Application {
 		r.Delete("/photo/:id/like", IdWrapper, RestoreLikePhoto)
 		r.Get("/countries", GetCountries)
 		r.Get("/cities", GetCities)
+		r.Get("/places", GetPlaces)
 	}, NeedAuth, SetOnlineWrapper)
 
 	a := &Application{session, p, m, db}

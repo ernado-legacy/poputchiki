@@ -21,3 +21,20 @@ func (db *DB) GetCities(start, country string) (cities []string, err error) {
 	sort.Strings(cities)
 	return cities, err
 }
+
+func (db *DB) GetPlaces(start string) (places []string, err error) {
+	var cities []string
+	var countries []string
+	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", start), Options: "i"}
+	query := bson.M{"title": pattern}
+	if err = db.cities.Find(query).Distinct("title", &cities); err != nil {
+		return
+	}
+	if err = db.countries.Find(query).Distinct("title", &countries); err != nil {
+		return
+	}
+	places = append(places, cities...)
+	places = append(places, countries...)
+	sort.Strings(places)
+	return places, err
+}

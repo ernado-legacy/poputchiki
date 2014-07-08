@@ -26,4 +26,10 @@ func TestCountries(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(countries, ShouldContain, "Россия")
 	})
+
+	Convey("Places", t, func() {
+		places, err := db.GetPlaces("Росси")
+		So(err, ShouldBeNil)
+		So(places, ShouldContain, "Россия")
+	})
 }
