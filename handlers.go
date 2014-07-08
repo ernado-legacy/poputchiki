@@ -1175,6 +1175,28 @@ func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 	return Render(likers)
 }
 
+func GetCountries(db DataBase, req *http.Request) (int, []byte) {
+	start := req.URL.Query().Get("start")
+	coutries, err := db.GetCountries(start)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(coutries)
+}
+
+func GetCities(db DataBase, req *http.Request) (int, []byte) {
+	start := req.URL.Query().Get("start")
+	country := req.URL.Query().Get("country")
+	if country == "" {
+		return Render(ErrorBadRequest)
+	}
+	cities, err := db.GetCities(start, country)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(cities)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

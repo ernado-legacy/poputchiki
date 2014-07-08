@@ -3,6 +3,7 @@ package database
 import (
 	. "github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
+	"log"
 	"time"
 )
 
@@ -41,8 +42,18 @@ type DB struct {
 	audio          *mgo.Collection
 	stripe         *mgo.Collection
 	conftokens     *mgo.Collection
+	cities         *mgo.Collection
+	countries      *mgo.Collection
 	salt           string
 	offlineTimeout time.Duration
+}
+
+func TestDatabase() *DB {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return New("test", "test", time.Second*5, session)
 }
 
 // Drop all collections of database
@@ -110,8 +121,11 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	aucoll := db.C(audioCollection)
 	stcoll := db.C(stripeCollection)
 	ctcoll := db.C(conftokensCollection)
+	citb := session.DB("countries")
+	cotc := citb.C(countriesCollection)
+	citc := citb.C("cities")
 	return &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
-		stcoll, ctcoll, salt, timeout}
+		stcoll, ctcoll, citc, cotc, salt, timeout}
 }
 
 func (db *DB) Salt() string {

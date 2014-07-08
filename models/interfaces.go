@@ -100,6 +100,9 @@ type DataBase interface {
 	UpdateAllStatuses() (*mgo.ChangeInfo, error)
 	SetLastActionNow(id bson.ObjectId) error
 
+	GetCities(start, country string) (cities []string, err error)
+	GetCountries(start string) (countries []string, err error)
+
 	Init()
 	Drop()
 	Salt() string
