@@ -13,7 +13,7 @@ import (
 
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
-	"likings_sex", "likings_destinations", "likings_seasons"
+	"likings_sex", "likings_destinations", "likings_seasons", "about",
 }
 
 const (
@@ -53,6 +53,7 @@ type User struct {
 	AvatarWebp          string          `json:"-"                      bson:"image_webp,omitempty"`
 	AvatarJpeg          string          `json:"-"                      bson:"image_jpeg,omitempty"`
 	Balance             uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
+	About               string          `json:"about,omitempty"        bson:"about,omitempty"`
 	Age                 int             `json:"age,omitempty"          bson:"-"`
 	Birthday            time.Time       `json:"birthday,omitempty"     bson:"birthday,omitempty"`
 	City                string          `json:"city,omitempty"         bson:"city,omitempty"`
