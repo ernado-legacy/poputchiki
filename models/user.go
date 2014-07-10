@@ -100,9 +100,6 @@ func (u *User) CleanPrivate() {
 	u.Favorites = nil
 	u.Blacklist = nil
 	u.Balance = 0
-	u.LikingsDestinations = ""
-	u.LikingsSeasons = []string{}
-	u.LikingsDestinations = []string{}
 }
 
 func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
