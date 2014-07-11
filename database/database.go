@@ -106,6 +106,10 @@ func (database *DB) Init() {
 
 	index = mgo.Index{Key: []string{"online", "lastaction"}}
 	db.C(collection).EnsureIndex(index)
+
+	database.cities.EnsureIndexKey("title", "country")
+	database.cities.EnsureIndexKey("title")
+	database.countries.EnsureIndexKey("title")
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {

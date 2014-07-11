@@ -17,6 +17,10 @@ const (
 	QUERY_PAGINATION_OFFSET = "offset"
 )
 
+type Redirect struct {
+	Url string
+}
+
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Upgrade") != "" {
 		log.Println("not setting header")
