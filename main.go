@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ernado/gotok"
+	"github.com/ernado/govkauth"
 	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
@@ -101,6 +102,7 @@ func NewApp() *Application {
 		martini.Env = martini.Prod
 	}
 
+	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru/api/auth/vk/redirect", "offline,email"})
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -121,6 +123,10 @@ func NewApp() *Application {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
 		r.Post("/logout", NeedAuth, Logout)
+		r.Post("/forgot/:id", IdWrapper, ForgotPassword)
+		r.Get("/reset/:token", ResetPassword)
+		r.Get("/vk/start", VkontakteAuthStart)
+		r.Get("/vk/redirect", VkontakteAuthRedirect)
 	})
 	m.Get("/api", Index)
 	m.Group("/api", func(r martini.Router) {

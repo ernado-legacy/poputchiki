@@ -12,6 +12,7 @@ import (
 	"github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
+	"github.com/ernado/govkauth"
 	. "github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
@@ -194,7 +195,7 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 	favorites := db.GetFavorites(id)
 	// check for existance
 	if favorites == nil {
-		return Render(ErrorObjectNotFound)
+		return Render([]interface{}{})
 	}
 	// clean private fields and prepare data
 	for key, _ := range favorites {
@@ -212,7 +213,7 @@ func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, 
 	}
 	// check for existance
 	if guests == nil {
-		return Render(ErrorObjectNotFound)
+		return Render([]interface{}{})
 	}
 	// clean private fields and prepare data
 	for key, _ := range guests {
@@ -1179,6 +1180,7 @@ func GetCountries(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	coutries, err := db.GetCountries(start)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(coutries)
@@ -1192,6 +1194,7 @@ func GetCities(db DataBase, req *http.Request) (int, []byte) {
 	}
 	cities, err := db.GetCities(start, country)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(cities)
@@ -1201,9 +1204,103 @@ func GetPlaces(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	places, err := db.GetPlaces(start)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(places)
+}
+
+func ForgotPassword(db DataBase, id bson.ObjectId) (int, []byte) {
+	var err error
+	u := db.Get(id)
+	if u == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	confTok := db.NewConfirmationToken(id)
+	if confTok == nil {
+		return Render(ErrorBackend)
+	}
+	// anyncronously send email to user
+	go func() {
+		mgClient := mailgun.New(mailKey)
+		message := ConfirmationMail{}
+		message.Destination = u.Email
+		message.Mail = "http://poputchiki.ru/api/forgot/" + confTok.Token
+		log.Println("[email]", message.From(), message.To(), message.Text())
+		_, err = mgClient.Send(message)
+		log.Println(message)
+		if err != nil {
+			log.Println("[email]", err)
+		}
+	}()
+
+	return Render("ok")
+}
+
+func ResetPassword(db DataBase, r *http.Request, w http.ResponseWriter, args martini.Params, tokens gotok.Storage) {
+	token := args["token"]
+	if token == "" {
+		code, data := Render(ErrorBadRequest)
+		http.Error(w, string(data), code) // todo: set content-type
+	}
+	tok := db.GetConfirmationToken(token)
+	if tok == nil {
+		code, data := Render(ErrorBadRequest)
+		http.Error(w, string(data), code) // todo: set content-type
+	}
+	userToken, err := tokens.Generate(tok.User)
+	if err != nil {
+		code, data := Render(ErrorBackend)
+		http.Error(w, string(data), code) // todo: set content-type
+	}
+	err = db.ConfirmEmail(userToken.Id)
+	if err != nil {
+		log.Println(err)
+		code, data := Render(ErrorBackend)
+		http.Error(w, string(data), code) // todo: set content-type
+	}
+	http.SetCookie(w, userToken.GetCookie())
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func VkontakteAuthStart(r *http.Request, w http.ResponseWriter, client *govkauth.Client) {
+	url := client.DialogURL()
+	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
+}
+
+func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, client *govkauth.Client) {
+	token, err := client.GetAccessToken(r)
+	if err != nil {
+		code, _ := Render(ErrorBadRequest)
+		http.Error(w, "Авторизация невозможна", code)
+		return
+	}
+	u := db.GetUsername(token.Email)
+	if u == nil {
+		newUser := &User{}
+		newUser.Email = token.Email
+		newUser.Password = "oauth"
+		newUser.EmailConfirmed = true
+		newUser.Name, err = client.GetName(token.UserID)
+		log.Println(newUser.Name, err)
+		err = db.Add(newUser)
+		if err != nil {
+			code, _ := Render(ErrorBackend)
+			http.Error(w, "Серверная ошибка. Попробуйте позже", code) // todo: set content-type
+			return
+		}
+		u = db.GetUsername(token.Email)
+	}
+	userToken, err := tokens.Generate(u.Id)
+	if err != nil {
+		code, _ := Render(ErrorBackend)
+		http.Error(w, "Серверная ошибка. Попробуйте позже", code) // todo: set content-type
+		return
+	}
+
+	http.SetCookie(w, userToken.GetCookie())
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 // init for random
