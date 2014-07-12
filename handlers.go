@@ -1306,6 +1306,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 	}
 
 	http.SetCookie(w, userToken.GetCookie())
+	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
@@ -1346,6 +1347,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, t
 	}
 
 	http.SetCookie(w, userToken.GetCookie())
+	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
