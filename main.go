@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"github.com/ernado/gofbauth"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
 	"github.com/ernado/poputchiki/database"
@@ -103,6 +104,7 @@ func NewApp() *Application {
 	}
 
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru/api/auth/vk/redirect", "offline,email"})
+	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru/api/auth/fb/redirect", "email"})
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -126,7 +128,9 @@ func NewApp() *Application {
 		r.Post("/forgot/:id", IdWrapper, ForgotPassword)
 		r.Get("/reset/:token", ResetPassword)
 		r.Get("/vk/start", VkontakteAuthStart)
+		r.Get("/fb/start", FacebookAuthStart)
 		r.Get("/vk/redirect", VkontakteAuthRedirect)
+		r.Get("/fb/redirect", FacebookAuthRedirect)
 	})
 	m.Get("/api", Index)
 	m.Group("/api", func(r martini.Router) {

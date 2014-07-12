@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ernado/cymedia/photo"
+	"github.com/ernado/gofbauth"
 	"github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
@@ -1269,6 +1270,11 @@ func VkontakteAuthStart(r *http.Request, w http.ResponseWriter, client *govkauth
 	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
 }
 
+func FacebookAuthStart(r *http.Request, w http.ResponseWriter, client *gofbauth.Client) {
+	url := client.DialogURL()
+	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
+}
+
 func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, client *govkauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
@@ -1291,6 +1297,46 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 			return
 		}
 		u = db.GetUsername(token.Email)
+	}
+	userToken, err := tokens.Generate(u.Id)
+	if err != nil {
+		code, _ := Render(ErrorBackend)
+		http.Error(w, "Серверная ошибка. Попробуйте позже", code) // todo: set content-type
+		return
+	}
+
+	http.SetCookie(w, userToken.GetCookie())
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
+	token, err := client.GetAccessToken(r)
+	if err != nil {
+		code, _ := Render(ErrorBadRequest)
+		http.Error(w, "Авторизация невозможна", code)
+		return
+	}
+	fbUser, err := client.GetUser(token.AccessToken)
+	if err != nil {
+		code, _ := Render(ErrorBadRequest)
+		http.Error(w, "Ошибка авторизации", code)
+		return
+	}
+	u := db.GetUsername(fbUser.Email)
+	if u == nil {
+		newUser := &User{}
+		newUser.Email = fbUser.Email
+		newUser.Password = "oauth"
+		newUser.EmailConfirmed = true
+		newUser.Name = fbUser.Name
+		log.Println(newUser.Name, err)
+		err = db.Add(newUser)
+		if err != nil {
+			code, _ := Render(ErrorBackend)
+			http.Error(w, "Серверная ошибка. Попробуйте позже", code) // todo: set content-type
+			return
+		}
+		u = db.GetUsername(fbUser.Email)
 	}
 	userToken, err := tokens.Generate(u.Id)
 	if err != nil {
