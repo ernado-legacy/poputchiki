@@ -1,10 +1,8 @@
 package models
 
 import (
-	"encoding/json"
 	"labix.org/v2/mgo/bson"
 	"net/url"
-	"strconv"
 	"time"
 )
 
@@ -39,30 +37,8 @@ type SearchQuery struct {
 
 // NewQuery returns query object with parsed fields from url params
 func NewQuery(q url.Values) (*SearchQuery, error) {
-	nQ := make(map[string]interface{})
-	for key, value := range q {
-		if len(value) == 1 {
-			v := value[0]
-			vInt, err := strconv.Atoi(v)
-			if err != nil {
-				nQ[key] = v
-			} else {
-				nQ[key] = vInt
-			}
-		} else {
-			nQ[key] = value
-		}
-	}
-	j, err := json.Marshal(nQ)
-	if err != nil {
-		return nil, err
-	}
 	query := &SearchQuery{}
-	err = json.Unmarshal(j, query)
-	if err != nil {
-		return nil, err
-	}
-	return query, nil
+	return query, mapToStruct(q, query)
 }
 
 // ToBson generates mongo query from SearchQuery
