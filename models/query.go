@@ -125,8 +125,10 @@ func (q *SearchQuery) ToBson() bson.M {
 	if q.Country != "" && q.City == "" {
 		query = append(query, bson.M{"country": q.Country})
 	}
-
-	return bson.M{"$and": query}
+	if len(query) > 0 {
+		return bson.M{"$and": query}
+	}
+	return bson.M{}
 }
 
 type Pagination struct {
