@@ -288,7 +288,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
 		log.Println(u.Email, "already registered")
-		return Render(ErrorBadRequest) // todo: change error name
+		return Render(ErrorUserAlreadyRegistered) // todo: change error name
 	}
 	// add to database
 	if err := db.Add(u); err != nil {
