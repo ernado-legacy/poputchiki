@@ -21,6 +21,8 @@ const (
 	FormPassword  = "password"  // password field
 	FormFirstname = "firstname" // user name field
 	FormPhone     = "phone"
+	femaleNoAvater = "http://poputchiki.ru/static/img/fem_avatar.gif"
+	maleNoAvatar = "http://poputchiki.ru/static/img/male_avatar.gif"
 )
 
 // UserInfo additional user information
@@ -113,6 +115,12 @@ func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept)
 		}
 		url, _ := adapter.GetUrl(fid)
 		u.AvatarUrl = url + suffix
+	} else {
+		if u.Sex = SexFemale {
+			u.AvatarUrl = femaleNoAvater
+		} else {
+			u.AvatarUrl = maleNoAvatar
+		}
 	}
 }
 
