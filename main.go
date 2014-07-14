@@ -47,9 +47,10 @@ var (
 	PromoCost            uint = 50
 )
 
-func getHash(password string) string {
+func getHash(password string, s string) string {
+	log.Printf("sha256(%s,%s)", password, s)
 	hasher := sha256.New()
-	hasher.Write([]byte(password + salt))
+	hasher.Write([]byte(password + s))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
@@ -112,6 +113,7 @@ func NewApp() *Application {
 	m.Use(AudioWrapper)
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
+	m.Use(ParserWrapper)
 	m.Map(tokenStorage)
 	m.Map(realtime)
 	m.Map(weed.NewAdapter(weedUrl))

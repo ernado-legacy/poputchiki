@@ -253,13 +253,25 @@ func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime Realti
 
 // Login checks the provided credentials and return token for user, setting appropriate
 // auth cookies
-func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
-	username, password := r.FormValue(FORM_EMAIL), r.FormValue(FORM_PASSWORD)
+
+type LoginCredentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, parser Parser) (int, []byte) {
+	credentials := &LoginCredentials{}
+	if parser.Parse(credentials) != nil {
+		return Render(ErrorBadRequest)
+	}
+	log.Println(credentials)
+	username, password := credentials.Email, credentials.Password
 	user := db.GetUsername(username)
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-	if user.Password != getHash(password) {
+	log.Println(user.Password, password, getHash(password, db.Salt()))
+	if user.Password != getHash(password, db.Salt()) {
 		return Render(ErrorAuth)
 	}
 	t, err := tokens.Generate(user.Id)
@@ -290,6 +302,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 		log.Println(u.Email, "already registered")
 		return Render(ErrorUserAlreadyRegistered) // todo: change error name
 	}
+	log.Println("registered", u.Password)
 	// add to database
 	if err := db.Add(u); err != nil {
 		log.Println(err)
@@ -323,10 +336,10 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 }
 
 // Update updates user information with provided key-value document
-func Update(db DataBase, r *http.Request, id bson.ObjectId, decoder *json.Decoder) (int, []byte) {
+func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int, []byte) {
 	query := bson.M{}
 	// decoding json to map
-	e := decoder.Decode(&query)
+	e := parser.Parse(&query)
 	if e != nil {
 		log.Println(e)
 		return Render(ErrorBadRequest)
@@ -402,8 +415,19 @@ func Must(err error) {
 	}
 }
 
-func SendMessage(db DataBase, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
-	text := r.FormValue(FORM_TEXT)
+type MessageText struct {
+	Text string `json:"text"`
+}
+
+func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+	message := &MessageText{}
+	err := parser.Parse(message)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBadRequest)
+	}
+	log.Println(err, message)
+	text := message.Text
 	origin := t.Id
 	now := time.Now()
 
@@ -905,9 +929,9 @@ func GetCurrentStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byt
 	return Render(status)
 }
 
-func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
+func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token, parser Parser) (int, []byte) {
 	status := &StatusUpdate{}
-	if err := decoder.Decode(status); err != nil {
+	if err := parser.Parse(status); err != nil {
 		return Render(ErrorBadRequest)
 	}
 	status, err := db.UpdateStatusSecure(t.Id, id, status.Text)
@@ -977,10 +1001,10 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, webpAccept
 	return Render(result)
 }
 
-func AddStripeItem(db DataBase, t *gotok.Token, decoder *json.Decoder) (int, []byte) {
+func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
-	if decoder.Decode(request) != nil {
+	if parser.Parse(request) != nil {
 		return Render(ErrorBadRequest)
 	}
 

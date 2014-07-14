@@ -48,7 +48,7 @@ type User struct {
 	PhoneConfirmed      bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
 	IsSponsor           bool            `json:"is_sponsor"             bson:"is_sponsor"`
 	IsHost              bool            `json:"is_host"                bson:"is_host"`
-	Password            string          `json:"-"                      bson:"password"`
+	Password            string          `json:"password,omitempty"     bson:"password"`
 	Online              bool            `json:"online"                 bson:"online"`
 	AvatarUrl           string          `json:"avatar_url,omitempty"   bson:"-"`
 	Avatar              bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
@@ -75,6 +75,7 @@ type User struct {
 }
 
 func getHash(password, salt string) string {
+	log.Printf("sha256(%s,%s)", password, salt)
 	hasher := sha256.New()
 	hasher.Write([]byte(password + salt))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
@@ -82,11 +83,15 @@ func getHash(password, salt string) string {
 
 func UserFromForm(r *http.Request, salt string) *User {
 	u := User{}
+	tUser := &User{}
+	parser := NewParser(r)
+	err := parser.Parse(tUser)
+	log.Println(err, tUser)
 	u.Id = bson.NewObjectId()
-	u.Email = r.FormValue(FormEmail)
-	u.Password = getHash(r.FormValue(FormPassword), salt)
-	u.Phone = r.FormValue(FormPhone)
-	u.Name = r.FormValue(FormFirstname)
+	u.Email = tUser.Email
+	u.Password = getHash(tUser.Password, salt)
+	u.Phone = tUser.Phone
+	u.Name = tUser.Name
 	return &u
 }
 
@@ -127,12 +132,11 @@ func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept)
 // diff in years between two times
 func diff(t1, t2 time.Time) (years int) {
 	t2 = t2.AddDate(0, 0, 1) // advance t2 to make the range inclusive
-
 	for t1.AddDate(years, 0, 0).Before(t2) {
 		years++
 	}
 	years--
-	return
+	return years
 }
 
 func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
@@ -140,7 +144,7 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
 	now := time.Now()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Println(r)
+			u.Birthday = time.Unix(0, 0)
 		}
 	}()
 	if u.Birthday.Unix() != 0 {

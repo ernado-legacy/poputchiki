@@ -469,6 +469,7 @@ func TestMethods(t *testing.T) {
 		// sending registration request
 		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
 		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 		a.ServeHTTP(res, req)
 
 		// reading response
@@ -517,6 +518,7 @@ func TestMethods(t *testing.T) {
 				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId(), token1.Token)
 				req, _ := http.NewRequest("PATCH", reqUrl, nil)
 				req.PostForm = url.Values{FORM_FIRSTNAME: {firstname}, FORM_SECONDNAME: {secondname}, FORM_PHONE: {phone}}
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusBadRequest)
@@ -529,6 +531,7 @@ func TestMethods(t *testing.T) {
 				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId().Hex(), bson.NewObjectId().Hex())
 				req, _ := http.NewRequest("PATCH", reqUrl, nil)
 				req.PostForm = url.Values{FORM_FIRSTNAME: {firstname}, FORM_SECONDNAME: {secondname}, FORM_PHONE: {phone}}
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusUnauthorized)
@@ -541,6 +544,7 @@ func TestMethods(t *testing.T) {
 				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId().Hex(), token1.Token)
 				req, _ := http.NewRequest("PATCH", reqUrl, nil)
 				req.PostForm = url.Values{FORM_FIRSTNAME: {firstname}, FORM_SECONDNAME: {secondname}, FORM_PHONE: {phone}}
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusMethodNotAllowed)
@@ -553,6 +557,7 @@ func TestMethods(t *testing.T) {
 				// trying to log in
 				req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
 				req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {"randomemail"}}
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 				a.ServeHTTP(res, req)
 
 				So(res.Code, ShouldEqual, http.StatusNotFound)
@@ -563,6 +568,7 @@ func TestMethods(t *testing.T) {
 				// trying to log in
 				req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
 				req.PostForm = url.Values{FORM_PASSWORD: {"randompass"}, FORM_EMAIL: {username}}
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 				a.ServeHTTP(res, req)
 
 				So(res.Code, ShouldEqual, http.StatusUnauthorized)
@@ -584,6 +590,7 @@ func TestMethods(t *testing.T) {
 			uReader := bytes.NewReader(uJson)
 			So(err, ShouldBeNil)
 			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
+			req.Header.Add(ContentTypeHeader, "application/json")
 			a.ServeHTTP(res, req)
 
 			So(res.Code, ShouldEqual, http.StatusOK)
@@ -632,6 +639,7 @@ func TestMethods(t *testing.T) {
 			// trying to log in
 			req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
 			req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+			req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 			a.ServeHTTP(res, req)
 
 			So(res.Code, ShouldEqual, http.StatusOK)
@@ -707,6 +715,7 @@ func TestMethods(t *testing.T) {
 			res := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
 			req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+			req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 			a.ServeHTTP(res, req)
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			a.DropDatabase()
@@ -722,6 +731,7 @@ func TestMethods(t *testing.T) {
 			res := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
 			req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username2}}
+			req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 			a.ServeHTTP(res, req)
 			tokenBody2, _ = ioutil.ReadAll(res.Body)
 
@@ -750,7 +760,9 @@ func TestMethods(t *testing.T) {
 					// we are sending message from user2 to user1
 					reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ := http.NewRequest("PUT", reqUrl, nil)
-					req.PostForm = url.Values{FORM_TEXT: {messageText}}
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+					req.PostForm = url.Values{}
+					req.PostForm.Add(FORM_TEXT, messageText)
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
 					var foundMessage Message
@@ -803,6 +815,7 @@ func TestMethods(t *testing.T) {
 					reqUrl := fmt.Sprintf("/api/user/%s/guests/?token=%s", token2.Id.Hex(), token2.Token)
 					req, _ := http.NewRequest("POST", reqUrl, nil)
 					req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 					a.ServeHTTP(res, req)
 
 					So(res.Code, ShouldEqual, http.StatusOK)
@@ -836,6 +849,7 @@ func TestMethods(t *testing.T) {
 
 					reqUrl := fmt.Sprintf("/api/user/%s/blacklist/?token=%s", token2.Id.Hex(), token2.Token)
 					req, _ := http.NewRequest("POST", reqUrl, nil)
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 					req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
 					a.ServeHTTP(res, req)
 
@@ -863,6 +877,7 @@ func TestMethods(t *testing.T) {
 							reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 							req, _ := http.NewRequest("PUT", reqUrl, nil)
 							req.PostForm = url.Values{FORM_TEXT: {messageText}}
+							req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 							a.ServeHTTP(res, req)
 							So(res.Code, ShouldEqual, http.StatusOK)
 							var foundMessage Message
@@ -914,6 +929,7 @@ func TestMethods(t *testing.T) {
 							reqUrl := fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
 							req, _ := http.NewRequest("PUT", reqUrl, nil)
 							req.PostForm = url.Values{FORM_TEXT: {messageText}}
+							req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 							a.ServeHTTP(res, req)
 							So(res.Code, ShouldEqual, http.StatusOK)
 

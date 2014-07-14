@@ -71,6 +71,10 @@ func PaginationWrapper(c martini.Context, r *http.Request) {
 	c.Map(p)
 }
 
+func ParserWrapper(c martini.Context, r *http.Request) {
+	c.Map(models.NewParser(r))
+}
+
 func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w http.ResponseWriter) {
 	var hexToken string
 	q := r.URL.Query()

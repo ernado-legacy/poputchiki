@@ -36,10 +36,11 @@ func TestParser(t *testing.T) {
 		})
 
 		Convey("form", func() {
-			req, _ := http.NewRequest("POST", "/?hello=world&world=1", nil)
-			req.Form = url.Values{}
-			req.Form.Add("hello", "world")
-			req.Form.Add("world", "1")
+			req, _ := http.NewRequest("POST", "/", nil)
+			req.PostForm = url.Values{}
+			req.PostForm.Add("hello", "world")
+			req.PostForm.Add("world", "1")
+			req.Header.Set(ContentTypeHeader, "x-www-form-urlencoded")
 			v := &TestStruct{}
 			err := Parse(req, v)
 			So(err, ShouldBeNil)
