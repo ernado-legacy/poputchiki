@@ -10,7 +10,7 @@ type Error struct {
 }
 
 var (
-	ErrorNotAllowed            = Error{http.StatusMethodNotAllowed, "Not allowed"}
+	ErrorNotAllowed            = Error{http.StatusMethodNotAllowed, "You are trying to modify others user information"}
 	ErrorBlacklisted           = Error{http.StatusMethodNotAllowed, "You are blacklisted"}
 	ErrorAuth                  = Error{http.StatusUnauthorized, "Not authenticated"}
 	ErrorMarshal               = Error{http.StatusInternalServerError, "Unable to unmarshal data"}
