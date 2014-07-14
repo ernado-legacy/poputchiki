@@ -47,7 +47,7 @@ type User struct {
 	IsSponsor           bool            `json:"is_sponsor"             bson:"is_sponsor"`
 	IsHost              bool            `json:"is_host"                bson:"is_host"`
 	Password            string          `json:"-"                      bson:"password"`
-	Online              bool            `json:"online,omitempty"       bson:"online,omitempty"`
+	Online              bool            `json:"online"                 bson:"online"`
 	AvatarUrl           string          `json:"avatar_url,omitempty"   bson:"-"`
 	Avatar              bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
 	AvatarWebp          string          `json:"-"                      bson:"image_webp,omitempty"`
