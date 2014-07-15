@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"reflect"
 )
 
 const (
@@ -15,12 +16,14 @@ const (
 
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
+	t := reflect.TypeOf(val)
 	for key, value := range q {
 		log.Printf("%s:%s", key, value)
+		field, ok := t.FieldByName(name)
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
-			if err != nil {
+			if err != nil || field.Type.Name() == "string"{
 				nQ[key] = v
 			} else {
 				nQ[key] = vInt
