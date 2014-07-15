@@ -19,7 +19,7 @@ func mapToStruct(q url.Values, val interface{}) error {
 	t := reflect.TypeOf(val)
 	for key, value := range q {
 		log.Printf("%s:%s", key, value)
-		field, ok := t.FieldByName(name)
+		field, _ := t.FieldByName(name)
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
