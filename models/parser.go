@@ -16,7 +16,7 @@ const (
 
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
-	t := reflect.TypeOf(val)
+	t := reflect.TypeOf(*val)
 	for key, value := range q {
 		log.Printf("%s:%s", key, value)
 		field, _ := t.FieldByName(key)
