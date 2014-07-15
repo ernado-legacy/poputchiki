@@ -261,7 +261,8 @@ type LoginCredentials struct {
 
 func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, parser Parser) (int, []byte) {
 	credentials := &LoginCredentials{}
-	if parser.Parse(credentials) != nil {
+	if err := parser.Parse(credentials); err != nil {
+		log.Println("error:", err)
 		return Render(ErrorBadRequest)
 	}
 	log.Println(credentials)
