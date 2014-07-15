@@ -480,7 +480,7 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 		return Render(ErrorBackend)
 	}
 	if messages == nil {
-		return Render(ErrorUserNotFound)
+		return Render([]interface{}{})
 	}
 	return Render(messages)
 }
