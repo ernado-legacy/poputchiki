@@ -17,9 +17,13 @@ const (
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
 	t := reflect.ValueOf(val)
+	log.Println("val", t)
 	for key, value := range q {
 		log.Printf("%s:%s", key, value)
-		field := t.Elem().FieldByName(key)
+		elem := t.Elem()
+		log.Println("elem", elem)
+		field := elem.FieldByName(key)
+		log.Println("field",field)
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
