@@ -46,6 +46,10 @@ func Parse(r *http.Request, v interface{}) error {
 		return decoder.Decode(v)
 	}
 	if strings.Index(contentType, "form") != -1 {
+		err := r.ParseForm()
+		if err != nil {
+			log.Println("parse frm", err)
+		}
 		if r.Method == "GET" {
 			log.Printf("GET FORM %+v", r.Form)
 			return mapToStruct(r.Form, v)
