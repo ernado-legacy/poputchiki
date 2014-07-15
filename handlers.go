@@ -435,8 +435,8 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		return Render(ErrorBadRequest)
 	}
 
-	m1 := Message{bson.NewObjectId(), origin, origin, origin, destination, now, text}
-	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, now, text}
+	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text}
+	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text}
 
 	go func() {
 		u := db.Get(destination)

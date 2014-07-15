@@ -11,6 +11,7 @@ type Message struct {
 	User        bson.ObjectId `json:"user"        bson:"user"`
 	Origin      bson.ObjectId `json:"origin"      bson:"origin"`
 	Destination bson.ObjectId `json:"destination" bson:"destination"`
+	Read        bool          `json:"read"        bson:"read"`
 	Time        time.Time     `json:"time"        bson:"time"`
 	Text        string        `json:"text"        bson:"text"`
 }
