@@ -8,11 +8,22 @@ import (
 	"strconv"
 	"strings"
 	"reflect"
+	"unicode"
 )
 
 const (
 	ContentTypeHeader = "Content-Type"
 )
+
+func capitalize(s string) string {
+	if len(s) < 1 {
+		return s
+	}
+	a := []rune(s)
+	a[0] = unicode.ToUpper(a[0])
+	return string(a)
+}
+
 
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
@@ -22,8 +33,8 @@ func mapToStruct(q url.Values, val interface{}) error {
 		log.Printf("%s:%s", key, value)
 		elem := t.Elem()
 		log.Println("elem", elem)
-		field := elem.FieldByName(key)
-		log.Println("field",field)
+		field := elem.FieldByName(capitalize(key))
+		log.Println("field", field)
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
