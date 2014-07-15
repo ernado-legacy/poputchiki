@@ -23,7 +23,7 @@ func mapToStruct(q url.Values, val interface{}) error {
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
-			if err != nil || field.Type.Name() == "string"{
+			if err != nil || field.Type().Name() == "string"{
 				nQ[key] = v
 			} else {
 				nQ[key] = vInt
