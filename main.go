@@ -155,9 +155,11 @@ func NewApp() *Application {
 				d.Get("/fav", GetFavorites)
 
 				d.Post("/blacklist", AddToBlacklist)
+				d.Put("/blacklist", AddToBlacklist)
 				d.Delete("/blacklist", RemoveFromBlacklist)
 
 				d.Post("/guests", AddToGuests)
+				d.Put("/guests", AddToGuests)
 				d.Get("/guests", GetGuests)
 				d.Get("/unread", GetUnreadCount)
 			}, IdEqualityRequired)
