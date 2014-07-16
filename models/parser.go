@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
-	"reflect"
 	"unicode"
 )
 
@@ -24,21 +24,28 @@ func capitalize(s string) string {
 	return string(a)
 }
 
-
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
 	t := reflect.ValueOf(val)
-	log.Println("val", t)
-	for key, value := range q {
-		log.Printf("%s:%s", key, value)
-		elem := t.Elem()
-		log.Println("elem", elem)
-		field := elem.FieldByName(capitalize(key))
-		log.Println("field", field)
+	st := t.Elem().Type()
+	fields := st.NumField()
+	for i := 0; i < fields; i++ {
+		field := st.Field(i)
+		key := field.Tag.Get("json")
+		if key == "" {
+			key = strings.ToLower(field.Name)
+		}
+		if strings.Index(key, ",") != -1 {
+			key = strings.Split(key, ",")[0]
+		}
+		if q.Get(key) == "" {
+			continue
+		}
+		value := q[key]
 		if len(value) == 1 {
 			v := value[0]
 			vInt, err := strconv.Atoi(v)
-			if err != nil || field.Type().Name() == "string"{
+			if err != nil || field.Type.Name() == "string" {
 				nQ[key] = v
 			} else {
 				nQ[key] = vInt

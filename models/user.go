@@ -72,6 +72,8 @@ type User struct {
 	LikingsSex          string          `json:"likings_sex,omitempty"          bson:"likings_sex,omitempty"`
 	LikingsDestinations []string        `json:"likings_destinations,omitempty" bson:"likings_destinations,omitempty"`
 	LikingsSeasons      []string        `json:"likings_seasons,omitempty"      bson:"likings_seasons,omitempty"`
+	LikingsCountry      string          `json:"likings_country,omitempty"      bson:"likings_country,omitempty"`
+	LikingsCity         string          `json:"likings_city,omitempty"      bson:"likings_city,omitempty"`
 }
 
 func getHash(password, salt string) string {
