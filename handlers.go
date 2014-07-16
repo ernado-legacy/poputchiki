@@ -502,6 +502,10 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 	if messages == nil {
 		return Render([]interface{}{})
 	}
+	err = db.SetReadMessagesFromUser(t.Id, origin)
+	if err != nil {
+		log.Println("SetReadMessagesFromUser", err)
+	}
 	return Render(messages)
 }
 

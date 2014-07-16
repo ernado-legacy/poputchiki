@@ -120,9 +120,6 @@ func NewApp() *Application {
 	m.Map(db)
 	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))
 
-	m.Get("/api/confirm/email/:token", ConfirmEmail)
-	m.Get("/api/confirm/phone/start", ConfirmPhoneStart)
-	m.Get("/api/confirm/phone/:token", ConfirmPhone)
 	m.Group("/api/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
@@ -136,9 +133,15 @@ func NewApp() *Application {
 	})
 	m.Get("/api", Index)
 	m.Group("/api", func(r martini.Router) {
+		r.Get("/confirm/email/:token", ConfirmEmail)
+		r.Get("/confirm/phone/start", ConfirmPhoneStart)
+		r.Get("/confirm/phone/:token", ConfirmPhone)
+
 		r.Post("/pay/:value", GetTransactionUrl)
 		r.Get("/pay/success", RobokassaSuccessHandler)
+
 		r.Get("/token", GetToken)
+
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)

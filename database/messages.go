@@ -36,6 +36,11 @@ func (db *DB) SetRead(user, id bson.ObjectId) error {
 	return db.setRead(query)
 }
 
+func (db *DB) SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
+	query := bson.M{"user": userReciever, "chat": userOrigin}
+	return db.setRead(query)
+}
+
 func (db *DB) GetUnreadCount(id bson.ObjectId) (int, error) {
 	query := bson.M{"user": id, "read": false}
 	return db.messages.Find(query).Count()
