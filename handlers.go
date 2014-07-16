@@ -87,8 +87,9 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 		}
 	}
 	// hiding private fields for non-owner
-	if t == nil || t.Id != id {
+	if t.Id != id {
 		user.CleanPrivate()
+		db.AddGuest(id, t.Id)
 	}
 	// preparing for rendering to json
 	user.Prepare(adapter, db, webp)

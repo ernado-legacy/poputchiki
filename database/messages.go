@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/ernado/poputchiki/models"
+	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 )
 
@@ -22,6 +23,11 @@ func (db *DB) GetMessage(id bson.ObjectId) (*models.Message, error) {
 	message := &models.Message{}
 	err := db.messages.FindId(id).One(message)
 	return message, err
+}
+func (db *DB) SetRead(query bson.M) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"read": true}}}
+	_, err := db.messages.Find(query).Apply(change, nil)
+	return err
 }
 
 func (db *DB) GetChats(id bson.ObjectId) ([]*models.User, error) {
