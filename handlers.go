@@ -485,6 +485,15 @@ func MarkReadMessage(db DataBase, id bson.ObjectId, t *gotok.Token) (int, []byte
 	return Render("message marked as read")
 }
 
+func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
+	n, err := db.GetUnreadCount(t.Id)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	return Render(UnreadCount{n})
+}
+
 func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	messages, err := db.GetMessagesFromUser(t.Id, origin)
 	if err != nil {

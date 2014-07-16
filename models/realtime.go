@@ -22,6 +22,10 @@ type RealtimeEvent struct {
 	Time time.Time   `json:"time"`
 }
 
+type UnreadCount struct {
+	Count int `json:"count"`
+}
+
 type ProgressMessage struct {
 	Id       bson.ObjectId `json:"id,omitempty"`
 	Progress float32       `json:"progress"`

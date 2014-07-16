@@ -907,20 +907,37 @@ func TestMethods(t *testing.T) {
 								So(foundMessage.Destination, ShouldEqual, token1.Id)
 								So(foundMessage.Origin, ShouldEqual, token2.Id)
 								So(foundMessage.Text, ShouldEqual, messageText)
-
+								Convey("So unread messages should equal 1", func() {
+									res = httptest.NewRecorder()
+									reqUrl = fmt.Sprintf("/api/user/%s/unread/?token=%s", token1.Id.Hex(), token1.Token)
+									req, _ = http.NewRequest("GET", reqUrl, nil)
+									a.ServeHTTP(res, req)
+									a.DropDatabase()
+									c := &UnreadCount{}
+									So(res.Code, ShouldEqual, http.StatusOK)
+									decoder := json.NewDecoder(res.Body)
+									err := decoder.Decode(c)
+									So(err, ShouldBeNil)
+									So(c.Count, ShouldEqual, 1)
+								})
 								Convey("So user could mark it as read", func() {
 									reqUrl := fmt.Sprintf("/api/message/%s/read?token=%s", foundMessage.Id.Hex(), token1.Token)
 									req, _ := http.NewRequest("POST", reqUrl, nil)
 									a.ServeHTTP(res, req)
 									So(res.Code, ShouldEqual, http.StatusOK)
-									res = httptest.NewRecorder()
-
-									// we are requesting messages for user1 from user2
-									reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
-									req, _ = http.NewRequest("GET", reqUrl, nil)
-									a.ServeHTTP(res, req)
-									a.DropDatabase()
-									So(res.Code, ShouldEqual, http.StatusOK)
+									Convey("So unread messages should equal zero", func() {
+										res = httptest.NewRecorder()
+										reqUrl = fmt.Sprintf("/api/user/%s/unread/?token=%s", token1.Id.Hex(), token1.Token)
+										req, _ = http.NewRequest("GET", reqUrl, nil)
+										a.ServeHTTP(res, req)
+										a.DropDatabase()
+										c := &UnreadCount{}
+										So(res.Code, ShouldEqual, http.StatusOK)
+										decoder := json.NewDecoder(res.Body)
+										err := decoder.Decode(c)
+										So(err, ShouldBeNil)
+										So(c.Count, ShouldEqual, 0)
+									})
 								})
 
 								Convey("So user could remove it", func() {

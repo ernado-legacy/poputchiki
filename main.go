@@ -159,6 +159,7 @@ func NewApp() *Application {
 
 				d.Post("/guests", AddToGuests)
 				d.Get("/guests", GetGuests)
+				d.Get("/unread", GetUnreadCount)
 			}, IdEqualityRequired)
 
 		}, IdWrapper)

@@ -44,6 +44,7 @@ type DataBase interface {
 	RemoveMessage(id bson.ObjectId) error
 	GetChats(id bson.ObjectId) ([]*User, error)
 	SetRead(user, id bson.ObjectId) error
+	GetUnreadCount(id bson.ObjectId) (int, error)
 
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
