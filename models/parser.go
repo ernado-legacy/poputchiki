@@ -8,21 +8,11 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 const (
 	ContentTypeHeader = "Content-Type"
 )
-
-func capitalize(s string) string {
-	if len(s) < 1 {
-		return s
-	}
-	a := []rune(s)
-	a[0] = unicode.ToUpper(a[0])
-	return string(a)
-}
 
 func mapToStruct(q url.Values, val interface{}) error {
 	nQ := make(map[string]interface{})
