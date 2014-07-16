@@ -802,7 +802,12 @@ func TestMethods(t *testing.T) {
 								req, _ := http.NewRequest("GET", reqUrl, nil)
 								a.ServeHTTP(res, req)
 								a.DropDatabase()
-								So(res.Code, ShouldEqual, http.StatusNotFound)
+								m := []Message{}
+								So(res.Code, ShouldEqual, http.StatusOK)
+								decoder := json.NewDecoder(res.Body)
+								err := decoder.Decode(&m)
+								So(err, ShouldBeNil)
+								So(len(m), ShouldEqual, 0)
 							})
 						})
 					})
@@ -916,7 +921,12 @@ func TestMethods(t *testing.T) {
 									req, _ = http.NewRequest("GET", reqUrl, nil)
 									a.ServeHTTP(res, req)
 									a.DropDatabase()
-									So(res.Code, ShouldEqual, http.StatusNotFound)
+									m := []Message{}
+									So(res.Code, ShouldEqual, http.StatusOK)
+									decoder := json.NewDecoder(res.Body)
+									err := decoder.Decode(&m)
+									So(err, ShouldBeNil)
+									So(len(m), ShouldEqual, 0)
 								})
 							})
 						})
@@ -943,7 +953,12 @@ func TestMethods(t *testing.T) {
 								time.Sleep(time.Millisecond * 5) // waiting for async message send
 								a.ServeHTTP(res, req)
 								a.DropDatabase()
-								So(res.Code, ShouldEqual, http.StatusNotFound)
+								m := []Message{}
+								So(res.Code, ShouldEqual, http.StatusOK)
+								decoder := json.NewDecoder(res.Body)
+								err := decoder.Decode(&m)
+								So(err, ShouldBeNil)
+								So(len(m), ShouldEqual, 0)
 							})
 						})
 						Convey("Other user now should not be able to get information", func() {
