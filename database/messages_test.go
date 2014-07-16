@@ -18,12 +18,10 @@ func TestMessages(t *testing.T) {
 		Reset(func() {
 			db.Drop()
 		})
-
 		uOrigin := &models.User{Id: origin}
 		uDestination := &models.User{Id: destination}
 		So(db.Add(uOrigin), ShouldBeNil)
 		So(db.Add(uDestination), ShouldBeNil)
-
 		Convey("Add message", func() {
 			now := time.Now()
 			idOrigin := bson.NewObjectId()
@@ -32,7 +30,6 @@ func TestMessages(t *testing.T) {
 			mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text}
 			So(db.AddMessage(mOrigin), ShouldBeNil)
 			So(db.AddMessage(mDestination), ShouldBeNil)
-
 			Convey("Destination chats", func() {
 				chats, err := db.GetChats(destination)
 				So(err, ShouldBeNil)
@@ -66,7 +63,7 @@ func TestMessages(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 			Convey("Read origin", func() {
-				So(db.SetRead(idOrigin), ShouldBeNil)
+				So(db.SetRead(origin, idOrigin), ShouldBeNil)
 				m, err := db.GetMessage(idOrigin)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)
@@ -77,7 +74,7 @@ func TestMessages(t *testing.T) {
 				})
 			})
 			Convey("Read destination", func() {
-				So(db.SetRead(idDestination), ShouldBeNil)
+				So(db.SetRead(destination, idDestination), ShouldBeNil)
 				m, err := db.GetMessage(idDestination)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)

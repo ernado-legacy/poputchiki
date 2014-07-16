@@ -31,8 +31,8 @@ func (db *DB) setRead(query bson.M) error {
 	return err
 }
 
-func (db *DB) SetRead(id bson.ObjectId) error {
-	query := bson.M{"_id": id}
+func (db *DB) SetRead(user, id bson.ObjectId) error {
+	query := bson.M{"_id": id, "user": user}
 	return db.setRead(query)
 }
 

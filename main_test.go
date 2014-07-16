@@ -908,6 +908,21 @@ func TestMethods(t *testing.T) {
 								So(foundMessage.Origin, ShouldEqual, token2.Id)
 								So(foundMessage.Text, ShouldEqual, messageText)
 
+								Convey("So user could mark it as read", func() {
+									reqUrl := fmt.Sprintf("/api/message/%s/read?token=%s", foundMessage.Id.Hex(), token1.Token)
+									req, _ := http.NewRequest("POST", reqUrl, nil)
+									a.ServeHTTP(res, req)
+									So(res.Code, ShouldEqual, http.StatusOK)
+									res = httptest.NewRecorder()
+
+									// we are requesting messages for user1 from user2
+									reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token2.Id.Hex(), token1.Token)
+									req, _ = http.NewRequest("GET", reqUrl, nil)
+									a.ServeHTTP(res, req)
+									a.DropDatabase()
+									So(res.Code, ShouldEqual, http.StatusOK)
+								})
+
 								Convey("So user could remove it", func() {
 									res = httptest.NewRecorder()
 									reqUrl := fmt.Sprintf("/api/message/%s/?token=%s", foundMessage.Id.Hex(), token1.Token)

@@ -172,6 +172,7 @@ func NewApp() *Application {
 		}, IdWrapper)
 
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
+		r.Post("/message/:id/read", IdWrapper, MarkReadMessage)
 		r.Post("/video", UploadVideo)
 		r.Post("/video/:id/like", IdWrapper, LikeVideo)
 		r.Get("/video/:id/like", IdWrapper, GetLikersVideo)
