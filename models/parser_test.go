@@ -14,6 +14,11 @@ type TestStruct struct {
 	World int    `json:"world"`
 }
 
+type TestStructStr struct {
+	Hello string `json:"hello"`
+	World string `json:"world"`
+}
+
 func TestParser(t *testing.T) {
 	Convey("Parser", t, func() {
 		Convey("json", func() {
@@ -33,6 +38,15 @@ func TestParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(v.Hello, ShouldEqual, "world")
 			So(v.World, ShouldEqual, 1)
+		})
+
+		Convey("String reflection", func() {
+			req, _ := http.NewRequest("GET", "/?hello=world&world=1", nil)
+			v := &TestStructStr{}
+			err := Parse(req, v)
+			So(err, ShouldBeNil)
+			So(v.Hello, ShouldEqual, "world")
+			So(v.World, ShouldEqual, "1")
 		})
 
 		Convey("form", func() {
