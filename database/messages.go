@@ -24,10 +24,21 @@ func (db *DB) GetMessage(id bson.ObjectId) (*models.Message, error) {
 	err := db.messages.FindId(id).One(message)
 	return message, err
 }
-func (db *DB) SetRead(query bson.M) error {
+func (db *DB) setRead(query bson.M) error {
+	messages := []models.Message{}
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"read": true}}}
-	_, err := db.messages.Find(query).Apply(change, nil)
+	_, err := db.messages.Find(query).Apply(change, &messages)
 	return err
+}
+
+func (db *DB) SetRead(id bson.ObjectId) error {
+	query := bson.M{"_id": id}
+	return db.setRead(query)
+}
+
+func (db *DB) GetUnreadCount(id bson.ObjectId) (int, error) {
+	query := bson.M{"user": id, "read": false}
+	return db.messages.Find(query).Count()
 }
 
 func (db *DB) GetChats(id bson.ObjectId) ([]*models.User, error) {

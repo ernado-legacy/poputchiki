@@ -44,6 +44,49 @@ func TestMessages(t *testing.T) {
 				}
 				So(found, ShouldBeTrue)
 			})
+			Convey("Origin chats", func() {
+				chats, err := db.GetChats(origin)
+				So(err, ShouldBeNil)
+				found := false
+				for k := range chats {
+					if chats[k].Id == destination {
+						found = true
+					}
+				}
+				So(found, ShouldBeTrue)
+			})
+			Convey("Destination has new message", func() {
+				n, err := db.GetUnreadCount(destination)
+				So(n, ShouldEqual, 1)
+				So(err, ShouldBeNil)
+			})
+			Convey("Origin has new message", func() {
+				n, err := db.GetUnreadCount(origin)
+				So(n, ShouldEqual, 1)
+				So(err, ShouldBeNil)
+			})
+			Convey("Read origin", func() {
+				So(db.SetRead(idOrigin), ShouldBeNil)
+				m, err := db.GetMessage(idOrigin)
+				So(err, ShouldBeNil)
+				So(m.Read, ShouldBeTrue)
+				Convey("Origin has no new messages", func() {
+					n, err := db.GetUnreadCount(origin)
+					So(n, ShouldEqual, 0)
+					So(err, ShouldBeNil)
+				})
+			})
+			Convey("Read destination", func() {
+				So(db.SetRead(idDestination), ShouldBeNil)
+				m, err := db.GetMessage(idDestination)
+				So(err, ShouldBeNil)
+				So(m.Read, ShouldBeTrue)
+				Convey("Destination has no new messages", func() {
+					n, err := db.GetUnreadCount(destination)
+					So(n, ShouldEqual, 0)
+					So(err, ShouldBeNil)
+				})
+			})
 		})
 	})
 }
