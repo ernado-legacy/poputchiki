@@ -76,6 +76,7 @@ type DataBase interface {
 	AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesPhoto(id bson.ObjectId) []*User
+	GetUserPhoto(user bson.ObjectId) ([]*Photo, error)
 
 	AddFile(file *File) (*File, error)
 

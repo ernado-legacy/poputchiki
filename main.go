@@ -12,6 +12,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
+
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -166,6 +167,7 @@ func NewApp() *Application {
 				d.Put("/guests", AddToGuests)
 				d.Get("/guests", GetGuests)
 				d.Get("/unread", GetUnreadCount)
+				d.Get("/photo", GetUserPhoto)
 			}, IdEqualityRequired)
 
 		}, IdWrapper)

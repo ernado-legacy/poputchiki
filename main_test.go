@@ -887,6 +887,7 @@ func TestMethods(t *testing.T) {
 							So(res.Code, ShouldEqual, http.StatusOK)
 							var foundMessage Message
 							Convey("So unread messages should equal 1", func() {
+								time.Sleep(time.Millisecond * 10)
 								res = httptest.NewRecorder()
 								reqUrl = fmt.Sprintf("/api/user/%s/unread/?token=%s", token1.Id.Hex(), token1.Token)
 								req, _ = http.NewRequest("GET", reqUrl, nil)

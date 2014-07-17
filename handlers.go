@@ -1025,6 +1025,14 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, webpAccept
 	return Render(result)
 }
 
+func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	photo, err := db.GetUserPhoto(id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render(photo)
+}
+
 func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
