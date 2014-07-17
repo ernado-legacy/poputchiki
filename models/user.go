@@ -76,6 +76,11 @@ type User struct {
 	LikingsCity         string          `json:"likings_city,omitempty"      bson:"likings_city,omitempty"`
 }
 
+type GuestUser struct {
+	User `bson:"-"`
+	Time time.Time `json:"time"  bson:"time"`
+}
+
 func getHash(password, salt string) string {
 	log.Printf("sha256(%s,%s)", password, salt)
 	hasher := sha256.New()

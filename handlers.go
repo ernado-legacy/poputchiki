@@ -209,7 +209,7 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 
 // GetFavorites returns list of users in guests of target user
 func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	guests, err := db.GetAllGuests(id)
+	guests, err := db.GetAllGuestUsers(id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}

@@ -5,6 +5,7 @@ import (
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"sort"
 	"time"
 )
 
@@ -108,7 +109,7 @@ func (db *DB) RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) e
 }
 
 func (db *DB) GetAllGuests(id bson.ObjectId) ([]*User, error) {
-	g := []bson.ObjectId{}
+	g := []Guest{}
 	u := []*User{}
 
 	// first query - get all guests ids from guest-pair collection
@@ -124,6 +125,51 @@ func (db *DB) GetAllGuests(id bson.ObjectId) ([]*User, error) {
 	}
 
 	return u, nil
+}
+
+type guestByTime []*GuestUser
+
+func (a guestByTime) Len() int {
+	return len(a)
+}
+
+func (a guestByTime) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a guestByTime) Less(i, j int) bool {
+	return a[i].Time.Before(a[j].Time)
+}
+
+func (db *DB) GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error) {
+	var ids []bson.ObjectId
+	var result []Guest
+	times := make(map[bson.ObjectId]time.Time)
+	var guests []*GuestUser
+	var buff []*User
+
+	err := db.guests.Find(bson.M{"user": id}).Sort("-time").All(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	for k := range result {
+		ids = append(ids, result[k].Guest)
+		times[result[k].Guest] = result[k].Time
+	}
+
+	err = db.users.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&buff)
+	if err != nil {
+		return nil, err
+	}
+
+	for k := range buff {
+		user := *buff[k]
+		guest := &GuestUser{User: user, Time: times[user.Id]}
+		guests = append(guests, guest)
+	}
+	sort.Sort(guestByTime(guests))
+	return guests, nil
 }
 
 func (db *DB) SetOnlineStatus(id bson.ObjectId, status bool) error {

@@ -37,6 +37,7 @@ type DataBase interface {
 
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)
+	GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error)
 
 	AddMessage(m *Message) error
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
