@@ -15,9 +15,9 @@ func (db *DB) NewConfirmationToken(id bson.ObjectId) *models.EmailConfirmationTo
 func (db *DB) GetConfirmationToken(token string) *models.EmailConfirmationToken {
 	t := &models.EmailConfirmationToken{}
 	selector := bson.M{"token": token}
-	log.Println("[GetConfirmationToken]", "searching", token)
+	// log.Println("[GetConfirmationToken]", "searching", token)
 	if err := db.conftokens.Find(selector).One(t); err != nil {
-		log.Println("[GetConfirmationToken]", err)
+		// log.Println("[GetConfirmationToken]", err)
 		return nil
 	}
 
@@ -35,7 +35,7 @@ func (db *DB) NewConfirmationTokenValue(id bson.ObjectId, token string) *models.
 	t.Time = time.Now()
 	t.Token = token
 	err := db.conftokens.Insert(t)
-	log.Println("[NewConfirmationToken]", "inserted", t.Token)
+	// log.Println("[NewConfirmationToken]", "inserted", t.Token)
 	if err != nil {
 		log.Println("[NewConfirmationToken]", err)
 		return nil
