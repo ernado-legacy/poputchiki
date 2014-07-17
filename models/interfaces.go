@@ -112,6 +112,8 @@ type DataBase interface {
 	Init()
 	Drop()
 	Salt() string
+
+	SetAvatar(user, avatar bson.ObjectId) error
 }
 
 type RealtimeInterface interface {

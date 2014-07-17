@@ -1030,6 +1030,13 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter 
 	if err != nil {
 		return Render(ErrorBackend)
 	}
+	var video VideoAccept
+	var audio AudioAccept
+
+	for key := range photo {
+		photo[key].Prepare(adapter, webpAccept, video, audio)
+	}
+
 	return Render(photo)
 }
 

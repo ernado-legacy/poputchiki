@@ -212,6 +212,12 @@ func (db *DB) SetLastActionNow(id bson.ObjectId) error {
 	return err
 }
 
+func (db *DB) SetAvatar(user, avatar bson.ObjectId) error {
+	change := mgo.Change{Update: bson.M{"$set": bson.M{"avatar": avatar}}}
+	_, err := db.users.FindId(user).Apply(change, &bson.M{})
+	return err
+}
+
 func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
 	if count == 0 {
 		count = searchCount
