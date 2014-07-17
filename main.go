@@ -85,6 +85,7 @@ func NewDatabase(session *mgo.Session) models.DataBase {
 
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
+	session.SetMode(mgo.Eventual, true)
 	if err != nil {
 		log.Fatal(err)
 	}
