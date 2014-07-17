@@ -21,7 +21,7 @@ type Video struct {
 	Duration      int64         `json:"duration"              bson:"duration"`
 }
 
-func (v Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, _ AudioAccept) error {
+func (v *Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, _ AudioAccept) error {
 	var err error
 	if video == VaWebm {
 		v.VideoUrl, err = adapter.GetUrl(v.VideoWebm)

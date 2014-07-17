@@ -17,7 +17,7 @@ type Audio struct {
 	Duration    int64         `json:"duration"              bson:"duration"`
 }
 
-func (audio Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a AudioAccept) error {
+func (audio *Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a AudioAccept) error {
 	var err error
 	if a == AaAac {
 		audio.AudioUrl, err = adapter.GetUrl(audio.AudioAac)

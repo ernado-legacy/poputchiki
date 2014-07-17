@@ -1,7 +1,6 @@
 package database
 
 import (
-	"errors"
 	. "github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -70,14 +69,9 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 	for i, user := range u {
 		users[i] = user.Id
 	}
-
 	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).All(&photos); err != nil {
 		return photos, err
 	}
-	if len(photos) != len(users) {
-		return photos, errors.New("unexpected length")
-	}
-
 	return photos, nil
 }
 

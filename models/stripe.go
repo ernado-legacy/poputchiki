@@ -36,11 +36,14 @@ func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video 
 	var media PrepareInterface
 	switch stripe.Type {
 	case "video":
-		media = stripe.Media.(Video)
+		v := stripe.Media.(Video)
+		media = &v
 	case "audio":
-		media = stripe.Media.(Audio)
+		v := stripe.Media.(Audio)
+		media = &v
 	case "photo":
-		media = stripe.Media.(Photo)
+		v := stripe.Media.(Photo)
+		media = &v
 	default:
 		return errors.New("bad type")
 	}

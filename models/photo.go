@@ -27,7 +27,7 @@ type Photo struct {
 	LikedUsers    []bson.ObjectId `bson:"liked_users"`
 }
 
-func (p Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
+func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
 	var err error
 	if webp {
 		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailWebp)
