@@ -69,7 +69,7 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 	for i, user := range u {
 		users[i] = user.Id
 	}
-	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).All(&photos); err != nil {
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
 		return photos, err
 	}
 	return photos, nil
