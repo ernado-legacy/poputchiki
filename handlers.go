@@ -242,12 +242,10 @@ func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime Realti
 		return Render(ErrorUserNotFound)
 	}
 
-	go func() {
-		err := db.AddGuest(guest.Id, user.Id)
-		if err != nil {
-			log.Println(err)
-		}
-	}()
+	err := db.AddGuest(guest.Id, user.Id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
 
 	return Render("added to guests")
 }

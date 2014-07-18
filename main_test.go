@@ -846,6 +846,21 @@ func TestMethods(t *testing.T) {
 						}
 						So(found, ShouldBeTrue)
 					})
+
+					Convey("Second addition", func() {
+						res = httptest.NewRecorder()
+
+						json.Unmarshal(tokenBody, &token1)
+
+						reqUrl := fmt.Sprintf("/api/user/%s/guests/?token=%s", token2.Id.Hex(), token2.Token)
+						req, _ := http.NewRequest("PUT", reqUrl, nil)
+						req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
+						req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+						a.ServeHTTP(res, req)
+						a.DropDatabase()
+
+						So(res.Code, ShouldEqual, http.StatusOK)
+					})
 				})
 				Convey("User should be able to add to blacklist", func() {
 					res = httptest.NewRecorder()
