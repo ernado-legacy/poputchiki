@@ -74,6 +74,7 @@ type User struct {
 	LikingsSeasons      []string        `json:"likings_seasons,omitempty"      bson:"likings_seasons,omitempty"`
 	LikingsCountry      string          `json:"likings_country,omitempty"      bson:"likings_country,omitempty"`
 	LikingsCity         string          `json:"likings_city,omitempty"      bson:"likings_city,omitempty"`
+	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 }
 
 type GuestUser struct {

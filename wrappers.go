@@ -22,8 +22,7 @@ type Redirect struct {
 }
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Upgrade") != "" {
-		log.Println("not setting header")
+	if r.Header.Get("Upgrade") != "" || r.Header.Get("X-Html") != "" {
 		return
 	}
 

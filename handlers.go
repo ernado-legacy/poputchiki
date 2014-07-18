@@ -19,6 +19,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
 	"github.com/riobard/go-mailgun"
+	"html/template"
 	"io"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -1411,6 +1412,24 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, t
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+// admin
+func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase) {
+	user := db.Get(t.Id)
+	if user == nil || !user.IsAdmin {
+		code, data := Render(ErrorAuth)
+		http.Error(w, string(data), code)
+	}
+
+	view, err := template.ParseFiles("static/html/index.html")
+	if err != nil {
+		code, data := Render(ErrorBackend)
+		http.Error(w, string(data), code)
+	}
+	w.Header().Set("Content-Type", "text/html")
+	// w.Header().Write(w)
+	view.Execute(w, nil)
 }
 
 // init for random
