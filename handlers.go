@@ -244,6 +244,7 @@ func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime Realti
 
 	err := db.AddGuest(guest.Id, user.Id)
 	if err != nil {
+		log.Println("unable to add guest", err)
 		return Render(ErrorBackend)
 	}
 
