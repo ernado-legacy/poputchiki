@@ -818,7 +818,7 @@ func TestMethods(t *testing.T) {
 					json.Unmarshal(tokenBody, &token1)
 
 					reqUrl := fmt.Sprintf("/api/user/%s/guests/?token=%s", token2.Id.Hex(), token2.Token)
-					req, _ := http.NewRequest("POST", reqUrl, nil)
+					req, _ := http.NewRequest("PUT", reqUrl, nil)
 					req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 					a.ServeHTTP(res, req)
@@ -827,7 +827,7 @@ func TestMethods(t *testing.T) {
 					Convey("Other user should now be in guests", func() {
 						res = httptest.NewRecorder()
 
-						reqUrl := fmt.Sprintf("/api/user/%s/guests/?token=%s", token2.Id.Hex(), token2.Token)
+						reqUrl := fmt.Sprintf("/api/user/%s/guests/?token=%s", token1.Id.Hex(), token1.Token)
 						req, _ := http.NewRequest("GET", reqUrl, nil)
 						a.ServeHTTP(res, req)
 						a.DropDatabase()
@@ -840,7 +840,7 @@ func TestMethods(t *testing.T) {
 						So(err, ShouldEqual, nil)
 						found := false
 						for _, value := range u {
-							if value.Id == token1.Id {
+							if value.Id == token2.Id {
 								found = true
 							}
 						}
