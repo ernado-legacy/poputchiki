@@ -151,7 +151,7 @@ func NewApp() *Application {
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
 			r.Get("/chats", GetChats)
-
+			r.Get("/photo", GetUserPhoto)
 			r.Group("", func(d martini.Router) {
 				d.Patch("", Update)
 				d.Put("", Update)
@@ -167,7 +167,7 @@ func NewApp() *Application {
 				d.Put("/guests", AddToGuests)
 				d.Get("/guests", GetGuests)
 				d.Get("/unread", GetUnreadCount)
-				d.Get("/photo", GetUserPhoto)
+
 			}, IdEqualityRequired)
 
 		}, IdWrapper)
