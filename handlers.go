@@ -243,7 +243,7 @@ func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime Realti
 	}
 
 	go func() {
-		err := db.AddGuest(user.Id, guest.Id)
+		err := db.AddGuest(guest.Id, user.Id)
 		if err != nil {
 			log.Println(err)
 		}
