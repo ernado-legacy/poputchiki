@@ -32,7 +32,7 @@ type UserInfo struct {
 }
 
 type Guest struct {
-	Id    bson.ObjectId `json:"id"    bson:"_id"`
+	Id    bson.ObjectId `json:"id"    bson:"_id,omitempty"`
 	User  bson.ObjectId `json:"user"  bson:"user"`
 	Guest bson.ObjectId `json:"guest" bson:"guest"`
 	Time  time.Time     `json:"time"  bson:"time"`

@@ -85,8 +85,11 @@ func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 }
 
 func (db *DB) AddGuest(id bson.ObjectId, guest bson.ObjectId) error {
-	g := Guest{bson.NewObjectId(), id, guest, time.Now()}
-	_, err := db.guests.Upsert(bson.M{"user": id, "guest": guest}, &g)
+	g := Guest{}
+	g.Time = time.Now()
+	g.Guest = guest
+	g.User = id
+	_, err := db.guests.Upsert(bson.M{"user": g.User, "guest": g.Guest}, &g)
 	return err
 }
 
