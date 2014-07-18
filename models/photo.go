@@ -24,7 +24,7 @@ type Photo struct {
 	Description   string          `json:"description,omitempty" bson:"description,omitempty"`
 	Likes         int             `json:"likes"                 bson:"likes"`
 	Time          time.Time       `json:"time"                  bson:"time"`
-	LikedUsers    []bson.ObjectId `bson:"liked_users"`
+	LikedUsers    []bson.ObjectId `json:"-" 					bson:"liked_users"`
 }
 
 func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
