@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,10 @@ type Redirect struct {
 }
 
 func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
+	accept := r.Header.Get("Accept")
+	if strings.Index(accept, "json") == -1 {
+		return
+	}
 	if r.Header.Get("Upgrade") != "" || r.Header.Get("X-Html") != "" {
 		return
 	}
