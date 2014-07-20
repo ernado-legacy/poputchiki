@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"labix.org/v2/mgo/bson"
 	"net/url"
 	"time"
@@ -33,6 +34,8 @@ type SearchQuery struct {
 	City         string
 	Country      string
 	Text         string
+	Avatar       string
+	Name         string
 }
 
 // NewQuery returns query object with parsed fields from url params
@@ -101,9 +104,18 @@ func (q *SearchQuery) ToBson() bson.M {
 	if q.Country != "" && q.City == "" {
 		query = append(query, bson.M{"country": q.Country})
 	}
+	if q.Avatar != "" {
+		query = append(query, bson.M{"avatar": bson.M{"$exists": true}})
+	}
+	if q.Name != "" {
+		pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", q.Name)}
+		query = append(query, bson.M{"name": pattern})
+	}
+
 	if len(query) > 0 {
 		return bson.M{"$and": query}
 	}
+
 	return bson.M{}
 }
 
