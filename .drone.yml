@@ -1,3 +1,6 @@
 image: d.cydev.ru/media
 script:
   - go get -v -u .
+services:
+  - mongodb
+  - redis
