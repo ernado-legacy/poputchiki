@@ -87,17 +87,13 @@
   $('.next').click(function(e){
     e.preventDefault();
     page++;
-    offset = getOffset()
     update();
   });
 
   $('.previous').click(function(e){
     e.preventDefault();
-    if (offset == 0) {
-      return;
-    }
+    if (offset == 0) return;
     page--;
-    offset = getOffset()
     update();
   });
 
@@ -127,14 +123,16 @@
     return params;
   }
 
-  $('#mainForm').change(function(){
+  var mainForm = $('#mainForm');
+
+  mainForm.change(function(){
     page = 0;
     offset = 0;
     update();
   });
 
   $('#inputName').keyup(function(){
-    $('#mainForm').change();
+    mainForm.change();
   })
 
   function update() {
@@ -142,7 +140,7 @@
     var urlparams = $.param(params);
     var previous = $('.previous');
     var next = $('.next');
-
+    offset = getOffset();
     if (offset == 0) {
       previous.addClass('disabled');
     } else {
