@@ -1,3 +1,3 @@
-image: radrydzewski/go:1.2
+image: cydev/go
 script:
-  - echo hello
+  - go version
