@@ -140,13 +140,24 @@
   function update() {
     var params = getParams();
     var urlparams = $.param(params);
+    var previous = $('.previous');
+    var next = $('.next');
 
-
-
+    if (offset == 0) {
+      previous.addClass('disabled');
+    } else {
+      previous.removeClass('disabled');
+    }
 
     $.getJSON( "/api/search?" + urlparams, function(data) {
       var users = $('#users');
       users.html('');
+      var length = data.length;
+      if (length < count) {
+        next.addClass('disabled');
+      } else {
+        next.removeClass('disabled');
+      }
       $.each(data, function(key, val) {
         users.append(getTemplate(val));
       });
