@@ -1,3 +1,3 @@
 image: d.cydev.ru/media
 script:
-  - go get .
+  - go get -v -u .
