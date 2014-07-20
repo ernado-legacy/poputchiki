@@ -1432,6 +1432,24 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase) {
 	view.Execute(w, nil)
 }
 
+func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWriter, r *http.Request, tokens gotok.Storage) {
+	user := db.Get(t.Id)
+	if user == nil || !user.IsAdmin {
+		code, data := Render(ErrorAuth)
+		http.Error(w, string(data), code)
+	}
+
+	userToken, err := tokens.Generate(id)
+	if err != nil {
+		code, data := Render(ErrorBackend)
+		http.Error(w, string(data), code)
+	}
+
+	http.SetCookie(w, userToken.GetCookie())
+	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id.Hex(), Path: "/"})
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

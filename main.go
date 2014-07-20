@@ -151,7 +151,7 @@ func NewApp() *Application {
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)
-
+			r.Get("/login", AdminLogin)
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
 			r.Get("/chats", GetChats)
