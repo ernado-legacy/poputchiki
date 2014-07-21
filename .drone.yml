@@ -1,6 +1,11 @@
 image: d.cydev.ru/media
+env:
+  - GOPATH=/var/cache/drone
 script:
-  - go get -v -u .
+  - go get github.com/smartystreets/goconvey/convey
+  - go get -v .
+  - go test
 services:
   - mongodb
   - redis
+  - d.cydev.ru/weed:server
