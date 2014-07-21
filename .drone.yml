@@ -4,6 +4,8 @@ env:
 script:
   - go get github.com/smartystreets/goconvey/convey
   - go get -v .
+  - sudo start mongodb
+  - sleep 10
   - go test
 services:
   - mongodb
