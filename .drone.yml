@@ -1,4 +1,4 @@
-image: d.cydev.ru/media
+image: d.cydev.ru/media:latest
 env:
   - GOPATH=/var/cache/drone
 script:
