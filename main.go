@@ -86,10 +86,10 @@ func NewDatabase(session *mgo.Session) models.DataBase {
 
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
-	session.SetMode(mgo.Eventual, true)
 	if err != nil {
 		log.Fatal(err)
 	}
+	session.SetMode(mgo.Eventual, true)
 
 	runtime.GOMAXPROCS(processes)
 	var db models.DataBase
@@ -183,7 +183,6 @@ func NewApp() *Application {
 			r.Put("", UpdateStatus)
 			r.Delete("", RemoveStatus)
 		}, IdWrapper)
-
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
 		r.Post("/message/:id/read", IdWrapper, MarkReadMessage)
 		r.Post("/video", UploadVideo)
