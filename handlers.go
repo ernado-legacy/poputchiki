@@ -1274,14 +1274,15 @@ func GetPlaces(db DataBase, req *http.Request) (int, []byte) {
 	return Render(places)
 }
 
-func ForgotPassword(db DataBase, id bson.ObjectId) (int, []byte) {
+func ForgotPassword(db DataBase, args martini.Params) (int, []byte) {
 	var err error
-	u := db.Get(id)
+	email := args["email"]
+	u := db.GetUsername(email)
 	if u == nil {
 		return Render(ErrorUserNotFound)
 	}
 
-	confTok := db.NewConfirmationToken(id)
+	confTok := db.NewConfirmationToken(u.Id)
 	if confTok == nil {
 		return Render(ErrorBackend)
 	}
