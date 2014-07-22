@@ -426,6 +426,8 @@ func TestMethods(t *testing.T) {
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
 
+					time.Sleep(10 * time.Millisecond)
+
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
@@ -433,6 +435,7 @@ func TestMethods(t *testing.T) {
 					req.PostForm.Add(FORM_TEXT, messageText2)
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
+					time.Sleep(10 * time.Millisecond)
 
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
@@ -442,6 +445,7 @@ func TestMethods(t *testing.T) {
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
 
+					time.Sleep(10 * time.Millisecond)
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
