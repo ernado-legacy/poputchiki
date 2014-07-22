@@ -470,11 +470,12 @@ func TestMethods(t *testing.T) {
 						}
 						So(foundMessage.Destination, ShouldEqual, token1.Id)
 						So(foundMessage.Origin, ShouldEqual, token2.Id)
-						So(foundMessage.Text, ShouldEqual, messageText4)
+						So(foundMessage.Text, ShouldEqual, messageText)
 
-						So(m[3].Text, ShouldEqual, messageText)
-						So(m[2].Text, ShouldEqual, messageText2)
-						So(m[1].Text, ShouldEqual, messageText3)
+						So(m[0].Text, ShouldEqual, messageText)
+						So(m[1].Text, ShouldEqual, messageText2)
+						So(m[2].Text, ShouldEqual, messageText3)
+						So(m[3].Text, ShouldEqual, messageText4)
 
 						Convey("So user could remove it", func() {
 							res = httptest.NewRecorder()

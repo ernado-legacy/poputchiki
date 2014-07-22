@@ -68,7 +68,7 @@ func TestMessages(t *testing.T) {
 							messages, err := db.GetMessagesFromUser(destination, origin)
 							So(err, ShouldBeNil)
 							So(len(messages), ShouldEqual, 2)
-							So(messages[0].Text, ShouldEqual, text2)
+							So(messages[1].Text, ShouldEqual, text2)
 						})
 					})
 					Convey("Origin has new message", func() {
@@ -106,7 +106,7 @@ func TestMessages(t *testing.T) {
 								messages, err := db.GetMessagesFromUser(destination, origin)
 								So(err, ShouldBeNil)
 								So(len(messages), ShouldEqual, 3)
-								So(messages[0].Text, ShouldEqual, text3)
+								So(messages[2].Text, ShouldEqual, text3)
 							})
 						})
 						Convey("Origin has new message", func() {
