@@ -1338,7 +1338,48 @@ func FacebookAuthStart(r *http.Request, w http.ResponseWriter, client *gofbauth.
 	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
 }
 
-func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, client *govkauth.Client) {
+func ExportPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, url string) *Photo {
+	res, err := http.Get(url)
+	f := res.Body
+	if err != nil {
+		log.Println("unable to read form file", err)
+		return nil
+	}
+	length := res.ContentLength
+	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
+	progress := make(chan float32)
+	go func() {
+		for _ = range progress {
+			continue
+		}
+	}()
+
+	p, err := uploader.Upload(length, f, progress)
+
+	c := func(input *photo.File) File {
+		output := &File{}
+		output.Id = bson.NewObjectId()
+		output.User = id
+		convert(input, output)
+		db.AddFile(output)
+		return *output
+	}
+
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	newPhoto, err := db.AddPhoto(id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
+	if err != nil {
+		log.Println(err)
+	}
+	return newPhoto
+}
+
+func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, adapter *weed.Adapter, tokens gotok.Storage, client *govkauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1351,7 +1392,10 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 		newUser.Email = token.Email
 		newUser.Password = "oauth"
 		newUser.EmailConfirmed = true
-		newUser.Name, err = client.GetName(token.UserID)
+		user, err := client.GetName(token.UserID)
+		newUser.Name = user.Name
+		newUser.Birthday = user.Birthday
+		newUser.Sex = user.Sex
 		log.Println(newUser.Name, err)
 		err = db.Add(newUser)
 		if err != nil {
@@ -1360,6 +1404,15 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 			return
 		}
 		u = db.GetUsername(token.Email)
+
+		if user.Photo != "" {
+			p := ExportPhoto(db, u.Id, adapter, user.Photo)
+			if p != nil {
+				db.SetAvatar(u.Id, p.Id)
+			} else {
+				log.Println("unable to set avatar")
+			}
+		}
 	}
 	userToken, err := tokens.Generate(u.Id)
 	if err != nil {
