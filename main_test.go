@@ -409,6 +409,10 @@ func TestMethods(t *testing.T) {
 					a.DropDatabase()
 				})
 				Convey("User should be able to send message", func() {
+
+					messageText2 := "keeeeeeeee"
+					messageText3 := "sheeee"
+					messageText4 := "jsdkdsfklsdk"
 					res = httptest.NewRecorder()
 
 					json.Unmarshal(tokenBody, &token1)
@@ -421,6 +425,31 @@ func TestMethods(t *testing.T) {
 					req.PostForm.Add(FORM_TEXT, messageText)
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
+
+					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
+					req, _ = http.NewRequest("PUT", reqUrl, nil)
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+					req.PostForm = url.Values{}
+					req.PostForm.Add(FORM_TEXT, messageText2)
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+
+					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
+					req, _ = http.NewRequest("PUT", reqUrl, nil)
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+					req.PostForm = url.Values{}
+					req.PostForm.Add(FORM_TEXT, messageText3)
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+
+					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
+					req, _ = http.NewRequest("PUT", reqUrl, nil)
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+					req.PostForm = url.Values{}
+					req.PostForm.Add(FORM_TEXT, messageText4)
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+
 					var foundMessage Message
 					Convey("And that message should be in messages", func() {
 						res = httptest.NewRecorder()
@@ -436,13 +465,12 @@ func TestMethods(t *testing.T) {
 						err := json.Unmarshal(messagesBody, &m)
 						So(err, ShouldEqual, nil)
 						for _, value := range m {
-							if value.Text == messageText {
-								foundMessage = value
-							}
+							foundMessage = value
+							break
 						}
 						So(foundMessage.Destination, ShouldEqual, token1.Id)
 						So(foundMessage.Origin, ShouldEqual, token2.Id)
-						So(foundMessage.Text, ShouldEqual, messageText)
+						So(foundMessage.Text, ShouldEqual, messageText4)
 
 						Convey("So user could remove it", func() {
 							res = httptest.NewRecorder()
@@ -463,7 +491,7 @@ func TestMethods(t *testing.T) {
 								decoder := json.NewDecoder(res.Body)
 								err := decoder.Decode(&m)
 								So(err, ShouldBeNil)
-								So(len(m), ShouldEqual, 0)
+								So(len(m), ShouldEqual, 3)
 							})
 						})
 					})
