@@ -41,6 +41,83 @@ func TestMessages(t *testing.T) {
 				}
 				So(found, ShouldBeTrue)
 			})
+			Convey("Add new message", func() {
+				text2 := "hehehe"
+				now := time.Now()
+				idOrigin := bson.NewObjectId()
+				idDestination := bson.NewObjectId()
+				mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text2}
+				mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text2}
+				So(db.AddMessage(mOrigin), ShouldBeNil)
+				So(db.AddMessage(mDestination), ShouldBeNil)
+				Convey("Destination chats", func() {
+					chats, err := db.GetChats(destination)
+					So(err, ShouldBeNil)
+					found := false
+					for k := range chats {
+						if chats[k].Id == origin {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
+					Convey("Destination has new message", func() {
+						n, err := db.GetUnreadCount(destination)
+						So(n, ShouldEqual, 2)
+						So(err, ShouldBeNil)
+						Convey("Fist message should be second", func() {
+							messages, err := db.GetMessagesFromUser(destination, origin)
+							So(err, ShouldBeNil)
+							So(len(messages), ShouldEqual, 2)
+							So(messages[0].Text, ShouldEqual, text2)
+						})
+					})
+					Convey("Origin has new message", func() {
+						n, err := db.GetUnreadCount(origin)
+						So(n, ShouldEqual, 2)
+						So(err, ShouldBeNil)
+					})
+
+				})
+
+				Convey("Add new message", func() {
+					text3 := "hehehe"
+					now := time.Now()
+					idOrigin := bson.NewObjectId()
+					idDestination := bson.NewObjectId()
+					mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text3}
+					mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text3}
+					So(db.AddMessage(mOrigin), ShouldBeNil)
+					So(db.AddMessage(mDestination), ShouldBeNil)
+					Convey("Destination chats", func() {
+						chats, err := db.GetChats(destination)
+						So(err, ShouldBeNil)
+						found := false
+						for k := range chats {
+							if chats[k].Id == origin {
+								found = true
+							}
+						}
+						So(found, ShouldBeTrue)
+						Convey("Destination has new message", func() {
+							n, err := db.GetUnreadCount(destination)
+							So(n, ShouldEqual, 3)
+							So(err, ShouldBeNil)
+							Convey("Fist message should be second", func() {
+								messages, err := db.GetMessagesFromUser(destination, origin)
+								So(err, ShouldBeNil)
+								So(len(messages), ShouldEqual, 3)
+								So(messages[0].Text, ShouldEqual, text3)
+							})
+						})
+						Convey("Origin has new message", func() {
+							n, err := db.GetUnreadCount(origin)
+							So(n, ShouldEqual, 3)
+							So(err, ShouldBeNil)
+						})
+
+					})
+				})
+			})
 			Convey("Origin chats", func() {
 				chats, err := db.GetChats(origin)
 				So(err, ShouldBeNil)
