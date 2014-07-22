@@ -16,6 +16,6 @@ RUN cd $ROOT && go get .
 
 # update
 RUN cd $ROOT && version=VERSION git pull
-RUN cd $ROOT && go get .
+RUN cd $ROOT && go get -u -v .
 
 ENTRYPOINT ["/go/bin/poputchiki"]
