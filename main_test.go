@@ -472,6 +472,10 @@ func TestMethods(t *testing.T) {
 						So(foundMessage.Origin, ShouldEqual, token2.Id)
 						So(foundMessage.Text, ShouldEqual, messageText4)
 
+						So(m[3].Text, ShouldEqual, messageText)
+						So(m[2].Text, ShouldEqual, messageText2)
+						So(m[1].Text, ShouldEqual, messageText3)
+
 						Convey("So user could remove it", func() {
 							res = httptest.NewRecorder()
 							reqUrl := fmt.Sprintf("/api/message/%s/?token=%s", foundMessage.Id.Hex(), token1.Token)
