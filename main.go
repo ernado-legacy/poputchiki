@@ -129,7 +129,7 @@ func NewApp() *Application {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
 		r.Post("/logout", NeedAuth, Logout)
-		r.Post("/forgot/:email", IdWrapper, ForgotPassword)
+		r.Post("/forgot/:email", ForgotPassword)
 		r.Get("/reset/:token", ResetPassword)
 		r.Get("/vk/start", VkontakteAuthStart)
 		r.Get("/fb/start", FacebookAuthStart)
