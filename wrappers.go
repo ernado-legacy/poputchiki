@@ -34,6 +34,19 @@ func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", JSON_HEADER)
 }
 
+func addStatus(value interface{}, status int) []byte {
+	j, err := json.Marshal(value)
+	log.Println(string(j), err)
+	buff := make(map[string]interface{})
+	err = json.Unmarshal(j, &buff)
+	log.Println(err)
+	buff["status"] = status
+	log.Println(buff)
+	j, _ = json.Marshal(buff)
+	log.Print(string(j))
+	return j
+}
+
 func Render(value interface{}) (int, []byte) {
 	// trying to marshal to json
 	j, err := json.Marshal(value)
@@ -50,8 +63,14 @@ func Render(value interface{}) (int, []byte) {
 		if v.Code == http.StatusInternalServerError {
 			log.Println(v)
 		}
+		if *mobile {
+			return http.StatusOK, addStatus(value, v.Code)
+		}
 		return v.Code, j
 	default:
+		if *mobile {
+			return http.StatusOK, addStatus(value, 0)
+		}
 		return http.StatusOK, j
 	}
 }

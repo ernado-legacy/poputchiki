@@ -46,6 +46,7 @@ var (
 	OfflineTimeout            = 60 * 5 * time.Second
 	OfflineUpdateTick         = 5 * time.Second
 	PromoCost            uint = 50
+	mobile                    = flag.Bool("mobile", false, "is mobile api")
 )
 
 func getHash(password string, s string) string {

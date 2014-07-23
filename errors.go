@@ -6,7 +6,7 @@ import (
 
 type Error struct {
 	Code int    `json:"status"`
-	Text string `json:"text"`
+	Text string `json:"error"`
 }
 
 var (
