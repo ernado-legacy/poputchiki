@@ -12,7 +12,6 @@ import (
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
-
 	"github.com/go-martini/martini"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -126,7 +125,12 @@ func NewApp() *Application {
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}
 	m.Use(martini.Static("static", staticOptions))
 
-	m.Group("/api/auth", func(r martini.Router) {
+	root := "/api"
+	if *mobile {
+		root = "/api/mobile"
+	}
+
+	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
 		r.Post("/logout", NeedAuth, Logout)
@@ -137,8 +141,8 @@ func NewApp() *Application {
 		r.Get("/vk/redirect", VkontakteAuthRedirect)
 		r.Get("/fb/redirect", FacebookAuthRedirect)
 	})
-	m.Get("/api", Index)
-	m.Group("/api", func(r martini.Router) {
+	m.Get(root, Index)
+	m.Group(root, func(r martini.Router) {
 		r.Get("/admin", AdminView)
 		r.Get("/confirm/email/:token", ConfirmEmail)
 		r.Get("/confirm/phone/start", ConfirmPhoneStart)
