@@ -166,6 +166,7 @@ func NewApp() *Application {
 				d.Put("", Update)
 				d.Post("", Update)
 				d.Post("/fav", AddToFavorites)
+				d.Put("/fav", AddToFavorites)
 				d.Delete("/fav", RemoveFromFavorites)
 				d.Get("/fav", GetFavorites)
 
