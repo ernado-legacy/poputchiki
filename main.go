@@ -164,6 +164,7 @@ func NewApp() *Application {
 			r.Group("", func(d martini.Router) {
 				d.Patch("", Update)
 				d.Put("", Update)
+				d.Post("", Update)
 				d.Post("/fav", AddToFavorites)
 				d.Delete("/fav", RemoveFromFavorites)
 				d.Get("/fav", GetFavorites)
@@ -186,6 +187,7 @@ func NewApp() *Application {
 		r.Group("/status/:id", func(r martini.Router) {
 			r.Get("", GetStatus)
 			r.Put("", UpdateStatus)
+			r.Post("", UpdateStatus)
 			r.Delete("", RemoveStatus)
 		}, IdWrapper)
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
