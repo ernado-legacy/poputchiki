@@ -1491,12 +1491,14 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
 		http.Error(w, string(data), code)
+		return
 	}
 
 	userToken, err := tokens.Generate(id)
 	if err != nil {
 		code, data := Render(ErrorBackend)
 		http.Error(w, string(data), code)
+		return
 	}
 
 	http.SetCookie(w, userToken.GetCookie())
