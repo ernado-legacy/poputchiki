@@ -107,7 +107,7 @@ func NewApp() *Application {
 	}
 
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru/api/auth/vk/redirect", "offline,email"})
-	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru/api/auth/fb/redirect", "email"})
+	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru/api/auth/fb/redirect", "email,user_birthday"})
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -165,6 +165,7 @@ func NewApp() *Application {
 				d.Patch("", Update)
 				d.Put("", Update)
 				d.Post("", Update)
+
 				d.Post("/fav", AddToFavorites)
 				d.Put("/fav", AddToFavorites)
 				d.Delete("/fav", RemoveFromFavorites)
