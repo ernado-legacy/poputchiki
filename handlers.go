@@ -1427,7 +1427,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
+func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1435,6 +1435,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, t
 		return
 	}
 	fbUser, err := client.GetUser(token.AccessToken)
+	log.Println(err)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
 		http.Error(w, "Ошибка авторизации", code)
@@ -1447,6 +1448,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, t
 		newUser.Password = "oauth"
 		newUser.EmailConfirmed = true
 		newUser.Name = fbUser.Name
+		newUser.Birthday = fbUser.Birthday
 		log.Println(newUser.Name, err)
 		err = db.Add(newUser)
 		if err != nil {
@@ -1455,6 +1457,15 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, t
 			return
 		}
 		u = db.GetUsername(fbUser.Email)
+		log.Println(fbUser.Photo)
+		if fbUser.Photo != "" {
+			p := ExportPhoto(db, u.Id, adapter, fbUser.Photo)
+			if p != nil {
+				db.SetAvatar(u.Id, p.Id)
+			} else {
+				log.Println("unable to set avatar")
+			}
+		}
 	}
 	userToken, err := tokens.Generate(u.Id)
 	if err != nil {
