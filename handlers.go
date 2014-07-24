@@ -196,6 +196,7 @@ func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request) (int, [
 		if err == mgo.ErrNotFound {
 			return Render(ErrorUserNotFound)
 		}
+		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
 	return Render("removed")
