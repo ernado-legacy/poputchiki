@@ -69,7 +69,7 @@ func (db *DB) Drop() {
 
 func must(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 }
 

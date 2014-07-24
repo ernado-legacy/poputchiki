@@ -797,6 +797,7 @@ func TestMethods(t *testing.T) {
 							reqUrl := fmt.Sprintf("/api/user/%s/blacklist/?token=%s", token2.Id.Hex(), token2.Token)
 							req, _ := http.NewRequest("DELETE", reqUrl, nil)
 							req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
+							req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 							a.ServeHTTP(res, req)
 							So(res.Code, ShouldEqual, http.StatusOK)
 							Convey("Other user now should not be in blacklist", func() {
@@ -834,6 +835,7 @@ func TestMethods(t *testing.T) {
 
 					reqUrl := fmt.Sprintf("/api/user/%s/fav/?token=%s", token2.Id.Hex(), token2.Token)
 					req, _ := http.NewRequest("POST", reqUrl, nil)
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 					req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
 					a.ServeHTTP(res, req)
 
@@ -895,6 +897,7 @@ func TestMethods(t *testing.T) {
 					Convey("Then user should be able to remove other user from favorites", func() {
 						reqUrl := fmt.Sprintf("/api/user/%s/fav/?token=%s", token2.Id.Hex(), token2.Token)
 						req, _ := http.NewRequest("DELETE", reqUrl, nil)
+						req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 						req.PostForm = url.Values{FORM_TARGET: {token1.Id.Hex()}}
 						a.ServeHTTP(res, req)
 						So(res.Code, ShouldEqual, http.StatusOK)
@@ -926,6 +929,7 @@ func TestMethods(t *testing.T) {
 					reqUrl := fmt.Sprintf("/api/user/%s/fav/?token=%s", id1.Hex(), token2.Token)
 					req, _ := http.NewRequest("POST", reqUrl, nil)
 					req.PostForm = url.Values{FORM_TARGET: {id2.Hex()}}
+					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 					a.ServeHTTP(res, req)
 
 					So(res.Code, ShouldEqual, http.StatusMethodNotAllowed)

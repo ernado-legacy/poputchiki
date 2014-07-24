@@ -34,6 +34,7 @@ func mapToStruct(q url.Values, val interface{}) error {
 		value := q[key]
 		if len(value) == 1 {
 			v := value[0]
+			log.Println(v, value, field.Type.Name())
 			vInt, err := strconv.Atoi(v)
 			if err != nil || field.Type.Name() == "string" {
 				nQ[key] = v
@@ -44,10 +45,12 @@ func mapToStruct(q url.Values, val interface{}) error {
 			nQ[key] = value
 		}
 	}
+	log.Println(nQ)
 	j, err := json.Marshal(nQ)
 	if err != nil {
 		return err
 	}
+	log.Println(string(j))
 	return json.Unmarshal(j, val)
 
 }
@@ -64,10 +67,12 @@ func Parse(r *http.Request, v interface{}) error {
 		if err != nil {
 			log.Println("parse frm", err)
 		}
-		if r.Method == "GET" {
+		if len(r.Form) > 0 {
 			return mapToStruct(r.Form, v)
 		}
-		return mapToStruct(r.PostForm, v)
+		if len(r.PostForm) > 0 {
+			return mapToStruct(r.PostForm, v)
+		}
 	}
 
 	return mapToStruct(r.URL.Query(), v)
