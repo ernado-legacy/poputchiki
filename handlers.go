@@ -21,10 +21,12 @@ import (
 	"github.com/riobard/go-mailgun"
 	"html/template"
 	"io"
+	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -167,6 +169,9 @@ func RemoveFromBlacklist(db DataBase, id bson.ObjectId, r *http.Request) (int, [
 		return Render(ErrorUserNotFound)
 	}
 	if err := db.RemoveFromBlacklist(user.Id, friend.Id); err != nil {
+		if err == mgo.ErrNotFound {
+			return Render(ErrorUserNotFound)
+		}
 		return Render(ErrorBadRequest)
 	}
 	return Render("removed")
@@ -188,6 +193,9 @@ func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request) (int, [
 		return Render(ErrorUserNotFound)
 	}
 	if err := db.RemoveFromFavorites(user.Id, friend.Id); err != nil {
+		if err == mgo.ErrNotFound {
+			return Render(ErrorUserNotFound)
+		}
 		return Render(ErrorBadRequest)
 	}
 	return Render("removed")
@@ -361,7 +369,6 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	for k := range query {
 		if !isWriteable(k) {
 			delete(query, k)
-			log.Println(id, "was trying to edit", k)
 		}
 	}
 	// checking field count
@@ -965,8 +972,18 @@ func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token
 	return Render(status)
 }
 
-func SearchPeople(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	query, err := NewQuery(r.URL.Query())
+func addGeo(db DataBase, t *gotok.Token, r *http.Request) url.Values {
+	q := r.URL.Query()
+	u := db.Get(t.Id)
+	if len(u.Location) == 2 && q.Get("location") == "" {
+		q.Add(LocationArgument, fmt.Sprintf(LocationFormat, u.Location[0], u.Location[1]))
+	}
+	return q
+}
+
+func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	q := addGeo(db, t, r)
+	query, err := NewQuery(q)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBadRequest)

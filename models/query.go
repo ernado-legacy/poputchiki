@@ -3,21 +3,24 @@ package models
 import (
 	"fmt"
 	"labix.org/v2/mgo/bson"
+	"log"
 	"net/url"
 	"time"
 )
 
 const (
-	SeasonSummer = "summer"
-	SeasonWinter = "winter"
-	SeasonAutumn = "autumn"
-	SeasonSpring = "spring"
-	SexMale      = "male"
-	SexFemale    = "female"
-	ageMax       = 100
-	ageMin       = 18
-	growthMax    = 300
-	weightMax    = 1000
+	SeasonSummer     = "summer"
+	SeasonWinter     = "winter"
+	SeasonAutumn     = "autumn"
+	SeasonSpring     = "spring"
+	SexMale          = "male"
+	SexFemale        = "female"
+	LocationFormat   = "%f,%f"
+	LocationArgument = "location"
+	ageMax           = 100
+	ageMin           = 18
+	growthMax        = 300
+	weightMax        = 1000
 )
 
 // SearchQuery represents filtering query for users or user-related objects
@@ -36,6 +39,8 @@ type SearchQuery struct {
 	Text         string
 	Avatar       string
 	Name         string
+	Geo          string
+	Location     string
 }
 
 // NewQuery returns query object with parsed fields from url params
@@ -110,6 +115,17 @@ func (q *SearchQuery) ToBson() bson.M {
 	if q.Name != "" {
 		pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", q.Name)}
 		query = append(query, bson.M{"name": pattern})
+	}
+
+	if q.Geo != "" {
+		location := make([]float64, 2)
+		_, err := fmt.Sscanf(q.Location, LocationFormat, &location[0], &location[1])
+		if err != nil {
+			log.Println(err)
+		} else {
+			geoQuery := bson.M{"location": bson.M{"$near": location}}
+			query = append(query, geoQuery)
+		}
 	}
 
 	if len(query) > 0 {

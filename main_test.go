@@ -100,6 +100,76 @@ func TestRealtime(t *testing.T) {
 	})
 }
 
+func TestGeoSearch(t *testing.T) {
+	dbName = "poputchiki_geo"
+	redisName = "poputchiki_geo"
+	a := NewApp()
+	username := "m@cydev.ru"
+	password := "secretsecret"
+	firstname := "kek"
+	var tokenBody []byte
+	var token1 gotok.Token
+
+	Convey("Register", t, func() {
+		Reset(func() {
+			a.DropDatabase()
+			a.InitDatabase()
+		})
+
+		res := httptest.NewRecorder()
+		// sending registration request
+		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+		a.ServeHTTP(res, req)
+
+		// reading response
+		tokenBody, _ = ioutil.ReadAll(res.Body)
+		So(res.Code, ShouldEqual, http.StatusOK)
+		Convey("User should be able to change information after registration", func() {
+			err := json.Unmarshal(tokenBody, &token1)
+			So(err, ShouldEqual, nil)
+
+			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
+			changes := User{}
+			changes.Name = firstname
+			changes.Sex = "male"
+			changes.Location = []float64{155.0, 155.0}
+			uJson, err := json.Marshal(changes)
+			uReader := bytes.NewReader(uJson)
+			So(err, ShouldBeNil)
+			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
+			req.Header.Add(ContentTypeHeader, "application/json")
+			a.ServeHTTP(res, req)
+
+			So(res.Code, ShouldEqual, http.StatusOK)
+			Convey("Search", func() {
+				res := httptest.NewRecorder()
+				err := json.Unmarshal(tokenBody, &token1)
+				So(err, ShouldEqual, nil)
+				time.Sleep(500 * time.Millisecond)
+				reqUrl := fmt.Sprintf("/api/search/?geo=true&token=%s", token1.Token)
+				req, _ := http.NewRequest("GET", reqUrl, nil)
+				a.ServeHTTP(res, req)
+				a.DropDatabase()
+				So(res.Code, ShouldEqual, http.StatusOK)
+				users := []*User{}
+				userBody, _ := ioutil.ReadAll(res.Body)
+				err = json.Unmarshal(userBody, &users)
+				So(err, ShouldBeNil)
+				found := false
+				for _, value := range users {
+					if value.Name == firstname {
+						found = true
+					}
+				}
+				So(found, ShouldBeTrue)
+			})
+		})
+
+	})
+}
+
 func TestMethods(t *testing.T) {
 	username := "m@cydev.ru"
 	password := "secretsecret"
@@ -113,8 +183,11 @@ func TestMethods(t *testing.T) {
 	redisName = "poputchiki_dev"
 
 	a := NewApp()
-	defer a.Close()
 	a.DropDatabase()
+	a.InitDatabase()
+	a.Close()
+
+	a = NewApp()
 
 	var tokenBody []byte
 	var token1 gotok.Token
@@ -233,6 +306,7 @@ func TestMethods(t *testing.T) {
 		})
 
 		Convey("User should be able to change information after registration", func() {
+			a.InitDatabase()
 			err := json.Unmarshal(tokenBody, &token1)
 			So(err, ShouldEqual, nil)
 
@@ -241,6 +315,7 @@ func TestMethods(t *testing.T) {
 			changes.Name = firstname
 			changes.Phone = phone
 			changes.Sex = "female"
+			changes.Location = []float64{155.0, 155.0}
 			uJson, err := json.Marshal(changes)
 			uReader := bytes.NewReader(uJson)
 			So(err, ShouldBeNil)
@@ -254,6 +329,7 @@ func TestMethods(t *testing.T) {
 				res := httptest.NewRecorder()
 
 				// 	// trying to get user information with scope
+
 				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
 				req, _ := http.NewRequest("GET", reqUrl, nil)
 				a.ServeHTTP(res, req)
@@ -262,15 +338,20 @@ func TestMethods(t *testing.T) {
 				u := User{}
 				userBody, _ := ioutil.ReadAll(res.Body)
 				json.Unmarshal(userBody, &u)
+				a.DropDatabase()
 				So(u.Name, ShouldEqual, changes.Name)
 				So(u.Phone, ShouldEqual, changes.Phone)
 				So(u.Sex, ShouldEqual, changes.Sex)
-				a.DropDatabase()
+				So(len(u.Location), ShouldEqual, 2)
+				So(u.Location[0], ShouldAlmostEqual, changes.Location[0])
+				So(u.Location[1], ShouldAlmostEqual, changes.Location[1])
 			})
 			Convey("Search", func() {
 				res := httptest.NewRecorder()
 				err := json.Unmarshal(tokenBody, &token1)
 				So(err, ShouldEqual, nil)
+				a.InitDatabase()
+				time.Sleep(500 * time.Millisecond)
 				reqUrl := fmt.Sprintf("/api/search/?sex=female&token=%s", token1.Token)
 				req, _ := http.NewRequest("GET", reqUrl, nil)
 				a.ServeHTTP(res, req)

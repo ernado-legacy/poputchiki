@@ -48,7 +48,6 @@ func mapToStruct(q url.Values, val interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Println("json", string(j))
 	return json.Unmarshal(j, val)
 
 }
@@ -66,10 +65,8 @@ func Parse(r *http.Request, v interface{}) error {
 			log.Println("parse frm", err)
 		}
 		if r.Method == "GET" {
-			log.Printf("GET FORM %+v", r.Form)
 			return mapToStruct(r.Form, v)
 		}
-		log.Printf("POST FORM %+v", r.PostForm)
 		return mapToStruct(r.PostForm, v)
 	}
 

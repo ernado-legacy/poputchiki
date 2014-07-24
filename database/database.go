@@ -58,6 +58,7 @@ func TestDatabase() *DB {
 
 // Drop all collections of database
 func (db *DB) Drop() {
+	log.Println("dropping database")
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
 		db.albums, db.files, db.video, db.audio, db.stripe, db.conftokens}
 
@@ -66,50 +67,70 @@ func (db *DB) Drop() {
 	}
 }
 
+func must(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // Init initiates indexes
 func (database *DB) Init() {
+	log.Println("ensuring indexes")
 	index := mgo.Index{
 		Key:        []string{"email"},
 		Background: true, // See notes.
 	}
 	db := database.db
-	db.C(collection).EnsureIndex(index)
+	must(db.C(collection).EnsureIndex(index))
 
 	index = mgo.Index{Key: []string{"$hashed:_id"}}
-	db.C(collection).EnsureIndex(index)
+	must(db.C(collection).EnsureIndex(index))
 
 	index = mgo.Index{
 		Key:        []string{"guest"},
 		Background: true, // See notes.
 	}
-	db.C(guestsCollection).EnsureIndex(index)
+	must(db.C(guestsCollection).EnsureIndex(index))
 
 	// photo, guest, messages: hashed user index
 	index = mgo.Index{
 		Key: []string{"$hashed:user"},
 	}
-	db.C(messagesCollection).EnsureIndex(index)
-	db.C(guestsCollection).EnsureIndex(index)
-	db.C(photoCollection).EnsureIndex(index)
-	db.C(statusesCollection).EnsureIndex(index)
-	db.C(guestsCollection).EnsureIndex(index)
-	db.C(filesCollection).EnsureIndex(index)
+	must(db.C(messagesCollection).EnsureIndex(index))
+	must(db.C(guestsCollection).EnsureIndex(index))
+	must(db.C(photoCollection).EnsureIndex(index))
+	must(db.C(statusesCollection).EnsureIndex(index))
+	must(db.C(guestsCollection).EnsureIndex(index))
+	must(db.C(filesCollection).EnsureIndex(index))
 
 	index = mgo.Index{
 		Key:        []string{"time"},
 		Background: true,
 	}
-	db.C(messagesCollection).EnsureIndex(index)
-	db.C(statusesCollection).EnsureIndex(index)
-	db.C(filesCollection).EnsureIndex(index)
-	db.C(stripeCollection).EnsureIndex(index)
+	must(db.C(messagesCollection).EnsureIndex(index))
+	must(db.C(statusesCollection).EnsureIndex(index))
+	must(db.C(filesCollection).EnsureIndex(index))
+	must(db.C(stripeCollection).EnsureIndex(index))
 
 	index = mgo.Index{Key: []string{"online", "lastaction"}}
-	db.C(collection).EnsureIndex(index)
+	must(db.C(collection).EnsureIndex(index))
 
-	database.cities.EnsureIndexKey("title", "country")
-	database.cities.EnsureIndexKey("title")
-	database.countries.EnsureIndexKey("title")
+	must(db.C(citiesCollection).EnsureIndexKey("title", "country"))
+	must(db.C(citiesCollection).EnsureIndexKey("title"))
+	must(db.C(countriesCollection).EnsureIndexKey("title"))
+
+	index = mgo.Index{
+		Key: []string{"$2d:location"},
+	}
+	must(db.C(collection).EnsureIndex(index))
+	log.Println("ok")
+
+	indexes, err := db.C(collection).Indexes()
+	if err == nil {
+		for _, index := range indexes {
+			log.Println(index.Key, index.Name)
+		}
+	}
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
@@ -128,8 +149,10 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	citb := session.DB("countries")
 	cotc := citb.C(countriesCollection)
 	citc := citb.C("cities")
-	return &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
+	database := &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
 		stcoll, ctcoll, citc, cotc, salt, timeout}
+	database.Init()
+	return database
 }
 
 func (db *DB) Salt() string {

@@ -13,7 +13,7 @@ import (
 
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
-	"likings_sex", "likings_destinations", "likings_seasons", "about",
+	"likings_sex", "likings_destinations", "likings_seasons", "about", "location",
 }
 
 const (
@@ -75,6 +75,7 @@ type User struct {
 	LikingsCountry      string          `json:"likings_country,omitempty"      bson:"likings_country,omitempty"`
 	LikingsCity         string          `json:"likings_city,omitempty"      bson:"likings_city,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
+	Location            []float64       `json:"location"               bson:"location"`
 }
 
 type GuestUser struct {

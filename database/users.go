@@ -229,6 +229,12 @@ func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
 	query := q.ToBson()
 	u := []*User{}
 
+	indexes, err := db.users.Indexes()
+	if err == nil {
+		for _, index := range indexes {
+			log.Println(index.Key, index.Name)
+		}
+	}
 	return u, db.users.Find(query).Skip(offset).Limit(count).All(&u)
 }
 

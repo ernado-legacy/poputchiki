@@ -89,8 +89,7 @@ func NewApp() *Application {
 	if err != nil {
 		log.Fatal(err)
 	}
-	session.SetMode(mgo.Eventual, true)
-
+	session.SetMode(mgo.Monotonic, true)
 	runtime.GOMAXPROCS(processes)
 	var db models.DataBase
 	var realtime models.RealtimeInterface
