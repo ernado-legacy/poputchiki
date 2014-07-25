@@ -13,7 +13,8 @@ import (
 
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
-	"likings_sex", "likings_destinations", "likings_seasons", "about", "location",
+	"likings_sex", "likings_destinations", "likings_seasons", "likings_country", "likings_city",
+	"about", "location", "likings_age_min", "likings_age_max",
 }
 
 const (
