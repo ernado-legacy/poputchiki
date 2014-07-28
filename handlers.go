@@ -916,7 +916,7 @@ func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return Render(photo)
 }
 
-func AddStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
+func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(status); err != nil {
