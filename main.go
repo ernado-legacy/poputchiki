@@ -46,10 +46,12 @@ var (
 	OfflineUpdateTick         = 5 * time.Second
 	PromoCost            uint = 50
 	mobile                    = flag.Bool("mobile", false, "is mobile api")
+	development               = flag.Bool("dev", false, "is in development")
+	sendEmail                 = flag.Bool("email", true, "send registration emails")
 )
 
 func getHash(password string, s string) string {
-	log.Printf("sha256(%s,%s)", password, s)
+	// log.Printf("sha256(%s,%s)", password, s)
 	hasher := sha256.New()
 	hasher.Write([]byte(password + s))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
@@ -132,6 +134,7 @@ func NewApp() *Application {
 	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)
+		r.Get("/login", Login)
 		r.Post("/logout", NeedAuth, Logout)
 		r.Post("/forgot/:email", ForgotPassword)
 		r.Get("/reset/:token", ResetPassword)
