@@ -184,6 +184,7 @@ func NewApp() *Application {
 		}, IdWrapper)
 
 		r.Put("/status", AddStatus)
+		r.Post("/status", AddStatus)
 		r.Get("/status", SearchStatuses)
 		r.Group("/status/:id", func(r martini.Router) {
 			r.Get("", GetStatus)
