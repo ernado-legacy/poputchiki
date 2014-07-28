@@ -25,7 +25,9 @@ func (db *DB) Get(id bson.ObjectId) *User {
 	err := db.users.FindId(id).One(&u)
 
 	if err != nil {
-		log.Println("getting user by id error:", err, id)
+		if err != mgo.ErrNotFound {
+			log.Println("getting user by id error:", err, id)
+		}
 		return nil
 	}
 
@@ -38,7 +40,9 @@ func (db *DB) GetUsername(username string) *User {
 	err := db.users.Find(bson.M{"email": username}).One(&u)
 
 	if err != nil {
-		log.Println("getting user by username error:", err)
+		if err != mgo.ErrNotFound {
+			log.Println("getting user by username error:", err)
+		}
 		return nil
 	}
 	return &u

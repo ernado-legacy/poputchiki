@@ -305,6 +305,22 @@ func TestMethods(t *testing.T) {
 			})
 		})
 
+		Convey("User should be able to set status", func() {
+			res := httptest.NewRecorder()
+			err := json.Unmarshal(tokenBody, &token1)
+			So(err, ShouldEqual, nil)
+			reqUrl := fmt.Sprintf("/api/status?token=%s", token1.Token)
+			status := new(StatusUpdate)
+			status.Text = "Hello world"
+			body, err := json.Marshal(status)
+			So(err, ShouldBeNil)
+
+			req, err := http.NewRequest("POST", reqUrl, bytes.NewReader(body))
+			a.ServeHTTP(res, req)
+			a.DropDatabase()
+			So(res.Code, ShouldEqual, http.StatusOK)
+		})
+
 		Convey("User should be able to change information after registration", func() {
 			a.InitDatabase()
 			err := json.Unmarshal(tokenBody, &token1)

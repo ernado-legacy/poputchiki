@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
-	"log"
+	// "log"
 	"net/http"
 	"time"
 )
@@ -87,7 +87,7 @@ type GuestUser struct {
 }
 
 func getHash(password, salt string) string {
-	log.Printf("sha256(%s,%s)", password, salt)
+	// log.Printf("sha256(%s,%s)", password, salt)
 	hasher := sha256.New()
 	hasher.Write([]byte(password + salt))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
@@ -97,8 +97,7 @@ func UserFromForm(r *http.Request, salt string) *User {
 	u := User{}
 	tUser := &User{}
 	parser := NewParser(r)
-	err := parser.Parse(tUser)
-	log.Println(err, tUser)
+	parser.Parse(tUser)
 	u.Id = bson.NewObjectId()
 	u.Email = tUser.Email
 	u.Password = getHash(tUser.Password, salt)

@@ -58,7 +58,6 @@ func TestDatabase() *DB {
 
 // Drop all collections of database
 func (db *DB) Drop() {
-	log.Println("dropping database")
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
 		db.albums, db.files, db.video, db.audio, db.stripe, db.conftokens}
 
@@ -75,7 +74,6 @@ func must(err error) {
 
 // Init initiates indexes
 func (database *DB) Init() {
-	log.Println("ensuring indexes")
 	index := mgo.Index{
 		Key:        []string{"email"},
 		Background: true, // See notes.
@@ -123,14 +121,6 @@ func (database *DB) Init() {
 		Key: []string{"$2d:location"},
 	}
 	must(db.C(collection).EnsureIndex(index))
-	log.Println("ok")
-
-	indexes, err := db.C(collection).Indexes()
-	if err == nil {
-		for _, index := range indexes {
-			log.Println(index.Key, index.Name)
-		}
-	}
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {

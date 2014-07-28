@@ -310,7 +310,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 		log.Println(u.Email, "already registered")
 		return Render(ErrorUserAlreadyRegistered) // todo: change error name
 	}
-	log.Println("registered", u.Password)
+	// log.Println("registered", u.Password)
 	// add to database
 	if err := db.Add(u); err != nil {
 		log.Println(err)
@@ -332,12 +332,12 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 		message := ConfirmationMail{}
 		message.Destination = u.Email
 		message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
-		log.Println("[email]", message.From(), message.To(), message.Text())
+		// log.Println("[email]", message.From(), message.To(), message.Text())
 		_, err = mgClient.Send(message)
-		log.Println(message)
-		if err != nil {
-			log.Println("[email]", err)
-		}
+		// log.Println(message)
+		// if err != nil {
+		// 	log.Println("[email]", err)
+		// }
 	}()
 	http.SetCookie(w, t.GetCookie())
 	return Render(t)
@@ -920,16 +920,21 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
 	status := &StatusUpdate{}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(status); err != nil {
+		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
-	status, err := db.AddStatus(t.Id, status.Text)
+	err := db.DecBalance(t.Id, PromoCost)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return Render(ErrorInsufficentFunds)
+		}
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	err = db.DecBalance(t.Id, PromoCost)
+	status, err = db.AddStatus(t.Id, status.Text)
 	if err != nil {
 		log.Println(err)
+		go db.IncBalance(t.Id, PromoCost)
 		return Render(ErrorBackend)
 	}
 	return Render(status)
