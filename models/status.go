@@ -7,16 +7,16 @@ import (
 )
 
 type StatusUpdate struct {
-	Id        bson.ObjectId `json:"id"            bson:"_id"`
-	User      bson.ObjectId `json:"user"          bson:"user"`
-	Name      string        `json:"name"          bson:"-"`
+	Id        bson.ObjectId `json:"id,omitempty"            bson:"_id"`
+	User      bson.ObjectId `json:"user,omitempty"          bson:"user"`
+	Name      string        `json:"name,omitempty"          bson:"-"`
 	Age       int           `json:"age,omitempty" bson:"-"`
-	Time      time.Time     `json:"time"          bson:"time"`
-	Text      string        `json:"text"          bson:"text"`
+	Time      time.Time     `json:"time,omitempty"          bson:"time"`
+	Text      string        `json:"text,omitempty"          bson:"text"`
 	ImageWebp string        `json:"-"             bson:"image_webp"`
 	ImageJpeg string        `json:"-"             bson:"image_jpeg"`
-	ImageUrl  string        `json:"url"           bson:"-"`
-	Likes     int           `json:"likes"         bson:"likes"`
+	ImageUrl  string        `json:"url,omitempty"           bson:"-"`
+	Likes     int           `json:"likes,omitempty"         bson:"likes"`
 }
 
 func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error) {
