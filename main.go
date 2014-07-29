@@ -28,9 +28,9 @@ var (
 	dbCity                    = "countries"
 	tokenCollection           = "tokens"
 	mongoHost                 = "localhost"
-	robokassaLogin            = "login"
-	robokassaPassword1        = "pwd1"
-	robokassaPassword2        = "pwd1"
+	robokassaLogin            = "pop_admin"
+	robokassaPassword1        = "pcZKT5Qm84MJAIudLAbR"
+	robokassaPassword2        = "8x3cVXUt08Uc9TV70mx3"
 	robokassaDescription      = "Пополнение счета Попутчики.ру"
 	production                = false
 	processes                 = runtime.NumCPU()
@@ -144,6 +144,7 @@ func NewApp() *Application {
 		r.Get("/fb/redirect", FacebookAuthRedirect)
 	})
 	m.Get(root, Index)
+	m.Get(root+"/pay/success", RobokassaSuccessHandler)
 	m.Group(root, func(r martini.Router) {
 		r.Get("/admin", AdminView)
 		r.Get("/confirm/email/:token", ConfirmEmail)
@@ -151,7 +152,6 @@ func NewApp() *Application {
 		r.Get("/confirm/phone/:token", ConfirmPhone)
 
 		r.Post("/pay/:value", GetTransactionUrl)
-		r.Get("/pay/success", RobokassaSuccessHandler)
 
 		r.Get("/token", GetToken)
 
