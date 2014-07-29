@@ -79,6 +79,8 @@ type User struct {
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
+	Invisible           bool            `json:"invisible"              bson:"invisible"`
+	InvisibleDate       time.Time       `json:"invisible_date"         bson:"invisible_date"`
 }
 
 type GuestUser struct {
