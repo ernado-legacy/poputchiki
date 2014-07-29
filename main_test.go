@@ -180,6 +180,8 @@ func TestMethods(t *testing.T) {
 	messageText := "hello world русский текст"
 
 	dbName = "poputchiki_dev"
+	*development = true
+	*sendEmail = false
 	redisName = "poputchiki_dev"
 
 	a := NewApp()

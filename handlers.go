@@ -924,7 +924,7 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
 		return Render(ErrorBadRequest)
 	}
 	err := db.DecBalance(t.Id, PromoCost)
-	if err != nil {
+	if err != nil && !*development {
 		if err == mgo.ErrNotFound {
 			return Render(ErrorInsufficentFunds)
 		}
@@ -1181,24 +1181,28 @@ func ConfirmPhoneStart(db DataBase, t *gotok.Token) (int, []byte) {
 	return Render("ok")
 }
 
-func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler *TransactionHandler) (int, []byte) {
+func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler *TransactionHandler, r *http.Request, w http.ResponseWriter) {
 	value, err := strconv.Atoi(args["value"])
 	if err != nil || value <= 0 {
-		return Render(ErrorBadRequest)
+		code, data := Render(ErrorBadRequest)
+		http.Error(w, string(data), code)
+		return
 	}
 
 	url, transaction, err := handler.Start(t.Id, value, robokassaDescription)
 	log.Println(value, transaction, gorobokassa.CRC(value, transaction.Id, robokassaPassword1))
 	if err != nil {
-		return Render(ErrorBackend)
+		code, data := Render(ErrorBackend)
+		http.Error(w, string(data), code)
+		return
 	}
-
-	return Render(url)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionHandler) (int, []byte) {
 	transaction, err := handler.Close(r)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
 

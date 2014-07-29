@@ -28,7 +28,7 @@ var (
 	dbCity                    = "countries"
 	tokenCollection           = "tokens"
 	mongoHost                 = "localhost"
-	robokassaLogin            = "pop_admin"
+	robokassaLogin            = "poputchiki.ru"
 	robokassaPassword1        = "pcZKT5Qm84MJAIudLAbR"
 	robokassaPassword2        = "8x3cVXUt08Uc9TV70mx3"
 	robokassaDescription      = "Пополнение счета Попутчики.ру"
@@ -152,6 +152,7 @@ func NewApp() *Application {
 		r.Get("/confirm/phone/:token", ConfirmPhone)
 
 		r.Post("/pay/:value", GetTransactionUrl)
+		r.Get("/pay/:value", GetTransactionUrl)
 
 		r.Get("/token", GetToken)
 

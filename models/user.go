@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
-	// "log"
+	"log"
 	"net/http"
 	"time"
 )
@@ -67,7 +67,7 @@ type User struct {
 	Seasons             []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
 	LastAction          time.Time       `json:"last_action,omitempty"  bson:"lastaction,omitempty"`
 	StatusUpdate        time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
-	Favorites           []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
+	Favorites           []bson.ObjectId `json:"favorites"              bson:"favorites,omitempty"`
 	Blacklist           []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
 	Countries           []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
 	LikingsSex          string          `json:"likings_sex,omitempty"          bson:"likings_sex,omitempty"`
@@ -78,7 +78,7 @@ type User struct {
 	LikingsAgeMin       int             `json:"likings_age_min,omitempty"      bson:"likings_age_min,omitempty"`
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
-	Location            []float64       `json:"location"               bson:"location"`
+	Location            []float64       `json:"location,omitempty"     bson:"location"`
 }
 
 type GuestUser struct {
@@ -152,6 +152,11 @@ func diff(t1, t2 time.Time) (years int) {
 
 func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
 	u.SetAvatarUrl(adapter, db, webp)
+	log.Println(len(u.Favorites))
+	if len(u.Favorites) == 0 {
+		log.Println("prepared")
+		u.Favorites = []bson.ObjectId{}
+	}
 	now := time.Now()
 	defer func() {
 		if r := recover(); r != nil {
