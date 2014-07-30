@@ -31,7 +31,7 @@ func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 // GetUserPhoto returns avatar photo of user with provided user id
 func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 	p := []*Photo{}
-	err := db.photo.Find(bson.M{"user": user}).All(&p)
+	err := db.photo.Find(bson.M{"user": user}).Sort("-time").All(&p)
 	if err != nil {
 		return nil, err
 	}
