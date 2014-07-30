@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/gofbauth"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
@@ -25,6 +26,7 @@ var (
 	salt                      = "salt"
 	projectName               = "poputchiki"
 	premiumTime               = time.Hour * 24 * 30
+	statusUpdateTime          = time.Hour * 24
 	dbName                    = projectName
 	dbCity                    = "countries"
 	tokenCollection           = "tokens"
@@ -37,6 +39,7 @@ var (
 	processes                 = runtime.NumCPU()
 	redisName                 = projectName
 	redisAddr                 = ":6379"
+	redisQueryKey             = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
 	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
 	mailDomain                = "mg.cydev.ru"
 	smsKey                    = "nil"
@@ -108,6 +111,12 @@ func NewApp() *Application {
 		martini.Env = martini.Prod
 	}
 
+	queryClient, err := query.NewRedisClient(weedUrl, redisAddr, *redisQueryKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m.Map(queryClient)
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru/api/auth/vk/redirect", "offline,email"})
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru/api/auth/fb/redirect", "email,user_birthday"})
 	m.Use(JsonEncoder)

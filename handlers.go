@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	conv "github.com/ernado/cymedia/mediad/models"
+	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/cymedia/photo"
 	"github.com/ernado/gofbauth"
 	"github.com/ernado/gorobokassa"
@@ -1551,6 +1553,26 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func UploadAudio(r *http.Request, client query.QueryClient, adapter *weed.Adapter, t *gotok.Token) {
+	id := bson.NewObjectId()
+	video := Video{Id: id, User: t.Id, Time: time.Now()}
+	f, _, err := r.FormFile(FORM_FILE)
+	if err != nil {
+		log.Println("unable to read from file", err)
+		// return Render(ErrorBackend)
+	}
+
+	// length := r.ContentLength
+	// var b bytes.Buffer
+
+	bitrate := 128 * 1024
+	optsAac := conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
+	optsVorbis := conv.AudioOptions{Bitrate: bitrate, Format: "vorbis"}
+	log.Println(optsAac, optsVorbis, video)
+
+	adapter.Upload(f, "audio", "audio")
 }
 
 // init for random
