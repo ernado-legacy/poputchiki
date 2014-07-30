@@ -937,15 +937,15 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
-	err := db.DecBalance(t.Id, PromoCost)
-	if err != nil && !*development {
-		if err == mgo.ErrNotFound {
-			return Render(ErrorInsufficentFunds)
-		}
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
-	status, err = db.AddStatus(t.Id, status.Text)
+	// err := db.DecBalance(t.Id, PromoCost)
+	// if err != nil && !*development {
+	// 	if err == mgo.ErrNotFound {
+	// 		return Render(ErrorInsufficentFunds)
+	// 	}
+	// 	log.Println(err)
+	// 	return Render(ErrorBackend)
+	// }
+	status, err := db.AddStatus(t.Id, status.Text)
 	if err != nil {
 		log.Println(err)
 		go db.IncBalance(t.Id, PromoCost)
@@ -1555,24 +1555,35 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func UploadAudio(r *http.Request, client query.QueryClient, adapter *weed.Adapter, t *gotok.Token) {
+func UploadAudio(r *http.Request, client query.QueryClient, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
 	video := Video{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
-		// return Render(ErrorBackend)
+		return Render(ErrorBackend)
 	}
 
 	// length := r.ContentLength
 	// var b bytes.Buffer
 
 	bitrate := 128 * 1024
-	optsAac := conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
-	optsVorbis := conv.AudioOptions{Bitrate: bitrate, Format: "vorbis"}
+	optsAac := &conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
+	optsVorbis := &conv.AudioOptions{Bitrate: bitrate, Format: "vorbis"}
 	log.Println(optsAac, optsVorbis, video)
 
-	adapter.Upload(f, "audio", "audio")
+	fid, _, _, err := adapter.Upload(f, "audio", "audio")
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	if err := client.Push(fid, "audio", optsAac); err != nil {
+		return Render(ErrorBackend)
+	}
+	if err := client.Push(fid, "audio", optsVorbis); err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
 }
 
 // init for random
