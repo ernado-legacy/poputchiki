@@ -153,17 +153,11 @@ func TestGeoSearch(t *testing.T) {
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusOK)
-				users := []*User{}
-				userBody, _ := ioutil.ReadAll(res.Body)
-				err = json.Unmarshal(userBody, &users)
+				result := new(SearchResult)
+				resultBody, _ := ioutil.ReadAll(res.Body)
+				err = json.Unmarshal(resultBody, result)
 				So(err, ShouldBeNil)
-				found := false
-				for _, value := range users {
-					if value.Name == firstname {
-						found = true
-					}
-				}
-				So(found, ShouldBeTrue)
+				So(result.Count, ShouldEqual, 1)
 			})
 		})
 
@@ -375,17 +369,11 @@ func TestMethods(t *testing.T) {
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusOK)
-				users := []*User{}
-				userBody, _ := ioutil.ReadAll(res.Body)
-				err = json.Unmarshal(userBody, &users)
+				result := new(SearchResult)
+				resultBody, _ := ioutil.ReadAll(res.Body)
+				err = json.Unmarshal(resultBody, result)
 				So(err, ShouldBeNil)
-				found := false
-				for _, value := range users {
-					if value.Name == firstname {
-						found = true
-					}
-				}
-				So(found, ShouldBeTrue)
+				So(result.Count, ShouldEqual, 1)
 			})
 		})
 

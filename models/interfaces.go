@@ -24,6 +24,11 @@ var (
 	AaOgg  AudioAccept = "ogg"
 )
 
+type SearchResult struct {
+	Result interface{} `json:"result"`
+	Count  int         `json:"count"`
+}
+
 type DataBase interface {
 	// GetAll() []*User
 	GetUsername(username string) *User
@@ -93,7 +98,7 @@ type DataBase interface {
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
 	GetStripe(count, offset int) ([]*StripeItem, error)
 
-	Search(q *SearchQuery, count, offset int) ([]*User, error)
+	Search(q *SearchQuery, count, offset int) ([]*User, int, error)
 	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
 
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken

@@ -55,7 +55,7 @@ type User struct {
 	Avatar              bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
 	AvatarWebp          string          `json:"-"                      bson:"image_webp,omitempty"`
 	AvatarJpeg          string          `json:"-"                      bson:"image_jpeg,omitempty"`
-	Balance             uint            `json:"balance,omitempty"      bson:"balance,omitempty"`
+	Balance             uint            `json:"balance"                bson:"balance,omitempty"`
 	About               string          `json:"about,omitempty"        bson:"about,omitempty"`
 	Age                 int             `json:"age,omitempty"          bson:"-"`
 	Birthday            time.Time       `json:"birthday,omitempty"     bson:"birthday,omitempty"`

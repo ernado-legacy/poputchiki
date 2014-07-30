@@ -1,10 +1,11 @@
 package database
 
 import (
-	"errors"
+	// "errors"
 	"github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
+	// "log"
 	"time"
 )
 
@@ -75,19 +76,23 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
 		return statuses, err
 	}
-	users := make([]bson.ObjectId, len(u))
+	userIds := make([]bson.ObjectId, len(u))
+	users := make(map[bson.ObjectId]*models.User)
 	for i, user := range u {
-		users[i] = user.Id
+		users[user.Id] = user
+		userIds[i] = user.Id
 	}
 
-	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": users}}).All(&statuses); err != nil {
+	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": userIds}}).All(&statuses); err != nil {
 		return statuses, err
 	}
-	if len(statuses) != len(users) {
-		return statuses, errors.New("unexpected length")
-	}
+	// if len(statuses) != len(users) {
+	// 	log.Println(statuses, users)
+	// 	return statuses, errors.New("unexpected length")
+	// }
 
-	for i, user := range u {
+	for i, status := range statuses {
+		user := users[status.User]
 		statuses[i].ImageJpeg = user.AvatarJpeg
 		statuses[i].ImageWebp = user.AvatarWebp
 		statuses[i].Name = user.Name

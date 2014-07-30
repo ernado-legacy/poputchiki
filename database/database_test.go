@@ -80,7 +80,7 @@ func TestDBMethods(t *testing.T) {
 			})
 			Convey("Search", func() {
 				Convey("Growth", func() {
-					result, err := db.Search(&SearchQuery{GrowthMin: 175, GrowthMax: 186}, 0, 0)
+					result, _, err := db.Search(&SearchQuery{GrowthMin: 175, GrowthMax: 186}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -89,7 +89,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{GrowthMin: 160, GrowthMax: 179}, 0, 0)
+					result, _, err = db.Search(&SearchQuery{GrowthMin: 160, GrowthMax: 179}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {
@@ -100,7 +100,7 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeFalse)
 				})
 				Convey("Season", func() {
-					result, err := db.Search(&SearchQuery{Seasons: []string{SeasonAutumn, SeasonSummer}}, 0, 0)
+					result, _, err := db.Search(&SearchQuery{Seasons: []string{SeasonAutumn, SeasonSummer}}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -109,7 +109,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{Seasons: []string{SeasonWinter, SeasonAutumn}}, 0, 0)
+					result, _, err = db.Search(&SearchQuery{Seasons: []string{SeasonWinter, SeasonAutumn}}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {
@@ -120,7 +120,7 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeFalse)
 				})
 				Convey("Sex", func() {
-					result, err := db.Search(&SearchQuery{Sex: SexMale}, 0, 0)
+					result, _, err := db.Search(&SearchQuery{Sex: SexMale}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -129,7 +129,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{Sex: SexFemale}, 0, 0)
+					result, _, err = db.Search(&SearchQuery{Sex: SexFemale}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {
@@ -140,7 +140,7 @@ func TestDBMethods(t *testing.T) {
 					So(found, ShouldBeFalse)
 				})
 				Convey("Age", func() {
-					result, err := db.Search(&SearchQuery{AgeMin: 18, AgeMax: 26}, 0, 0)
+					result, _, err := db.Search(&SearchQuery{AgeMin: 18, AgeMax: 26}, 0, 0)
 					So(err, ShouldBeNil)
 					found := false
 					for _, item := range result {
@@ -149,7 +149,7 @@ func TestDBMethods(t *testing.T) {
 						}
 					}
 					So(found, ShouldBeTrue)
-					result, err = db.Search(&SearchQuery{AgeMax: 23}, 0, 0)
+					result, _, err = db.Search(&SearchQuery{AgeMax: 23}, 0, 0)
 					So(err, ShouldBeNil)
 					found = false
 					for _, item := range result {

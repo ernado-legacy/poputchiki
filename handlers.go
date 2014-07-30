@@ -90,9 +90,21 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 		}
 	}
 	// hiding private fields for non-owner
+	log.Println(t.Id, id)
 	if t.Id != id {
 		user.CleanPrivate()
-		db.AddGuest(id, t.Id)
+		go func() {
+			defer func() {
+				recover()
+			}()
+			origin := db.Get(t.Id)
+			now := time.Now()
+			d := now.Sub(origin.InvisibleDate)
+			if origin.Invisible && d < premiumTime {
+				return
+			}
+			db.AddGuest(id, t.Id)
+		}()
 	}
 	// preparing for rendering to json
 	user.Prepare(adapter, db, webp)
@@ -991,7 +1003,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
-	result, err := db.Search(query, pagination.Count, pagination.Offset)
+	result, count, err := db.Search(query, pagination.Count, pagination.Offset)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -1001,7 +1013,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 		result[key].Prepare(adapter, db, webpAccept)
 	}
 
-	return Render(result)
+	return Render(SearchResult{result, count})
 }
 
 func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {

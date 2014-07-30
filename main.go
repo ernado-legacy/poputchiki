@@ -24,6 +24,7 @@ import (
 var (
 	salt                      = "salt"
 	projectName               = "poputchiki"
+	premiumTime               = time.Hour * 24 * 30
 	dbName                    = projectName
 	dbCity                    = "countries"
 	tokenCollection           = "tokens"

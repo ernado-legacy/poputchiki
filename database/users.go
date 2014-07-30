@@ -225,7 +225,7 @@ func (db *DB) SetAvatar(user, avatar bson.ObjectId) error {
 	return err
 }
 
-func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
+func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, int, error) {
 	if count == 0 {
 		count = searchCount
 	}
@@ -233,13 +233,11 @@ func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, error) {
 	query := q.ToBson()
 	u := []*User{}
 
-	indexes, err := db.users.Indexes()
-	if err == nil {
-		for _, index := range indexes {
-			log.Println(index.Key, index.Name)
-		}
+	count, err := db.users.Find(query).Count()
+	if err != nil {
+		return u, 0, err
 	}
-	return u, db.users.Find(query).Skip(offset).Limit(count).All(&u)
+	return u, count, db.users.Find(query).Skip(offset).Limit(count).All(&u)
 }
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
