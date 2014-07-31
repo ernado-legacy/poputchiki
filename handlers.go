@@ -1555,35 +1555,81 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func UploadAudio(r *http.Request, client query.QueryClient, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
+func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
-	video := Video{Id: id, User: t.Id, Time: time.Now()}
+	video := &Video{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
 
-	// length := r.ContentLength
-	// var b bytes.Buffer
-
-	bitrate := 128 * 1024
-	optsAac := &conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
-	optsVorbis := &conv.AudioOptions{Bitrate: bitrate, Format: "vorbis"}
-	log.Println(optsAac, optsVorbis, video)
-
-	fid, _, _, err := adapter.Upload(f, "audio", "audio")
+	_, err = db.AddVideo(video)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 
-	if err := client.Push(fid, "audio", optsAac); err != nil {
+	optsMpeg := new(conv.VideoOptions)
+	optsMpeg.Audio.Format = "aac"
+	optsMpeg.Audio.Bitrate = 1024 * 128
+	optsMpeg.Video.Format = "h264"
+	optsMpeg.Video.Bitrate = 1024 * 500
+
+	optsWebm := new(conv.VideoOptions)
+	optsWebm.Video.Format = "libvpx"
+	optsWebm.Audio.Format = "libvorbis"
+	optsWebm.Audio.Bitrate = 128 * 1024
+	optsWebm.Video.Bitrate = 500 * 1024
+
+	fid, _, _, err := adapter.Upload(f, "video", "video")
+	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	if err := client.Push(fid, "audio", optsVorbis); err != nil {
+
+	if err := client.Push(id.Hex(), fid, "video", optsWebm); err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	return Render("ok")
+	if err := client.Push(id.Hex(), fid, "video", optsMpeg); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	return Render(video)
+}
+
+func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
+	id := bson.NewObjectId()
+	audio := &Audio{Id: id, User: t.Id, Time: time.Now()}
+	f, _, err := r.FormFile(FORM_FILE)
+	if err != nil {
+		log.Println("unable to read from file", err)
+		return Render(ErrorBackend)
+	}
+
+	_, err = db.AddAudio(audio)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+
+	bitrate := 128 * 1024
+	optsAac := &conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
+	optsVorbis := &conv.AudioOptions{Bitrate: bitrate, Format: "libvorbis"}
+	fid, _, _, err := adapter.Upload(f, "audio", "audio")
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	if err := client.Push(id.Hex(), fid, "audio", optsAac); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	if err := client.Push(id.Hex(), fid, "audio", optsVorbis); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	return Render(audio)
 }
 
 // init for random

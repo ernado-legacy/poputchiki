@@ -28,3 +28,11 @@ func (db *DB) GetVideo(id bson.ObjectId) *models.Video {
 func (db *DB) AddVideo(video *models.Video) (*models.Video, error) {
 	return video, db.video.Insert(video)
 }
+
+func (db *DB) UpdateVideoWebm(id bson.ObjectId, fid string) error {
+	return db.video.UpdateId(id, bson.M{"$set": bson.M{"video_webm": fid}})
+}
+
+func (db *DB) UpdateVideoMpeg(id bson.ObjectId, fid string) error {
+	return db.video.UpdateId(id, bson.M{"$set": bson.M{"video_mpeg": fid}})
+}

@@ -90,9 +90,13 @@ type DataBase interface {
 	AddLikeVideo(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikeVideo(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesVideo(id bson.ObjectId) []*User
+	UpdateVideoWebm(id bson.ObjectId, fid string) error
+	UpdateVideoMpeg(id bson.ObjectId, fid string) error
 
 	AddAudio(audio *Audio) (*Audio, error)
 	GetAudio(id bson.ObjectId) *Audio
+	UpdateAudioAAC(id bson.ObjectId, fid string) error
+	UpdateAudioOGG(id bson.ObjectId, fid string) error
 
 	AddStripeItem(user bson.ObjectId, media interface{}) (*StripeItem, error)
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)

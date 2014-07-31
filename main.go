@@ -111,7 +111,7 @@ func NewApp() *Application {
 		martini.Env = martini.Prod
 	}
 
-	queryClient, err := query.NewRedisClient(weedUrl, redisAddr, *redisQueryKey)
+	queryClient, err := query.NewRedisClient(weedUrl, redisAddr, *redisQueryKey, redisQueryRespKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -208,7 +208,8 @@ func NewApp() *Application {
 		}, IdWrapper)
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
 		r.Post("/message/:id/read", IdWrapper, MarkReadMessage)
-		r.Post("/video", UploadVideo)
+		r.Post("/video", UploadVideoFile)
+		r.Post("/audio", UploadAudio)
 		r.Post("/video/:id/like", IdWrapper, LikeVideo)
 		r.Get("/video/:id/like", IdWrapper, GetLikersVideo)
 		r.Delete("/video/:id/like", IdWrapper, RestoreLikeVideo)
@@ -245,8 +246,53 @@ func (a *Application) StatusCycle() {
 	}
 }
 
+var redisQueryRespKey = "poputchiki:conventer:resp"
+
+func (a *Application) ConvertResultListener() {
+	db := a.db
+	log.Println("Started conventer", *redisQueryKey, "->", redisQueryRespKey)
+	q, err := query.NewRedisResponceQuery(redisAddr, redisQueryRespKey)
+	if err != nil {
+		log.Println("Unable to create result listener", err)
+	}
+	for {
+		resp, err := q.Pull()
+		if err != nil {
+			log.Println(err)
+			time.Sleep(1 * time.Second)
+		}
+		log.Println(resp)
+		if !resp.Success {
+			log.Println("convertation error", resp.Id, resp.Error)
+			continue
+		}
+		id := bson.ObjectIdHex(resp.Id)
+		fid := resp.File
+		if resp.Type == "audio" {
+			if resp.Format == "ogg" {
+				err = db.UpdateAudioOGG(id, fid)
+			}
+			if resp.Format == "aac" {
+				err = db.UpdateAudioAAC(id, fid)
+			}
+		}
+		if resp.Type == "video" {
+			if resp.Format == "webm" {
+				err = db.UpdateVideoWebm(id, fid)
+			}
+			if resp.Format == "mp4" {
+				err = db.UpdateVideoMpeg(id, fid)
+			}
+		}
+		if err != nil {
+			log.Println(resp.Id, err)
+		}
+	}
+}
+
 func (a *Application) Run() {
 	go a.StatusCycle()
+	go a.ConvertResultListener()
 	a.m.Run()
 }
 
