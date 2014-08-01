@@ -37,7 +37,8 @@ const (
 	PHOTO_MAX_MEGABYTES      = 20
 	VIDEO_MAX_MEGABYTES      = 50
 	VIDEO_MAX_LENGTH_SECONDS = 360
-	VIDEO_BITRATE            = 256
+	VIDEO_BITRATE            = 500 * 1024
+	AUDIO_BITRATE            = 128 * 1024
 	VIDEO_SIZE               = 300
 	JSON_HEADER              = "application/json; charset=utf-8"
 	WEBP                     = "webp"
@@ -1248,7 +1249,6 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase) {
 		http.Error(w, string(data), code)
 	}
 	w.Header().Set("Content-Type", "text/html")
-	// w.Header().Write(w)
 	view.Execute(w, nil)
 }
 
@@ -1288,15 +1288,21 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 
 	optsMpeg := new(conv.VideoOptions)
 	optsMpeg.Audio.Format = "aac"
-	optsMpeg.Audio.Bitrate = 1024 * 128
 	optsMpeg.Video.Format = "h264"
-	optsMpeg.Video.Bitrate = 1024 * 500
+	optsMpeg.Audio.Bitrate = AUDIO_BITRATE
+	optsMpeg.Video.Bitrate = VIDEO_BITRATE
+	optsMpeg.Video.Square = true
+	optsMpeg.Video.Height = VIDEO_SIZE
+	optsMpeg.Video.Width = VIDEO_SIZE
 
 	optsWebm := new(conv.VideoOptions)
 	optsWebm.Video.Format = "libvpx"
 	optsWebm.Audio.Format = "libvorbis"
-	optsWebm.Audio.Bitrate = 128 * 1024
-	optsWebm.Video.Bitrate = 500 * 1024
+	optsMpeg.Audio.Bitrate = AUDIO_BITRATE
+	optsMpeg.Video.Bitrate = VIDEO_BITRATE
+	optsMpeg.Video.Square = true
+	optsMpeg.Video.Height = VIDEO_SIZE
+	optsMpeg.Video.Width = VIDEO_SIZE
 
 	fid, _, _, err := adapter.Upload(f, "video", "video")
 	if err != nil {
@@ -1323,21 +1329,17 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 		log.Println("unable to read from file", err)
 		return Render(ErrorBackend)
 	}
-
 	_, err = db.AddAudio(audio)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-
-	bitrate := 128 * 1024
-	optsAac := &conv.AudioOptions{Bitrate: bitrate, Format: "aac"}
-	optsVorbis := &conv.AudioOptions{Bitrate: bitrate, Format: "libvorbis"}
+	optsAac := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "aac"}
+	optsVorbis := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "libvorbis"}
 	fid, _, _, err := adapter.Upload(f, "audio", "audio")
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-
 	if err := client.Push(id.Hex(), fid, "audio", optsAac); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
