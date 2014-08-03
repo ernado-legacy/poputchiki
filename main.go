@@ -120,7 +120,7 @@ func NewApp() *Application {
 
 	// An Interval Policy
 	m.Use(throttle.Policy(&throttle.Quota{
-		Limit:  3,
+		Limit:  10,
 		Within: time.Second,
 	}))
 
