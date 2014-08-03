@@ -255,6 +255,7 @@ func (a *Application) ConvertResultListener() {
 	q, err := query.NewRedisResponceQuery(redisAddr, redisQueryRespKey)
 	if err != nil {
 		log.Println("Unable to create result listener", err)
+		return
 	}
 	for {
 		resp, err := q.Pull()
