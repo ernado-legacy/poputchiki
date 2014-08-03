@@ -242,7 +242,7 @@ func (a *Application) StatusCycle() {
 		_, err := a.db.UpdateAllStatuses()
 		if err != nil {
 			log.Println("[updater]", "status update error", err)
-			return
+			time.Sleep(time.Second * 5)
 		}
 	}
 }
