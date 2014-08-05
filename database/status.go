@@ -96,9 +96,43 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 		statuses[i].ImageJpeg = user.AvatarJpeg
 		statuses[i].ImageWebp = user.AvatarWebp
 		statuses[i].Name = user.Name
+		statuses[i].Birthday = user.Birthday
 	}
 
 	return statuses, nil
+}
+
+func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.StatusUpdate, err error) {
+	var userIds []bson.ObjectId
+	statuses = []*models.StatusUpdate{}
+	users := []*models.User{}
+	userMap := make(map[bson.ObjectId]*models.User)
+
+	if err = db.statuses.Find(nil).Sort("-likes").Skip(offset).Limit(count).All(statuses); err != nil {
+		return
+	}
+
+	for _, status := range statuses {
+		userIds = append(userIds, status.User)
+	}
+
+	if err = db.users.Find(bson.M{"_id": bson.M{"$in": userIds}}).All(&users); err != nil {
+		return
+	}
+
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
+	for _, status := range statuses {
+		user := userMap[status.User]
+		status.Name = user.Name
+		status.ImageJpeg = user.AvatarJpeg
+		status.ImageWebp = user.AvatarWebp
+		status.Birthday = user.Birthday
+	}
+
+	return
 }
 
 func (db *DB) AddLikeStatus(user bson.ObjectId, target bson.ObjectId) error {

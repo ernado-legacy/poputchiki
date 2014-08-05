@@ -976,7 +976,8 @@ func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	return Render(db.GetVideo(id))
+	p, _ := db.GetPhoto(id)
+	return Render(p)
 }
 
 func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
@@ -984,7 +985,8 @@ func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	return Render(db.GetVideo(id))
+	p, _ := db.GetPhoto(id)
+	return Render(p)
 }
 
 func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
@@ -993,7 +995,8 @@ func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 		likers[k].Prepare(adapter, db, webp)
 		likers[k].CleanPrivate()
 	}
-	return Render(likers)
+	p, _ := db.GetPhoto(id)
+	return Render(p)
 }
 
 func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
@@ -1001,7 +1004,8 @@ func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	return Render("ok")
+	s, _ := db.GetStatus(id)
+	return Render(s)
 }
 
 func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
@@ -1009,7 +1013,8 @@ func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []by
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	return Render("ok")
+	s, _ := db.GetStatus(id)
+	return Render(s)
 }
 
 func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {

@@ -41,6 +41,7 @@ type SearchQuery struct {
 	Name         string
 	Geo          string
 	Location     string
+	Sort         string
 }
 
 // NewQuery returns query object with parsed fields from url params

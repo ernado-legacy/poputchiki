@@ -10,6 +10,7 @@ type StatusUpdate struct {
 	Id         bson.ObjectId   `json:"id,omitempty"     bson:"_id"`
 	User       bson.ObjectId   `json:"user,omitempty"   bson:"user"`
 	Name       string          `json:"name,omitempty"   bson:"-"`
+	Birthday   time.Time       `json:"-"`
 	Age        int             `json:"age,omitempty"    bson:"-"`
 	Time       time.Time       `json:"time,omitempty"   bson:"time"`
 	Text       string          `json:"text,omitempty"   bson:"text"`
@@ -29,5 +30,16 @@ func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error
 	if len(u.LikedUsers) == 0 {
 		u.LikedUsers = []bson.ObjectId{}
 	}
+
+	now := time.Now()
+	defer func() {
+		if r := recover(); r != nil {
+			u.Birthday = time.Unix(0, 0)
+		}
+	}()
+	if u.Birthday.Unix() != 0 {
+		u.Age = diff(u.Birthday, now)
+	}
+
 	return err
 }
