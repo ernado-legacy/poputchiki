@@ -38,6 +38,7 @@ func addStatus(value interface{}, status int) []byte {
 	j, err := json.Marshal(Response{status, value})
 	if err != nil {
 		log.Println(string(j), err)
+		panic(err)
 	}
 	return j
 }
