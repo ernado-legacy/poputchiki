@@ -71,7 +71,11 @@ type DataBase interface {
 	AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error)
 	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
 	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
+	AddLikeStatus(user bson.ObjectId, target bson.ObjectId) error
+	RemoveLikeStatus(user bson.ObjectId, target bson.ObjectId) error
+	GetLikesStatus(id bson.ObjectId) []*User
 	// api/status/:id/comment/:id
+
 	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
 
 	// api/photo/:id

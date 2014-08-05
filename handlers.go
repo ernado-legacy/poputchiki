@@ -996,6 +996,31 @@ func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 	return Render(likers)
 }
 
+func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+	err := db.AddLikeStatus(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
+}
+
+func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+	err := db.RemoveLikeStatus(t.Id, id)
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
+}
+
+func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+	likers := db.GetLikesStatus(id)
+	for k := range likers {
+		likers[k].Prepare(adapter, db, webp)
+		likers[k].CleanPrivate()
+	}
+	return Render(likers)
+}
+
 func GetCountries(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	coutries, err := db.GetCountries(start)

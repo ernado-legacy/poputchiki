@@ -100,3 +100,15 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 
 	return statuses, nil
 }
+
+func (db *DB) AddLikeStatus(user bson.ObjectId, target bson.ObjectId) error {
+	return db.AddLike(db.statuses, user, target)
+}
+
+func (db *DB) RemoveLikeStatus(user bson.ObjectId, target bson.ObjectId) error {
+	return db.RemoveLike(db.statuses, user, target)
+}
+
+func (db *DB) GetLikesStatus(id bson.ObjectId) []*models.User {
+	return db.GetLikes(db.statuses, id)
+}
