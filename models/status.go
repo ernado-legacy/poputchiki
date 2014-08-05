@@ -7,16 +7,17 @@ import (
 )
 
 type StatusUpdate struct {
-	Id        bson.ObjectId `json:"id,omitempty"            bson:"_id"`
-	User      bson.ObjectId `json:"user,omitempty"          bson:"user"`
-	Name      string        `json:"name,omitempty"          bson:"-"`
-	Age       int           `json:"age,omitempty" bson:"-"`
-	Time      time.Time     `json:"time,omitempty"          bson:"time"`
-	Text      string        `json:"text,omitempty"          bson:"text"`
-	ImageWebp string        `json:"-"             bson:"image_webp"`
-	ImageJpeg string        `json:"-"             bson:"image_jpeg"`
-	ImageUrl  string        `json:"url,omitempty"           bson:"-"`
-	Likes     int           `json:"likes,omitempty"         bson:"likes"`
+	Id         bson.ObjectId   `json:"id,omitempty"     bson:"_id"`
+	User       bson.ObjectId   `json:"user,omitempty"   bson:"user"`
+	Name       string          `json:"name,omitempty"   bson:"-"`
+	Age        int             `json:"age,omitempty"    bson:"-"`
+	Time       time.Time       `json:"time,omitempty"   bson:"time"`
+	Text       string          `json:"text,omitempty"   bson:"text"`
+	ImageWebp  string          `json:"-"                bson:"image_webp"`
+	ImageJpeg  string          `json:"-"                bson:"image_jpeg"`
+	ImageUrl   string          `json:"url,omitempty"    bson:"-"`
+	Likes      int             `json:"likes,omitempty"  bson:"likes"`
+	LikedUsers []bson.ObjectId `json:"liked_users"      bson:"liked_users"`
 }
 
 func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error) {
@@ -24,6 +25,9 @@ func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error
 		u.ImageUrl, err = adapter.GetUrl(u.ImageWebp)
 	} else {
 		u.ImageUrl, err = adapter.GetUrl(u.ImageJpeg)
+	}
+	if len(u.LikedUsers) == 0 {
+		u.LikedUsers = []bson.ObjectId{}
 	}
 	return err
 }

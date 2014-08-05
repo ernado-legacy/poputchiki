@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
+	"log"
 	"time"
 )
 
@@ -23,11 +24,12 @@ type Photo struct {
 	ThumbnailUrl  string          `json:"thumbnail_url"         bson:"-"`
 	Description   string          `json:"description,omitempty" bson:"description,omitempty"`
 	Likes         int             `json:"likes"                 bson:"likes"`
+	LikedUsers    []bson.ObjectId `json:"liked_users"           bson:"liked_users"`
 	Time          time.Time       `json:"time"                  bson:"time"`
-	LikedUsers    []bson.ObjectId `json:"-" 					bson:"liked_users"`
 }
 
 func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
+	log.Printf("%+v", p)
 	var err error
 	if webp {
 		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailWebp)
@@ -41,6 +43,9 @@ func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _
 			return err
 		}
 		p.ImageUrl, err = adapter.GetUrl(p.ImageJpeg)
+	}
+	if len(p.LikedUsers) == 0 {
+		p.LikedUsers = []bson.ObjectId{}
 	}
 	return err
 }

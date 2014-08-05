@@ -4,7 +4,6 @@ import (
 	. "github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
-	"log"
 	"time"
 )
 
@@ -60,7 +59,6 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 
 	photos := []*Photo{}
 	query := q.ToBson()
-	log.Println("query:", query)
 	u := []*User{}
 	if err := db.users.Find(query).Skip(offset).Limit(count).All(&u); err != nil {
 		return photos, err
