@@ -35,16 +35,16 @@ func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func addStatus(value interface{}, status int) []byte {
-	j, err := json.Marshal(value)
-	log.Println(string(j), err)
-	buff := make(map[string]interface{})
-	err = json.Unmarshal(j, &buff)
-	log.Println(err)
-	buff["status"] = status
-	log.Println(buff)
-	j, _ = json.Marshal(buff)
-	log.Print(string(j))
+	j, err := json.Marshal(Response{status, value})
+	if err != nil {
+		log.Println(string(j), err)
+	}
 	return j
+}
+
+type Response struct {
+	Status   int         `json:"status"`
+	Response interface{} `json:"response"`
 }
 
 func Render(value interface{}) (int, []byte) {
