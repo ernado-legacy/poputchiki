@@ -7,7 +7,7 @@ import (
 )
 
 func (db *DB) AddLike(coll *mgo.Collection, user bson.ObjectId, target bson.ObjectId) error {
-	if err := coll.UpdateId(target, bson.M{"$push": bson.M{"liked_users": user}}); err != nil {
+	if err := coll.UpdateId(target, bson.M{"$addToSet": bson.M{"liked_users": user}}); err != nil {
 		return err
 	}
 
