@@ -211,6 +211,9 @@ func NewApp() *Application {
 		}, IdWrapper)
 
 		r.Get("/stripe", GetStripe)
+		r.Post("/stripe", AddStripeItem)
+		r.Put("/stripe", AddStripeItem)
+
 		r.Put("/status", AddStatus)
 		r.Post("/status", AddStatus)
 		r.Get("/status", SearchStatuses)
