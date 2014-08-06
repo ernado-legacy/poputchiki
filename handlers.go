@@ -804,6 +804,10 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		return Render(ErrorBadRequest)
 	}
 
+	i := &StripeItem{}
+	i.Id = bson.NewObjectId()
+	i.User = t.Id
+
 	log.Printf("%+v", request)
 
 	if !*development {
@@ -818,12 +822,17 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		if video == nil {
 			return Render(ErrorObjectNotFound)
 		}
+		i.ImageJpeg = video.ThumbnailJpeg
+		i.ImageWebp = video.ThumbnailWebp
 		media = video
 	case "audio":
 		audio := db.GetAudio(request.Id)
 		if audio == nil {
 			return Render(ErrorObjectNotFound)
 		}
+		u := db.Get(t.Id)
+		i.ImageJpeg = u.AvatarJpeg
+		i.ImageWebp = u.AvatarWebp
 		media = audio
 	case "photo":
 		p, err := db.GetPhoto(request.Id)
@@ -834,6 +843,8 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		if p == nil {
 			return Render(ErrorObjectNotFound)
 		}
+		i.ImageJpeg = p.ImageJpeg
+		i.ImageWebp = p.ImageWebp
 		media = p
 	default:
 		return Render(ErrorBadRequest)
@@ -843,7 +854,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 	}
 
 	log.Printf("media: %+v", media)
-	s, err := db.AddStripeItem(t.Id, media)
+	s, err := db.AddStripeItem(i, media)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -860,7 +871,8 @@ func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp W
 	}
 	for _, v := range stripe {
 		if err := v.Prepare(adapter, webp, video, audio); err != nil {
-			return Render(ErrorBackend)
+			log.Println(err)
+			// return Render(ErrorBackend)
 		}
 	}
 	return Render(stripe)

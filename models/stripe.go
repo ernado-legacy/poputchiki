@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
+	"log"
 	"time"
 )
 
@@ -23,6 +24,8 @@ type StripeItem struct {
 }
 
 func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+	log.Printf("%+v", stripe)
+
 	var err error
 	if webp {
 		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageWebp)
@@ -30,7 +33,8 @@ func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video 
 		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageJpeg)
 	}
 	if err != nil {
-		return err
+		log.Println(err)
+		// return err
 	}
 
 	var media PrepareInterface

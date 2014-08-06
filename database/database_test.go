@@ -174,7 +174,10 @@ func TestDBMethods(t *testing.T) {
 				video.Id = bson.NewObjectId()
 				video.User = id
 
-				s, err := db.AddStripeItem(id, video)
+				s := &StripeItem{}
+				s.Id = bson.NewObjectId()
+				s.User = id
+				s, err := db.AddStripeItem(s, video)
 				So(err, ShouldBeNil)
 				Convey("Stripe get", func() {
 					s1, err := db.GetStripeItem(s.Id)

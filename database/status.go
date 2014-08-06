@@ -6,6 +6,7 @@ import (
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	// "log"
+	"sort"
 	"time"
 )
 
@@ -64,6 +65,20 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	return err
 }
 
+type StatusByTime []*models.StatusUpdate
+
+func (a StatusByTime) Len() int {
+	return len(a)
+}
+
+func (a StatusByTime) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a StatusByTime) Less(i, j int) bool {
+	return a[i].Time.Before(a[j].Time)
+}
+
 func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.StatusUpdate, error) {
 	if count == 0 {
 		count = searchCount
@@ -99,6 +114,7 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 		statuses[i].Birthday = user.Birthday
 	}
 
+	sort.Sort(StatusByTime(statuses))
 	return statuses, nil
 }
 

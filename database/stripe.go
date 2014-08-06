@@ -7,10 +7,7 @@ import (
 	"strings"
 )
 
-func (db *DB) AddStripeItem(user bson.ObjectId, media interface{}) (*models.StripeItem, error) {
-	i := &models.StripeItem{}
-	i.Id = bson.NewObjectId()
-	i.User = user
+func (db *DB) AddStripeItem(i *models.StripeItem, media interface{}) (*models.StripeItem, error) {
 	i.Media = media
 	i.Type = strings.ToLower(reflect.TypeOf(media).Name())
 	return i, db.stripe.Insert(i)
