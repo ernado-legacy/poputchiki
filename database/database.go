@@ -113,11 +113,10 @@ func (database *DB) Init() {
 	index = mgo.Index{Key: []string{"online", "lastaction"}}
 	must(db.C(collection).EnsureIndex(index))
 
-	// must(db.C(citiesCollection).EnsureIndexKey("title", "country"))
-	index = mgo.Index{Key: []string{"title", "country"}, Unique: true, DropDups: true}
-	must(db.C(citiesCollection).EnsureIndex(index))
-	must(db.C(citiesCollection).EnsureIndexKey("title"))
-	must(db.C(countriesCollection).EnsureIndexKey("title"))
+	// index = mgo.Index{Key: []string{"title", "country"}, Unique: true, DropDups: true}
+	// must(db.C(citiesCollection).EnsureIndex(index))
+	// must(db.C(citiesCollection).EnsureIndexKey("title"))
+	// must(db.C(countriesCollection).EnsureIndexKey("title"))
 
 	index = mgo.Index{
 		Key: []string{"$2d:location"},
@@ -140,7 +139,7 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	ctcoll := db.C(conftokensCollection)
 	citb := session.DB("countries")
 	cotc := citb.C(countriesCollection)
-	citc := citb.C("cities")
+	citc := citb.C(citiesCollection)
 	database := &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
 		stcoll, ctcoll, citc, cotc, salt, timeout}
 	database.Init()
