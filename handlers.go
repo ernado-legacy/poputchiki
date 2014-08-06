@@ -804,6 +804,8 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 		return Render(ErrorBadRequest)
 	}
 
+	log.Printf("%+v", request)
+
 	if !*development {
 		err := db.DecBalance(t.Id, PromoCost)
 		if err != nil {
@@ -823,6 +825,8 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 	if media == nil {
 		return Render(ErrorUserNotFound)
 	}
+
+	log.Printf("media: %+v", media)
 	s, err := db.AddStripeItem(t.Id, media)
 	if err != nil {
 		log.Println(err)
