@@ -114,7 +114,7 @@ func (database *DB) Init() {
 	must(db.C(collection).EnsureIndex(index))
 
 	// must(db.C(citiesCollection).EnsureIndexKey("title", "country"))
-	index = mgo.Index{Key: []string{"title", "country"}, Unique: true}
+	index = mgo.Index{Key: []string{"title", "country"}, Unique: true, DropDups: true}
 	must(db.C(citiesCollection).EnsureIndex(index))
 	must(db.C(citiesCollection).EnsureIndexKey("title"))
 	must(db.C(countriesCollection).EnsureIndexKey("title"))
