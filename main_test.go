@@ -24,10 +24,10 @@ import (
 func TestUpload(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"
+	*development = true
 	redisName = "poputchiki_test_upload"
 	dbName = "poputchiki_dev_upload"
 	path := "test/image.jpg"
-	file, err := os.Open(path)
 	a := NewApp()
 	defer a.Close()
 	a.DropDatabase()
@@ -36,7 +36,7 @@ func TestUpload(t *testing.T) {
 		Reset(func() {
 			a.DropDatabase()
 		})
-		So(err, ShouldBeNil)
+
 		res := httptest.NewRecorder()
 		// sending registration request
 		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
@@ -50,13 +50,12 @@ func TestUpload(t *testing.T) {
 		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
 
 		Convey("Request should completed", func() {
+			file, err := os.Open(path)
 			So(err, ShouldBeNil)
-			defer file.Close()
 			res := httptest.NewRecorder()
 			body := &bytes.Buffer{}
 			writer := multipart.NewWriter(body)
 			part, err := writer.CreateFormFile("file", filepath.Base(path))
-			a.DropDatabase()
 			So(err, ShouldBeNil)
 			_, err = io.Copy(part, file)
 			So(err, ShouldBeNil)
@@ -78,6 +77,21 @@ func TestUpload(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(res.StatusCode, ShouldEqual, http.StatusOK)
 			})
+
+			Convey("Stipe", func() {
+				sreq := &StripeItemRequest{image.Id, "photo"}
+				j, err := json.Marshal(sreq)
+				So(err, ShouldBeNil)
+				res := httptest.NewRecorder()
+				body := bytes.NewBuffer(j)
+				req, err := http.NewRequest("POST", "/api/stripe/?token="+token.Token, body)
+				So(err, ShouldBeNil)
+				req.Header.Add("Content-type", "application/json")
+
+				a.ServeHTTP(res, req)
+				So(res.Code, ShouldEqual, http.StatusOK)
+			})
+
 		})
 	})
 }

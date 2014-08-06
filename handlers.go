@@ -617,6 +617,11 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	go realtimeProgress(progress, realtime, t)
 	p, err := uploader.Upload(length, f, progress)
 
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	c := func(input *photo.File) File {
 		output := &File{}
 		output.Id = bson.NewObjectId()
@@ -799,9 +804,11 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 		return Render(ErrorBadRequest)
 	}
 
-	err := db.DecBalance(t.Id, PromoCost)
-	if err != nil {
-		return Render(ErrorInsufficentFunds)
+	if !*development {
+		err := db.DecBalance(t.Id, PromoCost)
+		if err != nil {
+			return Render(ErrorInsufficentFunds)
+		}
 	}
 	switch request.Type {
 	case "video":
@@ -818,6 +825,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 	}
 	s, err := db.AddStripeItem(t.Id, media)
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(s)
