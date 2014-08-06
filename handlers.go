@@ -814,11 +814,27 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 	}
 	switch request.Type {
 	case "video":
-		media = db.GetVideo(request.Id)
+		video := db.GetVideo(request.Id)
+		if video == nil {
+			return Render(ErrorObjectNotFound)
+		}
+		media = video
 	case "audio":
-		media = db.GetAudio(request.Id)
+		audio := db.GetAudio(request.Id)
+		if audio == nil {
+			return Render(ErrorObjectNotFound)
+		}
+		media = audio
 	case "photo":
-		media, _ = db.GetPhoto(request.Id)
+		p, err := db.GetPhoto(request.Id)
+		if err != nil && err != mgo.ErrNotFound {
+			log.Println(err)
+			return Render(ErrorBackend)
+		}
+		if p == nil {
+			return Render(ErrorObjectNotFound)
+		}
+		media = p
 	default:
 		return Render(ErrorBadRequest)
 	}
