@@ -91,6 +91,7 @@ type DataBase interface {
 
 	AddVideo(video *Video) (*Video, error)
 	GetVideo(id bson.ObjectId) *Video
+	GetUserVideo(id bson.ObjectId) *Video
 	AddLikeVideo(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikeVideo(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesVideo(id bson.ObjectId) []*User

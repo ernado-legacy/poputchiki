@@ -1392,6 +1392,19 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	return Render(video)
 }
 
+func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+	v := db.GetUserVideo(id)
+	if v == nil {
+		return Render(ErrorObjectNotFound)
+	}
+
+	if err := v.Prepare(adapter, webp, video, audio); err != nil {
+		log.Println(err)
+	}
+
+	return Render(v)
+}
+
 func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
 	audio := &Audio{Id: id, User: t.Id, Time: time.Now()}

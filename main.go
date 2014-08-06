@@ -187,6 +187,7 @@ func NewApp() *Application {
 			r.Get("/messages", GetMessagesFromUser)
 			r.Get("/chats", GetChats)
 			r.Get("/photo", GetUserPhoto)
+			r.Get("/video", GetUserVideo)
 			r.Group("", func(d martini.Router) {
 				d.Patch("", Update)
 				d.Put("", Update)
@@ -226,7 +227,7 @@ func NewApp() *Application {
 			r.Post("/like", LikeStatus)
 			r.Delete("/like", RestoreLikeStatus)
 		}, IdWrapper)
-		
+
 		r.Delete("/message/:id", IdWrapper, RemoveMessage)
 		r.Post("/message/:id/read", IdWrapper, MarkReadMessage)
 		r.Post("/video", UploadVideoFile)
