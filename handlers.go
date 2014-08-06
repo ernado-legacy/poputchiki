@@ -797,7 +797,7 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter 
 	return Render(photo)
 }
 
-func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
+func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
 	if parser.Parse(request) != nil {
@@ -848,6 +848,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser) (int, []byte) {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
+	s.Prepare(adapter, webp, video, audio)
 	return Render(s)
 }
 
