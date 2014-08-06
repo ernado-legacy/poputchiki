@@ -1101,6 +1101,16 @@ func GetPlaces(db DataBase, req *http.Request) (int, []byte) {
 	return Render(places)
 }
 
+func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
+	start := req.URL.Query().Get("start")
+	cities, err := db.GetCityPairs(start)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	return Render(cities)
+}
+
 func ForgotPassword(db DataBase, args martini.Params) (int, []byte) {
 	var err error
 	email := args["email"]

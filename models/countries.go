@@ -6,7 +6,7 @@ type Country struct {
 }
 
 type City struct {
-	Id      int64  `bson:"_id"`
-	Title   string `bson:"title"`
-	Country string `bson:"country"`
+	Id      int64  `json:"-"       bson:"_id"`
+	Title   string `json:"title"   bson:"title"`
+	Country string `json:"country" bson:"country"`
 }

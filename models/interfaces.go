@@ -122,6 +122,7 @@ type DataBase interface {
 	GetCities(start, country string) (cities []string, err error)
 	GetCountries(start string) (countries []string, err error)
 	GetPlaces(start string) (places []string, err error)
+	GetCityPairs(start string) (cities []City, err error)
 
 	Init()
 	Drop()

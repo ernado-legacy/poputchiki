@@ -245,6 +245,7 @@ func NewApp() *Application {
 		r.Get("/countries", GetCountries)
 		r.Get("/cities", GetCities)
 		r.Get("/places", GetPlaces)
+		r.Get("/citypairs", GetCityPairs)
 	}, NeedAuth, SetOnlineWrapper)
 
 	a := &Application{session, p, m, db}

@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/ernado/poputchiki/models"
 	"labix.org/v2/mgo/bson"
 	"sort"
 	"unicode"
@@ -48,4 +49,9 @@ func (db *DB) GetPlaces(start string) (places []string, err error) {
 	places = append(places, countries...)
 	places = append(places, cities...)
 	return places, err
+}
+
+func (db *DB) GetCityPairs(start string) (cities []models.City, err error) {
+	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
+	return cities, db.cities.Find(bson.M{"title": pattern}).All(&cities)
 }

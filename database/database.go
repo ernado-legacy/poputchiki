@@ -113,7 +113,9 @@ func (database *DB) Init() {
 	index = mgo.Index{Key: []string{"online", "lastaction"}}
 	must(db.C(collection).EnsureIndex(index))
 
-	must(db.C(citiesCollection).EnsureIndexKey("title", "country"))
+	// must(db.C(citiesCollection).EnsureIndexKey("title", "country"))
+	index = mgo.Index{Key: []string{"title", "country"}, Unique: true}
+	must(db.C(citiesCollection).EnsureIndex(index))
 	must(db.C(citiesCollection).EnsureIndexKey("title"))
 	must(db.C(countriesCollection).EnsureIndexKey("title"))
 
