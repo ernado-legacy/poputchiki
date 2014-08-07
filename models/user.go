@@ -55,6 +55,10 @@ type User struct {
 	Avatar              bson.ObjectId   `json:"avatar,omitempty"       bson:"avatar,omitempty"`
 	AvatarWebp          string          `json:"-"                      bson:"image_webp,omitempty"`
 	AvatarJpeg          string          `json:"-"                      bson:"image_jpeg,omitempty"`
+	AudioUrl            string          `json:"audio_url,omitempty"    bson:"-"`
+	Audio               bson.ObjectId   `json:"audio,omitempty"        bson:"audio,omitempty"`
+	AudioAAC            string          `json:"-"                      bson:"audio_aac,omitempty"`
+	AudioOGG            string          `json:"-"                      bson:"audio_ogg,omitempty"`
 	Balance             uint            `json:"balance"                bson:"balance,omitempty"`
 	About               string          `json:"about,omitempty"        bson:"about,omitempty"`
 	Age                 int             `json:"age,omitempty"          bson:"-"`
@@ -74,7 +78,7 @@ type User struct {
 	LikingsDestinations []string        `json:"likings_destinations,omitempty" bson:"likings_destinations,omitempty"`
 	LikingsSeasons      []string        `json:"likings_seasons,omitempty"      bson:"likings_seasons,omitempty"`
 	LikingsCountry      string          `json:"likings_country,omitempty"      bson:"likings_country,omitempty"`
-	LikingsCity         string          `json:"likings_city,omitempty"      bson:"likings_city,omitempty"`
+	LikingsCity         string          `json:"likings_city,omitempty"         bson:"likings_city,omitempty"`
 	LikingsAgeMin       int             `json:"likings_age_min,omitempty"      bson:"likings_age_min,omitempty"`
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
