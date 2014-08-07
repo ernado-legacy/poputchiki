@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
-	"log"
 	"net/http"
 	"time"
 )
@@ -72,7 +71,7 @@ type User struct {
 	LastAction          time.Time       `json:"last_action,omitempty"  bson:"lastaction,omitempty"`
 	StatusUpdate        time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
 	Favorites           []bson.ObjectId `json:"favorites"              bson:"favorites,omitempty"`
-	Blacklist           []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
+	Blacklist           []bson.ObjectId `json:"blacklist"              bson:"blacklist,omitempty"`
 	Countries           []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
 	LikingsSex          string          `json:"likings_sex,omitempty"          bson:"likings_sex,omitempty"`
 	LikingsDestinations []string        `json:"likings_destinations,omitempty" bson:"likings_destinations,omitempty"`
@@ -169,11 +168,13 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 		}
 	}
 
-	log.Println(len(u.Favorites))
 	if len(u.Favorites) == 0 {
-		log.Println("prepared")
 		u.Favorites = []bson.ObjectId{}
 	}
+	if len(u.Blacklist) == 0 {
+		u.Blacklist = []bson.ObjectId{}
+	}
+
 	now := time.Now()
 	defer func() {
 		if r := recover(); r != nil {
