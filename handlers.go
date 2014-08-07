@@ -681,6 +681,9 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
 
 func GetStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetStatus(id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
 	if err != nil {
 		return Render(ErrorBackend)
 	}
