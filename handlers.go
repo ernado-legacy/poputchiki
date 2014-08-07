@@ -686,7 +686,7 @@ func GetStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	}
 	if err != nil {
 		log.Println(err)
-		return Render(ErrorBackend)
+		return Render("")
 	}
 	return Render(status)
 }
