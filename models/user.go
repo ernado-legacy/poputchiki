@@ -81,6 +81,7 @@ type User struct {
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible"              bson:"invisible"`
 	InvisibleDate       time.Time       `json:"invisible_date"         bson:"invisible_date"`
+	Vip                 bool            `json:"vip"                    bson:"vip"`
 }
 
 type GuestUser struct {
