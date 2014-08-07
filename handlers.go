@@ -700,7 +700,11 @@ func RemoveStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 
 func GetCurrentStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 	status, err := db.GetCurrentStatus(id)
+	if err == mgo.ErrNotFound {
+		return Render("")
+	}
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(status)
