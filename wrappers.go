@@ -166,7 +166,7 @@ func WebpWrapper(c martini.Context, r *http.Request) {
 }
 
 func VideoWrapper(c martini.Context, r *http.Request) {
-	var accept models.VideoAccept = models.AaAac
+	var accept models.VideoAccept = models.VaMp4
 	cookie, err := r.Cookie("video")
 	if err != nil {
 		c.Map(accept)
@@ -179,7 +179,7 @@ func VideoWrapper(c martini.Context, r *http.Request) {
 }
 
 func AudioWrapper(c martini.Context, r *http.Request) {
-	var accept models.AudioAccept = models.VaWebm
+	var accept models.AudioAccept = models.AaAac
 	cookie, err := r.Cookie("audio")
 	if err != nil {
 		c.Map(accept)
