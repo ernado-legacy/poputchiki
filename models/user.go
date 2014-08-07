@@ -14,7 +14,7 @@ import (
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
 	"likings_sex", "likings_destinations", "likings_seasons", "likings_country", "likings_city",
-	"about", "location", "likings_age_min", "likings_age_max", "password",
+	"about", "location", "likings_age_min", "likings_age_max", "password", "invisible",
 }
 
 const (
@@ -162,10 +162,10 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 
 	if u.Audio != "" {
 		if audio == AaAac {
-			u.AudioUrl = u.AudioAAC
+			u.AudioUrl, _ = adapter.GetUrl(u.AudioAAC)
 		}
 		if audio == AaOgg {
-			u.AudioUrl = u.AudioOGG
+			u.AudioUrl, _ = adapter.GetUrl(u.AudioOGG)
 		}
 	}
 
