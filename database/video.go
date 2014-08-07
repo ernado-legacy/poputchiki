@@ -25,12 +25,9 @@ func (db *DB) GetVideo(id bson.ObjectId) *models.Video {
 	return v
 }
 
-func (db *DB) GetUserVideo(id bson.ObjectId) *models.Video {
-	v := new(models.Video)
-	if db.video.Find(bson.M{"user": id}).One(v) != nil {
-		return nil
-	}
-	return v
+func (db *DB) GetUserVideo(id bson.ObjectId) ([]*models.Video, error) {
+	v := []*models.Video{}
+	return v, db.video.Find(bson.M{"user": id}).All(&v)
 }
 
 func (db *DB) AddVideo(video *models.Video) (*models.Video, error) {

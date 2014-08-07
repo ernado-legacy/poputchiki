@@ -1403,13 +1403,16 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 }
 
 func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
-	v := db.GetUserVideo(id)
-	if v == nil {
-		return Render(ErrorObjectNotFound)
+	v, err := db.GetUserVideo(id)
+
+	if err == mgo.ErrNotFound {
+		return Render(ErrorUserNotFound)
 	}
 
-	if err := v.Prepare(adapter, webp, video, audio); err != nil {
-		log.Println(err)
+	for _, videoElem := range v {
+		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
+			log.Println(err)
+		}
 	}
 
 	return Render(v)
