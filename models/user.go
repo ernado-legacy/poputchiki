@@ -157,8 +157,18 @@ func diff(t1, t2 time.Time) (years int) {
 	return years
 }
 
-func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
+func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept) {
 	u.SetAvatarUrl(adapter, db, webp)
+
+	if u.Audio != "" {
+		if audio == AaAac {
+			u.AudioUrl = u.AudioAAC
+		}
+		if audio == AaOgg {
+			u.AudioUrl = u.AudioOGG
+		}
+	}
+
 	log.Println(len(u.Favorites))
 	if len(u.Favorites) == 0 {
 		log.Println("prepared")

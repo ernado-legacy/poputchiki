@@ -19,6 +19,9 @@ func TestAudio(t *testing.T) {
 			a := &models.Audio{}
 			a.Id = bson.NewObjectId()
 			a.User = bson.NewObjectId()
+			u := &models.User{}
+			u.Id = a.User
+			So(db.Add(u), ShouldBeNil)
 			_, err := db.AddAudio(a)
 			So(err, ShouldBeNil)
 			Convey("Get", func() {

@@ -75,7 +75,7 @@ func Index() (int, []byte) {
 }
 
 // GetUser handler for getting full user information
-func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -104,7 +104,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 		}()
 	}
 	// preparing for rendering to json
-	user.Prepare(adapter, db, webp)
+	user.Prepare(adapter, db, webp, audio)
 	return Render(user)
 }
 
@@ -209,7 +209,7 @@ func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request, parser 
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	favorites := db.GetFavorites(id)
 	// check for existance
 	if favorites == nil {
@@ -218,13 +218,13 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 	// clean private fields and prepare data
 	for key, _ := range favorites {
 		favorites[key].CleanPrivate()
-		favorites[key].Prepare(adapter, db, webp)
+		favorites[key].Prepare(adapter, db, webp, audio)
 	}
 	return Render(favorites)
 }
 
 // GetFavorites returns list of users in guests of target user
-func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	guests, err := db.GetAllGuestUsers(id)
 	if err != nil {
 		return Render(ErrorBackend)
@@ -236,7 +236,7 @@ func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, 
 	// clean private fields and prepare data
 	for key, _ := range guests {
 		guests[key].CleanPrivate()
-		guests[key].Prepare(adapter, db, webp)
+		guests[key].Prepare(adapter, db, webp, audio)
 	}
 	return Render(guests)
 }
@@ -525,14 +525,14 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 	return Render(messages)
 }
 
-func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	users, err := db.GetChats(id)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	for k := range users {
-		users[k].Prepare(adapter, db, webp)
+		users[k].Prepare(adapter, db, webp, audio)
 	}
 	return Render(users)
 }
@@ -723,7 +723,7 @@ func addGeo(db DataBase, t *gotok.Token, r *http.Request) url.Values {
 	return q
 }
 
-func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
@@ -737,7 +737,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	}
 
 	for key, _ := range result {
-		result[key].Prepare(adapter, db, webpAccept)
+		result[key].Prepare(adapter, db, webpAccept, audio)
 	}
 
 	return Render(SearchResult{result, count})
@@ -1005,10 +1005,10 @@ func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	return Render(db.GetVideo(id))
 }
 
-func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
 	likers := db.GetLikesVideo(id)
 	for k := range likers {
-		likers[k].Prepare(adapter, db, webp)
+		likers[k].Prepare(adapter, db, webp, audio)
 		likers[k].CleanPrivate()
 	}
 	return Render(likers)
@@ -1032,10 +1032,10 @@ func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	return Render(p)
 }
 
-func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
 	for k := range likers {
-		likers[k].Prepare(adapter, db, webp)
+		likers[k].Prepare(adapter, db, webp, audio)
 		likers[k].CleanPrivate()
 	}
 	p, _ := db.GetPhoto(id)
@@ -1060,10 +1060,10 @@ func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []by
 	return Render(s)
 }
 
-func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
 	likers := db.GetLikesStatus(id)
 	for k := range likers {
-		likers[k].Prepare(adapter, db, webp)
+		likers[k].Prepare(adapter, db, webp, audio)
 		likers[k].CleanPrivate()
 	}
 	return Render(likers)
