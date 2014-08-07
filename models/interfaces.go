@@ -39,6 +39,7 @@ type DataBase interface {
 	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
 	RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error
 	GetFavorites(id bson.ObjectId) []*User
+	GetAllUsersWithFavorite(id bson.ObjectId) ([]*User, error)
 
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
 	GetAllGuests(id bson.ObjectId) ([]*User, error)

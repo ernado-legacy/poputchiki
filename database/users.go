@@ -179,6 +179,11 @@ func (db *DB) GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error) {
 	return guests, nil
 }
 
+func (db *DB) GetAllUsersWithFavorite(id bson.ObjectId) ([]*User, error) {
+	var users []*User
+	return users, db.users.Find(bson.M{"favorites": id}).All(&users)
+}
+
 func (db *DB) SetOnlineStatus(id bson.ObjectId, status bool) error {
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"online": status}}}
 	_, err := db.users.FindId(id).Apply(change, nil)
