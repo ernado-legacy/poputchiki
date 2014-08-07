@@ -685,6 +685,7 @@ func GetStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
 		return Render(ErrorObjectNotFound)
 	}
 	if err != nil {
+		log.Println(err)
 		return Render(ErrorBackend)
 	}
 	return Render(status)
