@@ -392,6 +392,8 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBadRequest)
 	}
 
+	user.Password = getHash(user.Password, db.Salt())
+
 	// encoding back to query object
 	// marshalling to bson
 	newQuery := bson.M{}
