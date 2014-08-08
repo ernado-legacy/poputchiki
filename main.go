@@ -198,6 +198,7 @@ func NewApp() *Application {
 				d.Delete("/fav", RemoveFromFavorites)
 				d.Get("/fav", GetFavorites)
 
+				d.Get("/blacklist", GetBlacklisted)
 				d.Post("/blacklist", AddToBlacklist)
 				d.Put("/blacklist", AddToBlacklist)
 				d.Delete("/blacklist", RemoveFromBlacklist)
