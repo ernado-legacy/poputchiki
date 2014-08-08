@@ -26,8 +26,8 @@ func TestMessages(t *testing.T) {
 			now := time.Now()
 			idOrigin := bson.NewObjectId()
 			idDestination := bson.NewObjectId()
-			mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text}
-			mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text}
+			mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text, false}
+			mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text, false}
 			So(db.AddMessage(mOrigin), ShouldBeNil)
 			So(db.AddMessage(mDestination), ShouldBeNil)
 			Convey("Destination chats", func() {
@@ -46,8 +46,8 @@ func TestMessages(t *testing.T) {
 				now := time.Now()
 				idOrigin := bson.NewObjectId()
 				idDestination := bson.NewObjectId()
-				mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text2}
-				mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text2}
+				mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text2, false}
+				mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text2, false}
 				So(db.AddMessage(mOrigin), ShouldBeNil)
 				So(db.AddMessage(mDestination), ShouldBeNil)
 				Convey("Destination chats", func() {
@@ -84,8 +84,8 @@ func TestMessages(t *testing.T) {
 					now := time.Now()
 					idOrigin := bson.NewObjectId()
 					idDestination := bson.NewObjectId()
-					mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text3}
-					mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text3}
+					mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text3, false}
+					mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text3, false}
 					So(db.AddMessage(mOrigin), ShouldBeNil)
 					So(db.AddMessage(mDestination), ShouldBeNil)
 					Convey("Destination chats", func() {

@@ -14,6 +14,7 @@ type Message struct {
 	Read        bool          `json:"read"        bson:"read"`
 	Time        time.Time     `json:"time"        bson:"time"`
 	Text        string        `json:"text"        bson:"text"`
+	Invite      bool          `json:"invite"      bson:"invite"`
 }
 
 type RealtimeEvent struct {

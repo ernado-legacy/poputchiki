@@ -185,6 +185,7 @@ func NewApp() *Application {
 			r.Get("/login", AdminLogin)
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
+			r.Post("/invite", SendInvite)
 			r.Get("/chats", GetChats)
 			r.Get("/photo", GetUserPhoto)
 			r.Get("/video", GetUserVideo)
@@ -207,6 +208,7 @@ func NewApp() *Application {
 				d.Put("/guests", AddToGuests)
 				d.Get("/guests", GetGuests)
 				d.Get("/unread", GetUnreadCount)
+				d.Get("/followers", GetFollowers)
 
 			}, IdEqualityRequired)
 

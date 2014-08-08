@@ -224,6 +224,25 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 }
 
 // GetFavorites returns list of users in favorites of target user
+func GetFollowers(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+	favorites, err := db.GetAllUsersWithFavorite(id)
+	if err != nil && err != mgo.ErrNotFound {
+		return Render(ErrorBackend)
+	}
+
+	// check for existance
+	if favorites == nil {
+		return Render([]interface{}{})
+	}
+	// clean private fields and prepare data
+	for key, _ := range favorites {
+		favorites[key].CleanPrivate()
+		favorites[key].Prepare(adapter, db, webp, audio)
+	}
+	return Render(favorites)
+}
+
+// GetFavorites returns list of users in favorites of target user
 func GetBlacklisted(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	blacklisted := db.GetBlacklisted(id)
 	// check for existance
@@ -468,8 +487,41 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		return Render(ErrorBadRequest)
 	}
 
-	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text}
-	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text}
+	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, false}
+	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, false}
+
+	go func() {
+		u := db.Get(destination)
+		if u == nil {
+			return
+		}
+		// check blacklist of destination
+		for _, id := range u.Blacklist {
+			if id == origin {
+				Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
+				return
+			}
+		}
+		Must(realtime.Push(origin, m1))
+		Must(realtime.Push(destination, m2))
+		Must(db.AddMessage(&m1))
+		Must(db.AddMessage(&m2))
+	}()
+
+	return Render("message sent")
+}
+
+func SendInvite(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+	text := "Вас пригласили в путешествие"
+	origin := t.Id
+	now := time.Now()
+
+	if text == "" {
+		return Render(ErrorBadRequest)
+	}
+
+	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
+	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, true}
 
 	go func() {
 		u := db.Get(destination)
