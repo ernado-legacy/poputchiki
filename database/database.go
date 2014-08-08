@@ -22,9 +22,9 @@ var (
 	photoCollection      = "photo"
 	albumsCollection     = "albums"
 	filesCollection      = "files"
-	videoCollection      = "audio"
+	videoCollection      = "video"
 	conftokensCollection = "conftokens"
-	audioCollection      = "video"
+	audioCollection      = "audio"
 	stripeCollection     = "stripe"
 	tokenCollection      = "tokens"
 )
