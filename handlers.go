@@ -1271,6 +1271,11 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
+	if *mobile {
+		_, data := Render(userToken)
+		fmt.Fprint(w, data)
+		return
+	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
@@ -1323,6 +1328,11 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
+	if *mobile {
+		_, data := Render(userToken)
+		fmt.Fprint(w, data)
+		return
+	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
