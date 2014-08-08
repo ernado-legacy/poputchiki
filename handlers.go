@@ -841,6 +841,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 			return Render(ErrorInsufficentFunds)
 		}
 	}
+	i.Type = request.Type
 	switch request.Type {
 	case "video":
 		video := db.GetVideo(request.Id)
