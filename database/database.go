@@ -122,7 +122,7 @@ func (database *DB) Init() {
 		Key: []string{"$2d:location"},
 	}
 	must(db.C(collection).EnsureIndex(index))
-	must(db.C(statusesCollection).EnsureIndexKey("$text:text"))
+	must(db.C(collection).EnsureIndexKey("$text:status"))
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {

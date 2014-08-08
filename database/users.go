@@ -88,6 +88,27 @@ func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 	return favorites
 }
 
+func (db *DB) GetBlacklisted(id bson.ObjectId) []*User {
+	var ids []bson.ObjectId
+	var blacklist []*User
+
+	// first query - distinct favorites id's from user
+	err := db.users.FindId(id).Distinct("blacklist", &ids)
+	if err != nil {
+		return nil
+	}
+
+	// second query - get all users with favorites id's
+	// query: db.users.find({_id: {$in: favoriteIds}})
+	err = db.users.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&blacklist)
+
+	if err != nil {
+		return nil
+	}
+
+	return blacklist
+}
+
 func (db *DB) AddGuest(id bson.ObjectId, guest bson.ObjectId) error {
 	g := Guest{}
 	g.Time = time.Now()

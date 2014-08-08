@@ -56,6 +56,7 @@ type DataBase interface {
 
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
+	GetBlacklisted(id bson.ObjectId) []*User
 
 	IncBalance(id bson.ObjectId, amount uint) error
 	DecBalance(id bson.ObjectId, amount uint) error

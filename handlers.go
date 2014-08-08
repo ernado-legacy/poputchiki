@@ -223,6 +223,21 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 	return Render(favorites)
 }
 
+// GetFavorites returns list of users in favorites of target user
+func GetBlacklisted(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+	blacklisted := db.GetBlacklisted(id)
+	// check for existance
+	if blacklisted == nil {
+		return Render([]interface{}{})
+	}
+	// clean private fields and prepare data
+	for key, _ := range blacklisted {
+		blacklisted[key].CleanPrivate()
+		blacklisted[key].Prepare(adapter, db, webp, audio)
+	}
+	return Render(blacklisted)
+}
+
 // GetFavorites returns list of users in guests of target user
 func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	guests, err := db.GetAllGuestUsers(id)

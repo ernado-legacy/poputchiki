@@ -43,6 +43,7 @@ type User struct {
 	Name                string          `json:"name,omitempty"         bson:"name,omitempty"`
 	Sex                 string          `json:"sex,omitempty"          bson:"sex,omitempty"`
 	Email               string          `json:"email,omitempty"        bson:"email,omitempty"`
+	Status              string          `json:"status"                 bson:"status"`
 	EmailConfirmed      bool            `json:"email_confirmed"        bson:"email_confirmed"`
 	Phone               string          `json:"phone,omitempty"        bson:"phone,omitempty"`
 	PhoneConfirmed      bool            `json:"phone_confirmed"        bson:"phone_confirmed"`

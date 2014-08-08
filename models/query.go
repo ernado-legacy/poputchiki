@@ -130,7 +130,7 @@ func (q *SearchQuery) ToBson() bson.M {
 	}
 
 	if q.Text != "" {
-		textQuery := bson.M{"text": bson.M{"$text": bson.M{"$search": q.Text, "$language": "russian"}}}
+		textQuery := bson.M{"$text": bson.M{"$search": q.Text, "$language": "russian"}}
 		query = append(query, textQuery)
 	}
 
