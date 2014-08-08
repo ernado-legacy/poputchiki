@@ -25,7 +25,8 @@ func (db *DB) UpdateAudioAAC(id bson.ObjectId, fid string) error {
 	if err := db.audio.UpdateId(id, update); err != nil {
 		return err
 	}
-	return db.users.UpdateAll(bson.M{"audio": id}, update)
+	_, err := db.users.UpdateAll(bson.M{"audio": id}, update)
+	return err
 }
 
 func (db *DB) UpdateAudioOGG(id bson.ObjectId, fid string) error {
@@ -33,5 +34,7 @@ func (db *DB) UpdateAudioOGG(id bson.ObjectId, fid string) error {
 	if err := db.audio.UpdateId(id, update); err != nil {
 		return err
 	}
-	return db.users.UpdateAll(bson.M{"audio": id}, update)
+
+	_, err := db.users.UpdateAll(bson.M{"audio": id}, update)
+	return err
 }
