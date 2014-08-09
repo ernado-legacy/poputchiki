@@ -20,6 +20,14 @@ func (db *DB) Update(id bson.ObjectId, update bson.M) (*User, error) {
 	return u, err
 }
 
+func (db *DB) SetVip(id bson.ObjectId, vip bool) error {
+	return db.users.Update(bson.M{"_id": id}, bson.M{"$set": bson.M{"vip": vip}})
+}
+
+func (db *DB) SetVipTill(id bson.ObjectId, t time.Time) error {
+	return db.users.Update(bson.M{"_id": id}, bson.M{"$set": bson.M{"vip_till": t}})
+}
+
 func (db *DB) Get(id bson.ObjectId) *User {
 	var u User
 	err := db.users.FindId(id).One(&u)
@@ -271,6 +279,11 @@ func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
 	t := time.Now().Add(-db.offlineTimeout)
 	query := bson.M{"online": true, "lastaction": bson.M{"$lte": t}}
 	return db.users.UpdateAll(query, bson.M{"$set": bson.M{"online": false}})
+}
+
+func (db *DB) UpdateAllVip() (*mgo.ChangeInfo, error) {
+	query := bson.M{"vip": true, "vip_till": bson.M{"$lte": time.Now()}}
+	return db.users.UpdateAll(query, bson.M{"$set": bson.M{"vip": false}})
 }
 
 func (db *DB) ConfirmEmail(id bson.ObjectId) error {

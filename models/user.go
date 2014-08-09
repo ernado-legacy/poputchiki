@@ -84,8 +84,8 @@ type User struct {
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible"              bson:"invisible"`
-	InvisibleDate       time.Time       `json:"invisible_date"         bson:"invisible_date"`
-	Vip                 bool            `json:"vip"                    bson:"vip"`
+	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
+	VipTill             time.Time       `json:"vip_till"               bson:"vip_till"`
 }
 
 type GuestUser struct {

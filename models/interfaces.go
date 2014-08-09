@@ -6,6 +6,7 @@ import (
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
+	"time"
 )
 
 // webp accept flag
@@ -60,6 +61,9 @@ type DataBase interface {
 
 	IncBalance(id bson.ObjectId, amount uint) error
 	DecBalance(id bson.ObjectId, amount uint) error
+
+	SetVipTill(id bson.ObjectId, t time.Time) error
+	SetVip(id bson.ObjectId, vip bool) error
 
 	SetOnline(id bson.ObjectId) error
 	SetOffline(id bson.ObjectId) error
@@ -131,6 +135,8 @@ type DataBase interface {
 	Salt() string
 
 	SetAvatar(user, avatar bson.ObjectId) error
+
+	UpdateAllVip() (*mgo.ChangeInfo, error)
 }
 
 type RealtimeInterface interface {

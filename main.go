@@ -27,6 +27,8 @@ var (
 	salt                      = "salt"
 	projectName               = "poputchiki"
 	premiumTime               = time.Hour * 24 * 30
+	vipWeek                   = 400
+	vipMonth                  = 1000
 	statusUpdateTime          = time.Hour * 24
 	dbName                    = projectName
 	dbCity                    = "countries"
@@ -178,6 +180,7 @@ func NewApp() *Application {
 		r.Get("/pay/:value", GetTransactionUrl)
 
 		r.Get("/token", GetToken)
+		r.Post("/vip/:duration", EnableVip)
 
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
@@ -264,10 +267,30 @@ func (a *Application) StatusCycle() {
 	log.Println("[updater]", "starting cycle")
 	ticker := time.NewTicker(OfflineUpdateTick)
 	for _ = range ticker.C {
-		_, err := a.db.UpdateAllStatuses()
+		i, err := a.db.UpdateAllStatuses()
 		if err != nil {
 			log.Println("[updater]", "status update error", err)
 			time.Sleep(time.Second * 5)
+		} else {
+			if i.Updated != 0 {
+				log.Println("[updater]", "statuses updated: ", i.Updated)
+			}
+		}
+	}
+}
+
+func (a *Application) VipCycle() {
+	log.Println("[updater]", "starting vip update cycle")
+	ticker := time.NewTicker(OfflineUpdateTick)
+	for _ = range ticker.C {
+		i, err := a.db.UpdateAllVip()
+		if err != nil {
+			log.Println("[updater]", "vip update error", err)
+			time.Sleep(time.Second * 5)
+		} else {
+			if i.Updated != 0 {
+				log.Println("[updater]", "vip updated: ", i.Updated)
+			}
 		}
 	}
 }
@@ -319,6 +342,7 @@ func (a *Application) ConvertResultListener() {
 
 func (a *Application) Run() {
 	go a.StatusCycle()
+	go a.VipCycle()
 	go a.ConvertResultListener()
 	a.m.Run()
 }

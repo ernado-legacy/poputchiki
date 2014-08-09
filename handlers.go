@@ -95,9 +95,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 				recover()
 			}()
 			origin := db.Get(t.Id)
-			now := time.Now()
-			d := now.Sub(origin.InvisibleDate)
-			if origin.Invisible && d < premiumTime {
+			if origin.Invisible && origin.Vip {
 				return
 			}
 			db.AddGuest(id, t.Id)
@@ -954,6 +952,47 @@ func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp W
 		}
 	}
 	return Render(stripe)
+}
+
+func EnableVip(db DataBase, t *gotok.Token, parm martini.Params) (int, []byte) {
+	var months, days, price int
+	duration := parm["duration"]
+	if duration == "week" {
+		days = 7
+		price = vipWeek
+	}
+	if duration == "month" {
+		months = 1
+		price = vipMonth
+	}
+	if price == 0 {
+		return Render(ErrBadRequest)
+	}
+
+	if !*development {
+		err := db.DecBalance(t.Id, uint(price))
+		if err != nil {
+			return Render(ErrorInsufficentFunds)
+		}
+	}
+
+	user := db.Get(t.Id)
+	if user == nil {
+		return Render(ErrorUserNotFound)
+	}
+
+	now := time.Now()
+	if now.After(user.VipTill) {
+		user.VipTill = now
+	}
+	till := user.VipTill.AddDate(0, months, days)
+	if err := db.SetVipTill(t.Id, till); err != nil {
+		return Render(ErrorBackend)
+	}
+	if err := db.SetVip(t.Id, true); err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
 }
 
 // GetToken returns active token body
