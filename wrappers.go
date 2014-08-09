@@ -8,6 +8,7 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -63,6 +64,7 @@ func Render(value interface{}) (int, []byte) {
 	case Error:
 		if v.Code == http.StatusInternalServerError {
 			log.Println(v)
+			debug.PrintStack()
 		}
 		if *mobile {
 			return http.StatusOK, addStatus(value, v.Code)
