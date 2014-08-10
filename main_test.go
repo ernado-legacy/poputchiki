@@ -21,6 +21,67 @@ import (
 	"time"
 )
 
+func TestStatusUpdate(t *testing.T) {
+	username := "test@" + mailDomain
+	password := "secretsecret"
+	*development = true
+	redisName = "poputchiki_test_status"
+	dbName = "poputchiki_test_status"
+	a := NewApp()
+	defer a.Close()
+	a.DropDatabase()
+
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(func() {
+			a.DropDatabase()
+		})
+
+		res := httptest.NewRecorder()
+		// sending registration request
+		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		a.ServeHTTP(res, req)
+
+		// reading response
+		So(res.Code, ShouldEqual, http.StatusOK)
+		tokenBody, _ := ioutil.ReadAll(res.Body)
+		token := &gotok.Token{}
+		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
+
+		Convey("Status set", func() {
+			text := "hello"
+			res := httptest.NewRecorder()
+			url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
+			req, _ := http.NewRequest("POST", url, nil)
+			a.ServeHTTP(res, req)
+			So(res.Code, ShouldEqual, http.StatusOK)
+			Convey("Status get", func() {
+				res := httptest.NewRecorder()
+				s := new(StatusUpdate)
+				url := fmt.Sprintf("/api/user/%s/status?token=%s", token.Id.Hex(), token.Token)
+				req, _ := http.NewRequest("GET", url, nil)
+				a.ServeHTTP(res, req)
+				decoder := json.NewDecoder(res.Body)
+				So(res.Code, ShouldEqual, http.StatusOK)
+				So(decoder.Decode(s), ShouldBeNil)
+				So(s.Text, ShouldEqual, text)
+			})
+
+			Convey("User get", func() {
+				res := httptest.NewRecorder()
+				s := new(User)
+				url := fmt.Sprintf("/api/user/%s?token=%s", token.Id.Hex(), token.Token)
+				req, _ := http.NewRequest("GET", url, nil)
+				a.ServeHTTP(res, req)
+				decoder := json.NewDecoder(res.Body)
+				So(res.Code, ShouldEqual, http.StatusOK)
+				So(decoder.Decode(s), ShouldBeNil)
+				So(s.Status, ShouldEqual, text)
+			})
+		})
+	})
+}
+
 func TestUpload(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"

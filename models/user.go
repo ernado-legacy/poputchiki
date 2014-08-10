@@ -43,7 +43,6 @@ type User struct {
 	Name                string          `json:"name,omitempty"         bson:"name,omitempty"`
 	Sex                 string          `json:"sex,omitempty"          bson:"sex,omitempty"`
 	Email               string          `json:"email,omitempty"        bson:"email,omitempty"`
-	Status              string          `json:"status"                 bson:"status"`
 	EmailConfirmed      bool            `json:"email_confirmed"        bson:"email_confirmed"`
 	Phone               string          `json:"phone,omitempty"        bson:"phone,omitempty"`
 	PhoneConfirmed      bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
@@ -70,7 +69,8 @@ type User struct {
 	Destinations        []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
 	Seasons             []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
 	LastAction          time.Time       `json:"last_action,omitempty"  bson:"lastaction,omitempty"`
-	StatusUpdate        time.Time       `json:"-"                      bson:"statusupdate,omitempty"`
+	Status              string          `json:"status"                 bson:"status"`
+	StatusUpdate        time.Time       `json:"status_time,omitempty"  bson:"statusupdate,omitempty"`
 	Favorites           []bson.ObjectId `json:"favorites"              bson:"favorites,omitempty"`
 	Blacklist           []bson.ObjectId `json:"blacklist"              bson:"blacklist,omitempty"`
 	Countries           []string        `json:"countries,omitempty"    bson:"countries,omitempty"`

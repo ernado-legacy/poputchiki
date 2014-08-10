@@ -720,11 +720,9 @@ func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return Render(photo)
 }
 
-func AddStatus(db DataBase, r *http.Request, t *gotok.Token) (int, []byte) {
+func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int, []byte) {
 	status := &StatusUpdate{}
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(status); err != nil {
-		log.Println(err)
+	if err := parser.Parse(status); err != nil {
 		return Render(ErrorBadRequest)
 	}
 	// err := db.DecBalance(t.Id, PromoCost)
