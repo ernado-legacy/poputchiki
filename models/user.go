@@ -21,8 +21,8 @@ const (
 	FormPassword   = "password"  // password field
 	FormFirstname  = "firstname" // user name field
 	FormPhone      = "phone"
-	femaleNoAvater = "http://poputchiki/static/img/defaultavatars/no_avatar_f.gif"
-	maleNoAvatar   = "http://poputchiki/static/img/defaultavatars/no_avatar_m.gif"
+	femaleNoAvater = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_f.gif"
+	maleNoAvatar   = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_m.gif"
 )
 
 // UserInfo additional user information
