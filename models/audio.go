@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
+	"log"
 	"time"
 )
 
@@ -23,6 +24,10 @@ func (audio *Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, 
 		audio.AudioUrl, err = adapter.GetUrl(audio.AudioAac)
 	} else if a == AaOgg {
 		audio.AudioUrl, err = adapter.GetUrl(audio.AudioOgg)
+	}
+	if err != nil {
+		log.Println(err)
+		log.Printf("%+v", audio)
 	}
 	return err
 }
