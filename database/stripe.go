@@ -5,6 +5,7 @@ import (
 	"labix.org/v2/mgo/bson"
 	"reflect"
 	"strings"
+	"time"
 )
 
 func (db *DB) AddStripeItem(i *models.StripeItem, media interface{}) (*models.StripeItem, error) {
@@ -12,6 +13,7 @@ func (db *DB) AddStripeItem(i *models.StripeItem, media interface{}) (*models.St
 	if i.Type == "" {
 		i.Type = strings.ToLower(reflect.TypeOf(media).Name())
 	}
+	i.Time = time.Now()
 	return i, db.stripe.Insert(i)
 }
 
