@@ -31,6 +31,8 @@ var (
 	vipMonth                  = 1000
 	statusUpdateTime          = time.Hour * 24
 	dbName                    = projectName
+	statusesPerDay            = 1
+	statusesPerDayVip         = 3
 	dbCity                    = "countries"
 	tokenCollection           = "tokens"
 	mongoHost                 = "localhost"
@@ -131,9 +133,14 @@ func NewApp() *Application {
 		log.Fatal(err)
 	}
 
+	root := "/api"
+	if *mobile {
+		root = "/api/mobile"
+	}
+
 	m.Map(queryClient)
-	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru/api/auth/vk/redirect", "offline,email"})
-	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru/api/auth/fb/redirect", "email,user_birthday"})
+	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
+	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -150,11 +157,6 @@ func NewApp() *Application {
 
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}
 	m.Use(martini.Static("static", staticOptions))
-
-	root := "/api"
-	if *mobile {
-		root = "/api/mobile"
-	}
 
 	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)

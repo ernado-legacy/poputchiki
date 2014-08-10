@@ -162,3 +162,8 @@ func (db *DB) RemoveLikeStatus(user bson.ObjectId, target bson.ObjectId) error {
 func (db *DB) GetLikesStatus(id bson.ObjectId) []*models.User {
 	return db.GetLikes(db.statuses, id)
 }
+
+func (db *DB) GetLastDayStatusesAmount(id bson.ObjectId) (int, error) {
+	from := time.Now().AddDate(0, 0, -1)
+	return db.statuses.Find(bson.M{"user": id, "time": bson.M{"$gte": from}}).Count()
+}

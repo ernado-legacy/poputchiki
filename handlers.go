@@ -19,10 +19,10 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
 	"github.com/riobard/go-mailgun"
-	"html/template"
-	"io"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"html/template"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -725,15 +725,22 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int
 	if err := parser.Parse(status); err != nil {
 		return Render(ErrorBadRequest)
 	}
-	// err := db.DecBalance(t.Id, PromoCost)
-	// if err != nil && !*development {
-	// 	if err == mgo.ErrNotFound {
-	// 		return Render(ErrorInsufficentFunds)
-	// 	}
-	// 	log.Println(err)
-	// 	return Render(ErrorBackend)
-	// }
-	status, err := db.AddStatus(t.Id, status.Text)
+
+	count, err := db.GetLastDayStatusesAmount(t.Id)
+	if err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	allowed := statusesPerDay
+	u := db.Get(t.Id)
+	if u.Vip {
+		allowed = statusesPerDayVip
+	}
+	if count >= allowed {
+		return Render(ErrorInsufficentFunds)
+	}
+	status, err = db.AddStatus(t.Id, status.Text)
 	if err != nil {
 		log.Println(err)
 		go db.IncBalance(t.Id, PromoCost)
@@ -1378,7 +1385,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
 	if *mobile {
 		_, data := Render(userToken)
-		fmt.Fprint(w, data)
+		fmt.Fprint(w, string(data))
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -1435,7 +1442,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: u.Id.Hex(), Path: "/"})
 	if *mobile {
 		_, data := Render(userToken)
-		fmt.Fprint(w, data)
+		fmt.Fprint(w, string(data))
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)

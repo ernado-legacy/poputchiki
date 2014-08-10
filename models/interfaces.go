@@ -80,6 +80,7 @@ type DataBase interface {
 	AddLikeStatus(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikeStatus(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesStatus(id bson.ObjectId) []*User
+	GetLastDayStatusesAmount(id bson.ObjectId) (int, error)
 	// api/status/:id/comment/:id
 
 	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
