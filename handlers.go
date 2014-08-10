@@ -933,7 +933,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	s.Prepare(adapter, webp, video, audio)
+	s.Prepare(db, adapter, webp, video, audio)
 	return Render(s)
 }
 
@@ -944,7 +944,7 @@ func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp W
 		return Render(ErrorBackend)
 	}
 	for _, v := range stripe {
-		if err := v.Prepare(adapter, webp, video, audio); err != nil {
+		if err := v.Prepare(db, adapter, webp, video, audio); err != nil {
 			log.Println(err)
 			// return Render(ErrorBackend)
 		}

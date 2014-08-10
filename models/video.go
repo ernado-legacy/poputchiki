@@ -42,3 +42,7 @@ func (v *Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccep
 	}
 	return err
 }
+
+func (v Video) Url() string {
+	return v.VideoUrl
+}

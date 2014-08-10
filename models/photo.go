@@ -49,3 +49,7 @@ func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _
 	}
 	return err
 }
+
+func (p Photo) Url() string {
+	return p.ImageUrl
+}

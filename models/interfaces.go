@@ -146,6 +146,7 @@ type RealtimeInterface interface {
 
 type PrepareInterface interface {
 	Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error
+	Url() string
 }
 
 type MailSender interface {
