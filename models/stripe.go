@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
@@ -26,8 +25,8 @@ type StripeItem struct {
 }
 
 func convert(input interface{}, output interface{}) error {
-	data, _ := json.Marshal(input)
-	return json.Unmarshal(data, output)
+	data, _ := bson.Marshal(input)
+	return bson.Unmarshal(data, output)
 }
 
 func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
