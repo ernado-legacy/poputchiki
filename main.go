@@ -14,7 +14,6 @@ import (
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
-	// "github.com/martini-contrib/throttle"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -115,18 +114,6 @@ func NewApp() *Application {
 	if production {
 		martini.Env = martini.Prod
 	}
-
-	// A Rate Limit Policy
-	// m.Use(throttle.Policy(&throttle.Quota{
-	// 	Limit:  1000,
-	// 	Within: time.Hour,
-	// }))
-
-	// // An Interval Policy
-	// m.Use(throttle.Policy(&throttle.Quota{
-	// 	Limit:  10,
-	// 	Within: time.Second,
-	// }))
 
 	queryClient, err := query.NewRedisClient(weedUrl, redisAddr, *redisQueryKey, redisQueryRespKey)
 	if err != nil {
