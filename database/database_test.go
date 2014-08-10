@@ -3,7 +3,7 @@ package database
 import (
 	. "github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 	"testing"
 	"time"
 )

@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/url"
 	"time"

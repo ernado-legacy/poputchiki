@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 	"github.com/ernado/weed"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
 )

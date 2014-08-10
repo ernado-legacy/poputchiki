@@ -5,7 +5,7 @@ import (
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki/models"
 	"github.com/go-martini/martini"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 	"runtime/debug"

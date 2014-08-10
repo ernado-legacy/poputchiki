@@ -2,7 +2,7 @@ package database
 
 import (
 	. "github.com/ernado/poputchiki/models"
-	"labix.org/v2/mgo"
+	"gopkg.in/mgo.v2"
 	"log"
 	"time"
 )

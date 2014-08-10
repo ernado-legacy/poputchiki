@@ -6,7 +6,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/websocket"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 	"reflect"
