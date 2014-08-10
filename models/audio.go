@@ -28,5 +28,5 @@ func (audio *Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, 
 }
 
 func (audio Audio) Url() string {
-	return audio.AudioUrl()
+	return audio.AudioUrl
 }
