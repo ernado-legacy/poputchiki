@@ -43,6 +43,8 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 		log.Println(err)
 		// return err
 	}
+	stripe.UserObject = db.Get(stripe.User)
+	stripe.UserObject.Prepare(adapter, db, webp, audio)
 
 	var media PrepareInterface
 	switch stripe.Type {
@@ -54,6 +56,7 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 		v := new(Audio)
 		convert(stripe.Media, v)
 		media = v
+		stripe.ImageUrl = stripe.UserObject.AvatarUrl
 	case "photo":
 		v := new(Photo)
 		convert(stripe.Media, v)
@@ -63,11 +66,10 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 	}
 
 	if err := media.Prepare(adapter, webp, video, audio); err != nil {
+		log.Println(err)
 		return err
 	}
 	stripe.Url = media.Url()
-	stripe.UserObject = db.Get(stripe.User)
-	stripe.UserObject.Prepare(adapter, db, webp, audio)
 	stripe.Age = stripe.UserObject.Age
 	stripe.Name = stripe.UserObject.Name
 	return nil
