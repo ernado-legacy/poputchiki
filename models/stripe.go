@@ -67,7 +67,7 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 
 	if err := media.Prepare(adapter, webp, video, audio); err != nil {
 		log.Println(err)
-		return err
+		// return err
 	}
 	stripe.Url = media.Url()
 	stripe.Age = stripe.UserObject.Age
