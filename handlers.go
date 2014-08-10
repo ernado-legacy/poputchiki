@@ -1448,7 +1448,6 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-// admin
 func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase) {
 	user := db.Get(t.Id)
 	if user == nil || !user.IsAdmin {
