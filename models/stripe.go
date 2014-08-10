@@ -25,10 +25,7 @@ type StripeItem struct {
 }
 
 func convert(input interface{}, output interface{}) error {
-	data, err := json.Marshal(input)
-	if err != nil {
-		return err
-	}
+	data, _ := json.Marshal(input)
 	return json.Unmarshal(data, output)
 }
 
