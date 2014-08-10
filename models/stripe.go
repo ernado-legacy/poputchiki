@@ -45,6 +45,8 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 	}
 	stripe.UserObject = db.Get(stripe.User)
 	stripe.UserObject.Prepare(adapter, db, webp, audio)
+	stripe.Age = stripe.UserObject.Age
+	stripe.Name = stripe.UserObject.Name
 	stripe.UserObject.CleanPrivate()
 
 	var media PrepareInterface
@@ -71,8 +73,6 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 		// return err
 	}
 	stripe.Url = media.Url()
-	stripe.Age = stripe.UserObject.Age
-	stripe.Name = stripe.UserObject.Name
 	return nil
 }
 
