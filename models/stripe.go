@@ -45,6 +45,7 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 	}
 	stripe.UserObject = db.Get(stripe.User)
 	stripe.UserObject.Prepare(adapter, db, webp, audio)
+	stripe.UserObject.CleanPrivate()
 
 	var media PrepareInterface
 	switch stripe.Type {
