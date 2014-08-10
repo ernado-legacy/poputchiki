@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/ernado/weed"
 	"labix.org/v2/mgo/bson"
@@ -23,6 +24,14 @@ type StripeItem struct {
 	Time      time.Time     `json:"time"                bson:"time"`
 }
 
+func convert(input interface{}, output interface{}) error {
+	data, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, output)
+}
+
 func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
 	log.Printf("%+v", stripe)
 
@@ -40,14 +49,17 @@ func (stripe *StripeItem) Prepare(adapter *weed.Adapter, webp WebpAccept, video 
 	var media PrepareInterface
 	switch stripe.Type {
 	case "video":
-		v := stripe.Media.(Video)
-		media = &v
+		v := new(Video)
+		convert(stripe.Media, v)
+		media = v
 	case "audio":
-		v := stripe.Media.(Audio)
-		media = &v
+		v := new(Audio)
+		convert(stripe.Media, v)
+		media = v
 	case "photo":
-		v := stripe.Media.(Photo)
-		media = &v
+		v := new(Photo)
+		convert(stripe.Media, v)
+		media = v
 	default:
 		return errors.New("bad type")
 	}

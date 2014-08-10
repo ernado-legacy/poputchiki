@@ -9,7 +9,9 @@ import (
 
 func (db *DB) AddStripeItem(i *models.StripeItem, media interface{}) (*models.StripeItem, error) {
 	i.Media = media
-	i.Type = strings.ToLower(reflect.TypeOf(media).Name())
+	if i.Type == "" {
+		i.Type = strings.ToLower(reflect.TypeOf(media).Name())
+	}
 	return i, db.stripe.Insert(i)
 }
 

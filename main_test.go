@@ -21,6 +21,86 @@ import (
 	"time"
 )
 
+func TestStripeUpdate(t *testing.T) {
+	username := "test@" + mailDomain
+	password := "secretsecret"
+	*development = true
+	redisName = "poputchiki_test_upload"
+	dbName = "poputchiki_dev_upload"
+	path := "test/image.jpg"
+	a := NewApp()
+	defer a.Close()
+	a.DropDatabase()
+
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(a.DropDatabase)
+		token := new(gotok.Token)
+		res := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		a.ServeHTTP(res, req)
+		So(res.Code, ShouldEqual, http.StatusOK)
+		decoder := json.NewDecoder(res.Body)
+		So(decoder.Decode(token), ShouldBeNil)
+		Convey("Request should completed", func() {
+			file, err := os.Open(path)
+			So(err, ShouldBeNil)
+			res := httptest.NewRecorder()
+			body := &bytes.Buffer{}
+			writer := multipart.NewWriter(body)
+			part, err := writer.CreateFormFile("file", filepath.Base(path))
+			So(err, ShouldBeNil)
+			_, err = io.Copy(part, file)
+			So(err, ShouldBeNil)
+			So(writer.Close(), ShouldBeNil)
+			req, err := http.NewRequest("POST", "/api/photo/?token="+token.Token, body)
+			So(err, ShouldBeNil)
+			req.Header.Add("Content-type", writer.FormDataContentType())
+			a.ServeHTTP(res, req)
+			So(res.Code, ShouldEqual, http.StatusOK)
+			imageBody, _ := ioutil.ReadAll(res.Body)
+			image := &Photo{}
+			log.Println(string(imageBody))
+			So(json.Unmarshal(imageBody, image), ShouldBeNil)
+
+			Convey("File must be able to download", func() {
+				req, _ = http.NewRequest("GET", image.ImageUrl, nil)
+				client := &http.Client{}
+				res, err := client.Do(req)
+				So(err, ShouldBeNil)
+				So(res.StatusCode, ShouldEqual, http.StatusOK)
+			})
+
+			Convey("Stipe add", func() {
+				sreq := &StripeItemRequest{image.Id, "photo"}
+				j, err := json.Marshal(sreq)
+				So(err, ShouldBeNil)
+				res := httptest.NewRecorder()
+				body := bytes.NewBuffer(j)
+				req, err := http.NewRequest("POST", "/api/stripe/?token="+token.Token, body)
+				So(err, ShouldBeNil)
+				req.Header.Add("Content-type", "application/json")
+				a.ServeHTTP(res, req)
+				So(res.Code, ShouldEqual, http.StatusOK)
+				Convey("Stripe get", func() {
+					res := httptest.NewRecorder()
+					req, err := http.NewRequest("GET", "/api/stripe?token="+token.Token, nil)
+					So(err, ShouldBeNil)
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+					stripe := []StripeItem{}
+					decoder := json.NewDecoder(res.Body)
+					So(decoder.Decode(&stripe), ShouldBeNil)
+					So(len(stripe), ShouldEqual, 1)
+					s := stripe[0]
+					So(s.Type, ShouldEqual, "photo")
+					So(s.ImageUrl, ShouldNotEqual, "")
+				})
+			})
+
+		})
+	})
+}
 func TestStatusUpdate(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"
