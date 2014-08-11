@@ -126,6 +126,8 @@ type DataBase interface {
 	UpdateAllStatuses() (*mgo.ChangeInfo, error)
 	SetLastActionNow(id bson.ObjectId) error
 
+	CountryExists(name string) bool
+	CityExists(name string) bool
 	GetCities(start, country string) (cities []string, err error)
 	GetCountries(start string) (countries []string, err error)
 	GetPlaces(start string) (places []string, err error)

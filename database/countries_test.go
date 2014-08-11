@@ -32,4 +32,30 @@ func TestCountries(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(places, ShouldContain, "Россия")
 	})
+
+	Convey("Existance", t, func() {
+		Convey("Country", func() {
+			Convey("Positive", func() {
+				So(db.CountryExists("Россия"), ShouldBeTrue)
+			})
+			Convey("Negative", func() {
+				So(db.CountryExists("Абырвалн"), ShouldBeFalse)
+			})
+			Convey("False positive", func() {
+				So(db.CountryExists("россия"), ShouldBeFalse)
+			})
+		})
+
+		Convey("City", func() {
+			Convey("Positive", func() {
+				So(db.CityExists("Москва"), ShouldBeTrue)
+			})
+			Convey("Negative", func() {
+				So(db.CityExists("Абырвалн"), ShouldBeFalse)
+			})
+			Convey("False positive", func() {
+				So(db.CityExists("москва"), ShouldBeFalse)
+			})
+		})
+	})
 }

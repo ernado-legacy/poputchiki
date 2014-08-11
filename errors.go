@@ -22,3 +22,7 @@ var (
 	ErrorBackend               = Error{http.StatusInternalServerError, "Internal server error"}
 	ErrorUserAlreadyRegistered = Error{http.StatusBadRequest, "User already registered"}
 )
+
+func ValidationError(err error) Error {
+	return Error{http.StatusBadRequest, err.Error()}
+}

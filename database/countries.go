@@ -25,6 +25,16 @@ func (db *DB) GetCountries(start string) (countries []string, err error) {
 	return countries, err
 }
 
+func (db *DB) CountryExists(name string) bool {
+	count, err := db.countries.Find(bson.M{"title": name}).Count()
+	return err == nil && count > 0
+}
+
+func (db *DB) CityExists(name string) bool {
+	count, err := db.cities.Find(bson.M{"title": name}).Count()
+	return err == nil && count > 0
+}
+
 func (db *DB) GetCities(start, country string) (cities []string, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern, "country": country}

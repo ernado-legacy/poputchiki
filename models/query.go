@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -50,6 +51,20 @@ type SearchQuery struct {
 func NewQuery(q url.Values) (*SearchQuery, error) {
 	query := &SearchQuery{}
 	return query, mapToStruct(q, query)
+}
+
+func (s *SearchQuery) Validate(db DataBase) error {
+	if s.City != "" {
+		if !db.CityExists(s.City) {
+			return errors.New(fmt.Sprintf("Город %s не существует в базе данных", s.City))
+		}
+	}
+	if s.Country != "" {
+		if !db.CountryExists(s.Country) {
+			return errors.New(fmt.Sprintf("Страна %s не существует в базе данных", s.Country))
+		}
+	}
+	return nil
 }
 
 // ToBson generates mongo query from SearchQuery

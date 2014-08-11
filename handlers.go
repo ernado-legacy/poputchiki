@@ -808,6 +808,9 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
+	if err := query.Validate(db); err != nil {
+		return Render(ValidationError(err))
+	}
 	u := db.Get(t.Id)
 	if !u.Vip {
 		query.Sponsor = ""
@@ -832,6 +835,9 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
+	if err := query.Validate(db); err != nil {
+		return Render(ValidationError(err))
+	}
 	u := db.Get(t.Id)
 	if !u.Vip {
 		query.Sponsor = ""
@@ -855,6 +861,9 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBadRequest)
+	}
+	if err := query.Validate(db); err != nil {
+		return Render(ValidationError(err))
 	}
 	u := db.Get(t.Id)
 	if !u.Vip {
