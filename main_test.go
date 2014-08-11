@@ -7,9 +7,9 @@ import (
 	"github.com/ernado/gotok"
 	. "github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -157,6 +157,42 @@ func TestStatusUpdate(t *testing.T) {
 				So(res.Code, ShouldEqual, http.StatusOK)
 				So(decoder.Decode(s), ShouldBeNil)
 				So(s.Status, ShouldEqual, text)
+			})
+
+			Convey("Second status set should fail", func() {
+				text := "hello"
+				res := httptest.NewRecorder()
+				url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
+				req, _ := http.NewRequest("POST", url, nil)
+				a.ServeHTTP(res, req)
+				So(res.Code, ShouldEqual, http.StatusPaymentRequired)
+
+				Convey("So user should activate vip", func() {
+					res := httptest.NewRecorder()
+					url := fmt.Sprintf("/api/vip/week?token=%s", token.Token)
+					req, _ := http.NewRequest("POST", url, nil)
+					a.ServeHTTP(res, req)
+					So(res.Code, ShouldEqual, http.StatusOK)
+
+					Convey("And add 2 statuses", func() {
+						text := "hello"
+						res := httptest.NewRecorder()
+						url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
+						req, _ := http.NewRequest("POST", url, nil)
+						a.ServeHTTP(res, req)
+						So(res.Code, ShouldEqual, http.StatusOK)
+
+						res = httptest.NewRecorder()
+						a.ServeHTTP(res, req)
+						So(res.Code, ShouldEqual, http.StatusOK)
+
+						Convey("Second status set should fail", func() {
+							res = httptest.NewRecorder()
+							a.ServeHTTP(res, req)
+							So(res.Code, ShouldEqual, http.StatusPaymentRequired)
+						})
+					})
+				})
 			})
 		})
 	})
