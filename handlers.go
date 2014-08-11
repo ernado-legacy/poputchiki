@@ -808,6 +808,10 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
+	u := db.Get(t.Id)
+	if !u.Vip {
+		query.Sponsor = ""
+	}
 	result, count, err := db.Search(query, pagination.Count, pagination.Offset)
 	if err != nil {
 		log.Println(err)
@@ -821,11 +825,16 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	return Render(SearchResult{result, count})
 }
 
-func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, audio AudioAccept, adapter *weed.Adapter) (int, []byte) {
-	query, err := NewQuery(r.URL.Query())
+func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, audio AudioAccept, adapter *weed.Adapter) (int, []byte) {
+	q := addGeo(db, t, r)
+	query, err := NewQuery(q)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBadRequest)
+	}
+	u := db.Get(t.Id)
+	if !u.Vip {
+		query.Sponsor = ""
 	}
 	result, err := db.SearchStatuses(query, pagination.Count, pagination.Offset)
 	if err != nil {
@@ -840,11 +849,16 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAcc
 	return Render(result)
 }
 
-func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	query, err := NewQuery(r.URL.Query())
+func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	q := addGeo(db, t, r)
+	query, err := NewQuery(q)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBadRequest)
+	}
+	u := db.Get(t.Id)
+	if !u.Vip {
+		query.Sponsor = ""
 	}
 	result, err := db.SearchPhoto(query, pagination.Count, pagination.Offset)
 	if err != nil {

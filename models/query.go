@@ -42,6 +42,8 @@ type SearchQuery struct {
 	Geo          string
 	Location     string
 	Sort         string
+	Sponsor      string
+	Host         string
 }
 
 // NewQuery returns query object with parsed fields from url params
@@ -132,6 +134,14 @@ func (q *SearchQuery) ToBson() bson.M {
 	if q.Text != "" {
 		textQuery := bson.M{"$text": bson.M{"$search": q.Text, "$language": "russian"}}
 		query = append(query, textQuery)
+	}
+
+	if q.Sponsor != "" {
+		query = append(query, bson.M{"is_sponsor": true})
+	}
+
+	if q.Host != "" {
+		query = append(query, bson.M{"is_host": true})
 	}
 
 	if len(query) > 0 {
