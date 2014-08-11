@@ -945,7 +945,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		return Render(ErrorBadRequest)
 	}
 	if media == nil {
-		return Render(ErrorUserNotFound)
+		return Render(ErrorObjectNotFound)
 	}
 
 	log.Printf("media: %+v", media)
