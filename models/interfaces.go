@@ -104,6 +104,7 @@ type DataBase interface {
 	GetLikesVideo(id bson.ObjectId) []*User
 	UpdateVideoWebm(id bson.ObjectId, fid string) error
 	UpdateVideoMpeg(id bson.ObjectId, fid string) error
+	UpdateVideoThumbnails(id bson.ObjectId, tjpeg, twebp string) error
 
 	AddAudio(audio *Audio) (*Audio, error)
 	GetAudio(id bson.ObjectId) *Audio

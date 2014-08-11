@@ -70,6 +70,7 @@ type Application struct {
 	p       *redis.Pool
 	m       *martini.ClassicMartini
 	db      models.DataBase
+	adapter *weed.Adapter
 }
 
 func newPool() *redis.Pool {
@@ -138,7 +139,8 @@ func NewApp() *Application {
 	m.Use(ParserWrapper)
 	m.Map(tokenStorage)
 	m.Map(realtime)
-	m.Map(weed.NewAdapter(weedUrl))
+	weedAdapter := weed.NewAdapter(weedUrl)
+	m.Map(weedAdapter)
 	m.Map(db)
 	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))
 
@@ -243,7 +245,7 @@ func NewApp() *Application {
 		r.Get("/citypairs", GetCityPairs)
 	}, NeedAuth, SetOnlineWrapper)
 
-	a := &Application{session, p, m, db}
+	a := &Application{session, p, m, db, weedAdapter}
 	a.InitDatabase()
 	return a
 }
@@ -300,7 +302,7 @@ func (a *Application) ConvertResultListener() {
 			log.Println(err)
 			time.Sleep(1 * time.Second)
 		}
-		log.Println(resp)
+		log.Println("[dedicated conventer]", resp)
 		if !resp.Success {
 			log.Println("convertation error", resp.Id, resp.Error)
 			continue
@@ -321,6 +323,14 @@ func (a *Application) ConvertResultListener() {
 			}
 			if resp.Format == "mp4" {
 				err = db.UpdateVideoMpeg(id, fid)
+			}
+		}
+		if resp.Type == "thumbnail" {
+			jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
+			if err != nil {
+				log.Println(err)
+			} else {
+				err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
 			}
 		}
 		if err != nil {

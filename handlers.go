@@ -1362,6 +1362,43 @@ func ExportPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, url strin
 	return newPhoto
 }
 
+func ExportThumbnail(adapter *weed.Adapter, fid string) (thumbnailJpeg, thumbnailWebp string, err error) {
+	url, err := adapter.GetUrl(fid)
+	if err != nil {
+		return
+	}
+	res, err := http.Get(url)
+	if err != nil {
+		log.Println("unable to read form file", err)
+		return
+	}
+	f := res.Body
+	length := res.ContentLength
+	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
+	progress := make(chan float32)
+	go func() {
+		for _ = range progress {
+			continue
+		}
+	}()
+
+	p, err := uploader.Upload(length, f, progress)
+
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		rerr := recover()
+		if rerr != nil {
+			err = errors.New("export failed")
+			return
+		}
+	}()
+
+	return p.ThumbnailJpeg.Fid, p.ThumbnailWebp.Fid, nil
+}
+
 func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, adapter *weed.Adapter, tokens gotok.Storage, client *govkauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
@@ -1533,11 +1570,14 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	optsWebm := new(conv.VideoOptions)
 	optsWebm.Video.Format = "libvpx"
 	optsWebm.Audio.Format = "libvorbis"
-	optsMpeg.Audio.Bitrate = AUDIO_BITRATE
-	optsMpeg.Video.Bitrate = VIDEO_BITRATE
-	optsMpeg.Video.Square = true
-	optsMpeg.Video.Height = VIDEO_SIZE
-	optsMpeg.Video.Width = VIDEO_SIZE
+	optsWebm.Audio.Bitrate = AUDIO_BITRATE
+	optsWebm.Video.Bitrate = VIDEO_BITRATE
+	optsWebm.Video.Square = true
+	optsWebm.Video.Height = VIDEO_SIZE
+	optsWebm.Video.Width = VIDEO_SIZE
+
+	optsThmb := new(conv.ThumbnailOptions)
+	optsThmb.Format = "png"
 
 	fid, _, _, err := adapter.Upload(f, "video", "video")
 	if err != nil {
@@ -1545,11 +1585,16 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 		return Render(ErrorBackend)
 	}
 
-	if err := client.Push(id.Hex(), fid, "video", optsWebm); err != nil {
+	if err := client.Push(id.Hex(), fid, conv.VideoType, optsWebm); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	if err := client.Push(id.Hex(), fid, "video", optsMpeg); err != nil {
+	if err := client.Push(id.Hex(), fid, conv.VideoType, optsMpeg); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+
+	if err := client.Push(id.Hex(), fid, conv.ThumbnailType, optsThmb); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
@@ -1591,11 +1636,11 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	if err := client.Push(id.Hex(), fid, "audio", optsAac); err != nil {
+	if err := client.Push(id.Hex(), fid, conv.AudioType, optsAac); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
-	if err := client.Push(id.Hex(), fid, "audio", optsVorbis); err != nil {
+	if err := client.Push(id.Hex(), fid, conv.AudioType, optsVorbis); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
