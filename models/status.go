@@ -26,6 +26,7 @@ func (u *StatusUpdate) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAcce
 	}
 
 	u.UserObject.Prepare(adapter, db, webp, audio)
+	u.UserObject.CleanPrivate()
 	u.ImageUrl = u.UserObject.AvatarUrl
 
 	return err
