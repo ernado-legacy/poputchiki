@@ -9,37 +9,24 @@ import (
 type StatusUpdate struct {
 	Id         bson.ObjectId   `json:"id,omitempty"     bson:"_id"`
 	User       bson.ObjectId   `json:"user,omitempty"   bson:"user"`
-	Name       string          `json:"name,omitempty"   bson:"-"`
-	Birthday   time.Time       `json:"-"`
-	Age        int             `json:"age,omitempty"    bson:"-"`
+	UserObject *User           `json:"user_object,omitempty" bson:"-"`
 	Time       time.Time       `json:"time,omitempty"   bson:"time"`
 	Text       string          `json:"text,omitempty"   bson:"text"`
-	ImageWebp  string          `json:"-"                bson:"image_webp"`
-	ImageJpeg  string          `json:"-"                bson:"image_jpeg"`
 	ImageUrl   string          `json:"url,omitempty"    bson:"-"`
 	Likes      int             `json:"likes,omitempty"  bson:"likes"`
 	LikedUsers []bson.ObjectId `json:"liked_users"      bson:"liked_users"`
 }
 
-func (u StatusUpdate) Prepare(adapter *weed.Adapter, webp WebpAccept) (err error) {
-	if webp {
-		u.ImageUrl, err = adapter.GetUrl(u.ImageWebp)
-	} else {
-		u.ImageUrl, err = adapter.GetUrl(u.ImageJpeg)
-	}
+func (u *StatusUpdate) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (err error) {
 	if len(u.LikedUsers) == 0 {
 		u.LikedUsers = []bson.ObjectId{}
 	}
-
-	now := time.Now()
-	defer func() {
-		if r := recover(); r != nil {
-			u.Birthday = time.Unix(0, 0)
-		}
-	}()
-	if u.Birthday.Unix() != 0 {
-		u.Age = diff(u.Birthday, now)
+	if u.UserObject == nil {
+		u.UserObject = db.Get(u.User)
 	}
+
+	u.UserObject.Prepare(adapter, db, webp, audio)
+	u.ImageUrl = u.UserObject.AvatarUrl
 
 	return err
 }

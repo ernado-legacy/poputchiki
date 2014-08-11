@@ -101,17 +101,9 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": userIds}}).All(&statuses); err != nil {
 		return statuses, err
 	}
-	// if len(statuses) != len(users) {
-	// 	log.Println(statuses, users)
-	// 	return statuses, errors.New("unexpected length")
-	// }
 
 	for i, status := range statuses {
-		user := users[status.User]
-		statuses[i].ImageJpeg = user.AvatarJpeg
-		statuses[i].ImageWebp = user.AvatarWebp
-		statuses[i].Name = user.Name
-		statuses[i].Birthday = user.Birthday
+		statuses[i].UserObject = users[status.User]
 	}
 
 	sort.Sort(StatusByTime(statuses))
@@ -141,11 +133,7 @@ func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.StatusUpdate
 	}
 
 	for _, status := range statuses {
-		user := userMap[status.User]
-		status.Name = user.Name
-		status.ImageJpeg = user.AvatarJpeg
-		status.ImageWebp = user.AvatarWebp
-		status.Birthday = user.Birthday
+		status.UserObject = userMap[status.User]
 	}
 
 	return

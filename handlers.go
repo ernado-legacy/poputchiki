@@ -821,7 +821,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	return Render(SearchResult{result, count})
 }
 
-func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAccept WebpAccept, audio AudioAccept, adapter *weed.Adapter) (int, []byte) {
 	query, err := NewQuery(r.URL.Query())
 	if err != nil {
 		log.Println(err)
@@ -834,7 +834,7 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, webpAcc
 	}
 
 	for key, _ := range result {
-		result[key].Prepare(adapter, webpAccept)
+		result[key].Prepare(db, adapter, webpAccept, audio)
 	}
 
 	return Render(result)
