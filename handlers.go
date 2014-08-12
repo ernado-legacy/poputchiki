@@ -934,9 +934,20 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		if audio == nil {
 			return Render(ErrorObjectNotFound)
 		}
-		u := db.Get(t.Id)
-		i.ImageJpeg = u.AvatarJpeg
-		i.ImageWebp = u.AvatarWebp
+
+		p, err := db.GetPhoto(request.Photo)
+		if err != nil && err != mgo.ErrNotFound {
+			log.Println(err)
+			return Render(ErrorBackend)
+		}
+		if p == nil {
+			u := db.Get(t.Id)
+			i.ImageJpeg = u.AvatarJpeg
+			i.ImageWebp = u.AvatarWebp
+		} else {
+			i.ImageJpeg = p.ImageJpeg
+			i.ImageWebp = p.ImageWebp
+		}
 		media = audio
 	case "photo":
 		p, err := db.GetPhoto(request.Id)

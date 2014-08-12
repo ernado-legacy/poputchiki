@@ -76,6 +76,7 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 }
 
 type StripeItemRequest struct {
-	Id   bson.ObjectId `json:"id"`
-	Type string        `json:"type"`
+	Id    bson.ObjectId `json:"id"`
+	Photo bson.ObjectId `json:"photo,omitempty"`
+	Type  string        `json:"type"`
 }
