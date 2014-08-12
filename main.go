@@ -239,6 +239,7 @@ func NewApp() *Application {
 		r.Post("/photo/:id/like", IdWrapper, LikePhoto)
 		r.Get("/photo/:id/like", IdWrapper, GetLikersPhoto)
 		r.Delete("/photo/:id/like", IdWrapper, RestoreLikePhoto)
+		r.Delete("/photo/:id", IdWrapper, RemovePhoto)
 		r.Get("/countries", GetCountries)
 		r.Get("/cities", GetCities)
 		r.Get("/places", GetPlaces)
