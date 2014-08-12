@@ -945,8 +945,8 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 			i.ImageJpeg = u.AvatarJpeg
 			i.ImageWebp = u.AvatarWebp
 		} else {
-			i.ImageJpeg = p.ImageJpeg
-			i.ImageWebp = p.ImageWebp
+			i.ImageJpeg = p.ThumbnailJpeg
+			i.ImageWebp = p.ThumbnailWebp
 		}
 		media = audio
 	case "photo":
