@@ -265,6 +265,7 @@ func (a *Application) Close() {
 func (a *Application) StatusCycle() {
 	log.Println("[status]", "starting status cycle")
 	ticker := time.NewTicker(OfflineUpdateTick)
+
 	for _ = range ticker.C {
 		i, err := a.db.UpdateAllStatuses()
 		if err != nil {
@@ -301,7 +302,8 @@ func (a *Application) RatingDegradatingCycle() {
 	fullTime := float64(ratingDegradationDuration.Nanoseconds())
 	rate := fullRating * deltaTime / fullTime
 	log.Println("[rating] rate", rate)
-
+	lastLog := time.Now()
+	logRate := time.Second * 30
 	ticker := time.NewTicker(ratingUpdateDelta)
 	for _ = range ticker.C {
 		start := time.Now()
@@ -310,8 +312,9 @@ func (a *Application) RatingDegradatingCycle() {
 		if err != nil {
 			log.Println("[rating]", "error", err)
 		} else {
-			if i.Updated != 0 {
+			if i.Updated != 0 && start.Sub(lastLog) > logRate {
 				log.Println("[rating]", "updated: ", i.Updated, "for", duration)
+				lastLog = start
 			}
 		}
 	}
