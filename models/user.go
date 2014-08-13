@@ -86,6 +86,7 @@ type User struct {
 	Invisible           bool            `json:"invisible"              bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
 	VipTill             time.Time       `json:"vip_till"               bson:"vip_till"`
+	Rating              float64         `json:"rating"                 bson:"rating"`
 }
 
 type GuestUser struct {

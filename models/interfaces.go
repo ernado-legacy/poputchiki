@@ -68,6 +68,9 @@ type DataBase interface {
 	SetOnline(id bson.ObjectId) error
 	SetOffline(id bson.ObjectId) error
 
+	SetRating(id bson.ObjectId, rating float64) error
+	ChangeRating(id bson.ObjectId, delta int) error
+
 	// statuses
 	// api/user/:id/status/
 	GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error)
