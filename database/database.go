@@ -83,6 +83,7 @@ func (database *DB) Init() {
 
 	index = mgo.Index{Key: []string{"$hashed:_id"}}
 	must(db.C(collection).EnsureIndex(index))
+	must(db.C(collection).EnsureIndexKey("rating"))
 
 	index = mgo.Index{
 		Key:        []string{"guest"},
