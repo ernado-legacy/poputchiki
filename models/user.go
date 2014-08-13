@@ -159,6 +159,7 @@ func diff(t1, t2 time.Time) (years int) {
 }
 
 func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept) {
+	u.Password = ""
 	u.SetAvatarUrl(adapter, db, webp)
 
 	if u.Audio != "" {
@@ -187,5 +188,4 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 		u.Age = diff(u.Birthday, now)
 	}
 
-	u.Password = ""
 }
