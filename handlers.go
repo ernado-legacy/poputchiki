@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -822,15 +823,27 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	if !u.Vip {
 		query.Sponsor = ""
 	}
+	now := time.Now()
 	result, count, err := db.Search(query, pagination)
+	log.Println("query", time.Now().Sub(now))
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
 	}
 
+	now = time.Now()
+	g := new(sync.WaitGroup)
 	for key, _ := range result {
-		result[key].Prepare(adapter, db, webpAccept, audio)
+		g.Add(1)
+		go func() {
+			result[key].Prepare(adapter, db, webpAccept, audio)
+			log.Println("prepared")
+			g.Done()
+		}()
 	}
+	g.Wait()
+
+	log.Println("prepare", time.Now().Sub(now))
 
 	return Render(SearchResult{result, count})
 }

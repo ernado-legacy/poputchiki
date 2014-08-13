@@ -146,6 +146,7 @@ type DataBase interface {
 
 	UpdateAllVip() (*mgo.ChangeInfo, error)
 	DegradeRating(amount float64) (*mgo.ChangeInfo, error)
+	NormalizeRating() (*mgo.ChangeInfo, error)
 }
 
 type RealtimeInterface interface {

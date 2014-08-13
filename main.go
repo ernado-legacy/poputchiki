@@ -30,7 +30,7 @@ var (
 	vipWeek                        = 400
 	vipMonth                       = 1000
 	ratingDegradationDuration      = time.Hour * 24 * 3
-	ratingUpdateDelta              = time.Millisecond * 5
+	ratingUpdateDelta              = time.Second * 5
 	statusUpdateTime               = time.Hour * 24
 	dbName                         = projectName
 	statusesPerDay                 = 1
@@ -290,6 +290,21 @@ func (a *Application) VipCycle() {
 		} else {
 			if i.Updated != 0 {
 				log.Println("[updater]", "vip updated: ", i.Updated)
+			}
+		}
+	}
+}
+
+func (a *Application) NormalizeRatingCycle() {
+	log.Println("[rating]", "starting rating normalization cycle")
+	ticker := time.NewTicker(OfflineUpdateTick)
+	for _ = range ticker.C {
+		i, err := a.db.NormalizeRating()
+		if err != nil {
+			log.Println("[rating]", "error", err)
+		} else {
+			if i.Updated != 0 {
+				log.Println("[rating]", "normalized: ", i.Updated)
 			}
 		}
 	}

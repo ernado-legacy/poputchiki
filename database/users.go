@@ -305,3 +305,7 @@ func (db *DB) ChangeRating(id bson.ObjectId, delta int) error {
 func (db *DB) DegradeRating(amount float64) (*mgo.ChangeInfo, error) {
 	return db.users.UpdateAll(bson.M{"rating": bson.M{"$gte": 0}}, bson.M{"$inc": bson.M{"rating": -1 * amount}})
 }
+
+func (db *DB) NormalizeRating() (*mgo.ChangeInfo, error) {
+	return db.users.UpdateAll(bson.M{"rating": bson.M{"$gt": 100}}, bson.M{"$set": bson.M{"rating": 100.0}})
+}
