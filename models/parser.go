@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,6 +35,9 @@ func mapToStruct(q url.Values, val interface{}) error {
 		value := q[key]
 		if len(value) == 1 {
 			v := value[0]
+			if field.Type.Name() == "ObjectId" && bson.IsObjectIdHex(v) {
+				nQ[key] = bson.ObjectIdHex(v)
+			}
 			vInt, err := strconv.Atoi(v)
 			if err != nil || field.Type.Name() == "string" {
 				nQ[key] = v
