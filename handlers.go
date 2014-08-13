@@ -1638,7 +1638,7 @@ func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	v, err := db.GetUserVideo(id)
 
 	if err == mgo.ErrNotFound {
-		return Render(ErrorUserNotFound)
+		return Render(ErrorObjectNotFound)
 	}
 
 	for _, videoElem := range v {
@@ -1648,6 +1648,34 @@ func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	}
 
 	return Render(v)
+}
+
+func GetVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+	v := db.GetVideo(id)
+	if v == nil {
+		return Render(ErrorObjectNotFound)
+	}
+	if err := v.Prepare(adapter, webp, video, audio); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
+	return Render(v)
+}
+
+func GetPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+	p, err := db.GetPhoto(id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
+	var (
+		video VideoAccept
+		audio AudioAccept
+	)
+	if err := p.Prepare(adapter, webp, video, audio); err != nil {
+		return Render(ErrorBackend)
+	}
+
+	return Render(p)
 }
 
 func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
