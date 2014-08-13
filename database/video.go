@@ -25,6 +25,10 @@ func (db *DB) GetVideo(id bson.ObjectId) *models.Video {
 	return v
 }
 
+func (db *DB) RemoveVideo(user bson.ObjectId, id bson.ObjectId) error {
+	return db.video.Remove(bson.M{"_id": id, "user": user})
+}
+
 func (db *DB) GetUserVideo(id bson.ObjectId) ([]*models.Video, error) {
 	v := []*models.Video{}
 	return v, db.video.Find(bson.M{"user": id}).All(&v)

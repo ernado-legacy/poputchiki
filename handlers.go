@@ -1198,6 +1198,17 @@ func RemovePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	return Render("ok")
 }
 
+func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+	err := db.RemoveVideo(t.Id, id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
+	if err != nil {
+		return Render(ErrorBackend)
+	}
+	return Render("ok")
+}
+
 func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
 	for k := range likers {

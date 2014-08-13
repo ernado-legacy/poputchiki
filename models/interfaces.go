@@ -105,6 +105,7 @@ type DataBase interface {
 	UpdateVideoWebm(id bson.ObjectId, fid string) error
 	UpdateVideoMpeg(id bson.ObjectId, fid string) error
 	UpdateVideoThumbnails(id bson.ObjectId, tjpeg, twebp string) error
+	RemoveVideo(user bson.ObjectId, id bson.ObjectId) error
 
 	AddAudio(audio *Audio) (*Audio, error)
 	GetAudio(id bson.ObjectId) *Audio
