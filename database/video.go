@@ -31,7 +31,7 @@ func (db *DB) RemoveVideo(user bson.ObjectId, id bson.ObjectId) error {
 
 func (db *DB) GetUserVideo(id bson.ObjectId) ([]*models.Video, error) {
 	v := []*models.Video{}
-	return v, db.video.Find(bson.M{"user": id}).All(&v)
+	return v, db.video.Find(bson.M{"user": id}).Sort("-time").All(&v)
 }
 
 func (db *DB) AddVideo(video *models.Video) (*models.Video, error) {
