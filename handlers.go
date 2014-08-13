@@ -1657,7 +1657,7 @@ func GetVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAcc
 	}
 	if err := v.Prepare(adapter, webp, video, audio); err != nil {
 		log.Println(err)
-		return Render(ErrorBackend)
+		// return Render(ErrorBackend)
 	}
 	return Render(v)
 }
