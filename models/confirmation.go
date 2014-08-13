@@ -26,7 +26,7 @@ type ConfirmationMail struct {
 }
 
 func (mail ConfirmationMail) From() string {
-	return "noreply@" + mail.Origin
+	return mail.Origin
 }
 
 func (mail ConfirmationMail) To() []string {

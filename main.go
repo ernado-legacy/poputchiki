@@ -14,6 +14,7 @@ import (
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
+	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -125,7 +126,8 @@ func NewApp() *Application {
 	if *mobile {
 		root = "/api/mobile"
 	}
-
+	mailgunClient := mailgun.New(mailKey)
+	m.Map(mailgunClient)
 	m.Map(queryClient)
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
@@ -369,7 +371,7 @@ func main() {
 	flag.BoolVar(&production, "production", false, "environment")
 	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
 	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")
-	flag.StringVar(&smsKey, "sms-key", "80df3a7d-4c8c-ffb4-b197-4dc850443bba", "mailgun domain")
+	flag.StringVar(&smsKey, "sms-key", "80df3a7d-4c8c-ffb4-b197-4dc850443bba", "sms key")
 	flag.Parse()
 	projectName = *projectNameF
 	dbName = projectName

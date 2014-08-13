@@ -342,7 +342,7 @@ func Logout(db DataBase, r *http.Request, tokens gotok.Storage, t *gotok.Token) 
 
 // Register checks the provided credentials, add new user with that credentials to
 // database and returns new authorisation token, setting the appropriate cookies
-func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, mail *mailgun.Client) (int, []byte) {
 	// load user data from form
 	u := UserFromForm(r, db.Salt())
 	// check that email is unique
@@ -367,19 +367,18 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 	if confTok == nil {
 		return Render(ErrorBackend)
 	}
-	// anyncronously send email to user
-	go func() {
-		mgClient := mailgun.New(mailKey)
+	if !*development {
 		message := ConfirmationMail{}
 		message.Destination = u.Email
+		message.Origin = "noreply@" + mailDomain
 		message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
 		// log.Println("[email]", message.From(), message.To(), message.Text())
-		_, err = mgClient.Send(message)
+		_, err = mail.Send(message)
 		// log.Println(message)
-		// if err != nil {
-		// 	log.Println("[email]", err)
-		// }
-	}()
+		if err != nil {
+			log.Println("[email]", err)
+		}
+	}
 	http.SetCookie(w, t.GetCookie())
 	return Render(t)
 }
@@ -1278,7 +1277,7 @@ func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
 	return Render(cities)
 }
 
-func ForgotPassword(db DataBase, args martini.Params) (int, []byte) {
+func ForgotPassword(db DataBase, args martini.Params, mail *mailgun.Client) (int, []byte) {
 	var err error
 	email := args["email"]
 	u := db.GetUsername(email)
@@ -1291,18 +1290,17 @@ func ForgotPassword(db DataBase, args martini.Params) (int, []byte) {
 		return Render(ErrorBackend)
 	}
 	// anyncronously send email to user
-	go func() {
-		mgClient := mailgun.New(mailKey)
+	if !*development {
 		message := ConfirmationMail{}
 		message.Destination = u.Email
+		message.Origin = "noreply@" + mailDomain
 		message.Mail = "http://poputchiki.ru/api/forgot/" + confTok.Token
 		log.Println("[email]", message.From(), message.To(), message.Text())
-		_, err = mgClient.Send(message)
-		log.Println(message)
+		_, err = mail.Send(message)
 		if err != nil {
 			log.Println("[email]", err)
 		}
-	}()
+	}
 
 	return Render("ok")
 }
