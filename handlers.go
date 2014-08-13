@@ -456,6 +456,7 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBackend)
 	}
 	// returning updated user
+	log.Printf("%+v", newQuery)
 	updated := db.Get(id)
 	return Render(updated)
 }
@@ -747,6 +748,7 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int
 		go db.IncBalance(t.Id, PromoCost)
 		return Render(ErrorBackend)
 	}
+	db.SetRating(t.Id, 100.0)
 	return Render(status)
 }
 
@@ -976,6 +978,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		return Render(ErrorBackend)
 	}
 	s.Prepare(db, adapter, webp, video, audio)
+	db.SetRating(t.Id, 100.0)
 	return Render(s)
 }
 
