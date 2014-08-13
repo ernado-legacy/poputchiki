@@ -30,7 +30,7 @@ var (
 	vipWeek                        = 400
 	vipMonth                       = 1000
 	ratingDegradationDuration      = time.Hour * 24 * 3
-	ratingUpdateDelta              = time.Millisecond * 300
+	ratingUpdateDelta              = time.Millisecond * 5
 	statusUpdateTime               = time.Hour * 24
 	dbName                         = projectName
 	statusesPerDay                 = 1
