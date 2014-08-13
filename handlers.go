@@ -353,6 +353,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 	}
 	// log.Println("registered", u.Password)
 	// add to database
+	u.Rating = 100.0
 	if err := db.Add(u); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -751,7 +752,7 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int
 		go db.IncBalance(t.Id, PromoCost)
 		return Render(ErrorBackend)
 	}
-	db.SetRating(t.Id, 100.0)
+	db.ChangeRating(t.Id, 50.0*count)
 	return Render(status)
 }
 
@@ -1454,6 +1455,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 		user, err := client.GetName(token.UserID)
 		newUser.Name = user.Name
 		newUser.Birthday = user.Birthday
+		newUser.Rating = 100.0
 		newUser.Sex = user.Sex
 		log.Println(newUser.Name, err)
 		err = db.Add(newUser)
@@ -1512,6 +1514,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 		newUser.EmailConfirmed = true
 		newUser.Name = fbUser.Name
 		newUser.Birthday = fbUser.Birthday
+		newUser.Rating = 100.0
 		log.Println(newUser.Name, err)
 		err = db.Add(newUser)
 		if err != nil {
