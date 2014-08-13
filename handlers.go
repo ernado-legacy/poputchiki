@@ -393,6 +393,8 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBadRequest)
 	}
 
+	log.Printf("query: %+v", query)
+
 	// removes fields
 	isWriteable := func(key string) bool {
 		for _, v := range UserWritableFields {
@@ -424,6 +426,7 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	}
 
 	if user.Password != "" {
+		log.Println("hashing password", user.Password, "to", getHash(user.Password, db.Salt()))
 		user.Password = getHash(user.Password, db.Salt())
 	}
 
@@ -456,7 +459,7 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBackend)
 	}
 	// returning updated user
-	log.Printf("%+v", newQuery)
+	log.Printf("result: %+v", newQuery)
 	updated := db.Get(id)
 	return Render(updated)
 }

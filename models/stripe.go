@@ -30,7 +30,7 @@ func convert(input interface{}, output interface{}) error {
 }
 
 func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
-	log.Printf("%+v", stripe)
+	// log.Printf("%+v", stripe)
 
 	var err error
 	if webp {
