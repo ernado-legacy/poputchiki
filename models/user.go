@@ -186,4 +186,6 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 	if u.Birthday.Unix() != 0 {
 		u.Age = diff(u.Birthday, now)
 	}
+
+	u.Password = ""
 }
