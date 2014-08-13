@@ -29,7 +29,6 @@ type Photo struct {
 }
 
 func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
-	log.Printf("%+v", p)
 	var err error
 	if webp {
 		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailWebp)

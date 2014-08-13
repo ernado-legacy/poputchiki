@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
-	"log"
+	// "log"
 	"time"
 )
 
@@ -39,7 +39,7 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageJpeg)
 	}
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
 		// return err
 	}
 	stripe.UserObject = db.Get(stripe.User)

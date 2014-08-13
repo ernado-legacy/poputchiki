@@ -60,7 +60,7 @@ func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
 	photos := []*Photo{}
 	query := q.ToBson()
 	u := []*User{}
-	if err := db.users.Find(query).Skip(offset).Limit(count).All(&u); err != nil {
+	if err := db.users.Find(query).Sort("-rating").Skip(offset).Limit(count).All(&u); err != nil {
 		return photos, err
 	}
 	users := make([]bson.ObjectId, len(u))

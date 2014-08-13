@@ -24,39 +24,41 @@ import (
 )
 
 var (
-	salt                      = "salt"
-	projectName               = "poputchiki"
-	premiumTime               = time.Hour * 24 * 30
-	vipWeek                   = 400
-	vipMonth                  = 1000
-	statusUpdateTime          = time.Hour * 24
-	dbName                    = projectName
-	statusesPerDay            = 1
-	statusesPerDayVip         = 3
-	dbCity                    = "countries"
-	tokenCollection           = "tokens"
-	mongoHost                 = "localhost"
-	robokassaLogin            = "poputchiki.ru"
-	robokassaPassword1        = "pcZKT5Qm84MJAIudLAbR"
-	robokassaPassword2        = "8x3cVXUt08Uc9TV70mx3"
-	robokassaDescription      = "Пополнение счета Попутчики.ру"
-	production                = false
-	processes                 = runtime.NumCPU()
-	redisName                 = projectName
-	redisAddr                 = ":6379"
-	redisQueryKey             = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
-	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
-	mailDomain                = "mg.cydev.ru"
-	smsKey                    = "nil"
-	weedHost                  = "127.0.0.1"
-	weedPort                  = 9333
-	weedUrl                   = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
-	OfflineTimeout            = 60 * 5 * time.Second
-	OfflineUpdateTick         = 5 * time.Second
-	PromoCost            uint = 50
-	mobile                    = flag.Bool("mobile", false, "is mobile api")
-	development               = flag.Bool("dev", false, "is in development")
-	sendEmail                 = flag.Bool("email", true, "send registration emails")
+	salt                           = "salt"
+	projectName                    = "poputchiki"
+	premiumTime                    = time.Hour * 24 * 30
+	vipWeek                        = 400
+	vipMonth                       = 1000
+	ratingDegradationDuration      = time.Hour * 24 * 3
+	ratingUpdateDelta              = time.Millisecond * 300
+	statusUpdateTime               = time.Hour * 24
+	dbName                         = projectName
+	statusesPerDay                 = 1
+	statusesPerDayVip              = 3
+	dbCity                         = "countries"
+	tokenCollection                = "tokens"
+	mongoHost                      = "localhost"
+	robokassaLogin                 = "poputchiki.ru"
+	robokassaPassword1             = "pcZKT5Qm84MJAIudLAbR"
+	robokassaPassword2             = "8x3cVXUt08Uc9TV70mx3"
+	robokassaDescription           = "Пополнение счета Попутчики.ру"
+	production                     = false
+	processes                      = runtime.NumCPU()
+	redisName                      = projectName
+	redisAddr                      = ":6379"
+	redisQueryKey                  = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
+	mailKey                        = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
+	mailDomain                     = "mg.cydev.ru"
+	smsKey                         = "nil"
+	weedHost                       = "127.0.0.1"
+	weedPort                       = 9333
+	weedUrl                        = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	OfflineTimeout                 = 60 * 5 * time.Second
+	OfflineUpdateTick              = 5 * time.Second
+	PromoCost                 uint = 50
+	mobile                         = flag.Bool("mobile", false, "is mobile api")
+	development                    = flag.Bool("dev", false, "is in development")
+	sendEmail                      = flag.Bool("email", true, "send registration emails")
 )
 
 func getHash(password string, s string) string {
@@ -261,16 +263,16 @@ func (a *Application) Close() {
 }
 
 func (a *Application) StatusCycle() {
-	log.Println("[updater]", "starting cycle")
+	log.Println("[status]", "starting status cycle")
 	ticker := time.NewTicker(OfflineUpdateTick)
 	for _ = range ticker.C {
 		i, err := a.db.UpdateAllStatuses()
 		if err != nil {
-			log.Println("[updater]", "status update error", err)
+			log.Println("[status]", "status update error", err)
 			time.Sleep(time.Second * 5)
 		} else {
 			if i.Updated != 0 {
-				log.Println("[updater]", "statuses updated: ", i.Updated)
+				log.Println("[status]", "statuses updated: ", i.Updated)
 			}
 		}
 	}
@@ -287,6 +289,29 @@ func (a *Application) VipCycle() {
 		} else {
 			if i.Updated != 0 {
 				log.Println("[updater]", "vip updated: ", i.Updated)
+			}
+		}
+	}
+}
+
+func (a *Application) RatingDegradatingCycle() {
+	log.Println("[rating]", "starting rating update cycle")
+	fullRating := 100.0
+	deltaTime := float64(ratingUpdateDelta.Nanoseconds())
+	fullTime := float64(ratingDegradationDuration.Nanoseconds())
+	rate := fullRating * deltaTime / fullTime
+	log.Println("[rating] rate", rate)
+
+	ticker := time.NewTicker(ratingUpdateDelta)
+	for _ = range ticker.C {
+		start := time.Now()
+		i, err := a.db.DegradeRating(rate)
+		duration := time.Now().Sub(start)
+		if err != nil {
+			log.Println("[rating]", "error", err)
+		} else {
+			if i.Updated != 0 {
+				log.Println("[rating]", "updated: ", i.Updated, "for", duration)
 			}
 		}
 	}
@@ -349,6 +374,7 @@ func (a *Application) Run() {
 	go a.StatusCycle()
 	go a.VipCycle()
 	go a.ConvertResultListener()
+	go a.RatingDegradatingCycle()
 	a.m.Run()
 }
 

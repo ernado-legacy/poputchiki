@@ -145,6 +145,7 @@ type DataBase interface {
 	SetAvatar(user, avatar bson.ObjectId) error
 
 	UpdateAllVip() (*mgo.ChangeInfo, error)
+	DegradeRating(amount float64) (*mgo.ChangeInfo, error)
 }
 
 type RealtimeInterface interface {

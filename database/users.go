@@ -271,7 +271,7 @@ func (db *DB) Search(q *SearchQuery, pagination Pagination) ([]*User, int, error
 	if err != nil {
 		return u, 0, err
 	}
-	return u, count, db.users.Find(query).Skip(pagination.Offset).Limit(pagination.Count).All(&u)
+	return u, count, db.users.Find(query).Sort("-rating").Skip(pagination.Offset).Limit(pagination.Count).All(&u)
 }
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
@@ -300,4 +300,8 @@ func (db *DB) SetRating(id bson.ObjectId, rating float64) error {
 
 func (db *DB) ChangeRating(id bson.ObjectId, delta int) error {
 	return db.users.UpdateId(id, bson.M{"$inc": bson.M{"rating": delta}})
+}
+
+func (db *DB) DegradeRating(amount float64) (*mgo.ChangeInfo, error) {
+	return db.users.UpdateAll(bson.M{"rating": bson.M{"$gte": 0}}, bson.M{"$inc": bson.M{"rating": -1 * amount}})
 }
