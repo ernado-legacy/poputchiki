@@ -423,7 +423,9 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBadRequest)
 	}
 
-	user.Password = getHash(user.Password, db.Salt())
+	if user.Password != "" {
+		user.Password = getHash(user.Password, db.Salt())
+	}
 
 	// encoding back to query object
 	// marshalling to bson
@@ -447,7 +449,6 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 			delete(newQuery, k)
 		}
 	}
-
 	// updating user
 	_, err = db.Update(id, newQuery)
 	if err != nil {
@@ -455,7 +456,8 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 		return Render(ErrorBackend)
 	}
 	// returning updated user
-	return Render(db.Get(id))
+	updated := db.Get(id)
+	return Render(updated)
 }
 
 func Must(err error) {

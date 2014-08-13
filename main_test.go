@@ -21,6 +21,52 @@ import (
 	"time"
 )
 
+func TestPasswordUpdate(t *testing.T) {
+	username := "test@" + mailDomain
+	password := "secretsecret"
+	*development = true
+	redisName = "poputchiki_test_upload"
+	dbName = "poputchiki_dev_upload"
+	a := NewApp()
+	defer a.Close()
+	a.DropDatabase()
+
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(a.DropDatabase)
+		token := new(gotok.Token)
+		res := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
+		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
+		req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+		a.ServeHTTP(res, req)
+		So(res.Code, ShouldEqual, http.StatusOK)
+		So(json.NewDecoder(res.Body).Decode(token), ShouldBeNil)
+		Convey("Change", func() {
+			newpassword := "tedsafsf"
+			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token.Id.Hex(), token.Token)
+			changes := map[string]string{"password": newpassword}
+			uJson, err := json.Marshal(changes)
+			uReader := bytes.NewReader(uJson)
+			So(err, ShouldBeNil)
+			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
+			req.Header.Add(ContentTypeHeader, "application/json")
+			a.ServeHTTP(res, req)
+			So(res.Code, ShouldEqual, http.StatusOK)
+
+			Convey("Login", func() {
+				token := new(gotok.Token)
+				res := httptest.NewRecorder()
+				req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
+				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
+				req.PostForm = url.Values{FORM_PASSWORD: {newpassword}, FORM_EMAIL: {username}}
+				a.ServeHTTP(res, req)
+				So(res.Code, ShouldEqual, http.StatusOK)
+				So(json.NewDecoder(res.Body).Decode(token), ShouldBeNil)
+			})
+		})
+	})
+}
+
 func TestStripeUpdate(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"
@@ -513,12 +559,14 @@ func TestMethods(t *testing.T) {
 			err := json.Unmarshal(tokenBody, &token1)
 			So(err, ShouldEqual, nil)
 
+			newpassword := "tedsafsf"
 			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
 			changes := User{}
 			changes.Name = firstname
 			changes.Phone = phone
 			changes.Sex = "female"
 			changes.Location = []float64{155.0, 155.0}
+			changes.Password = newpassword
 			uJson, err := json.Marshal(changes)
 			uReader := bytes.NewReader(uJson)
 			So(err, ShouldBeNil)
