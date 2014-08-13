@@ -815,7 +815,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	if !u.Vip {
 		query.Sponsor = ""
 	}
-	result, count, err := db.Search(query, pagination.Count, pagination.Offset)
+	result, count, err := db.Search(query, pagination)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)

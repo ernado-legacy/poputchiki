@@ -115,7 +115,7 @@ type DataBase interface {
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
 	GetStripe(count, offset int) ([]*StripeItem, error)
 
-	Search(q *SearchQuery, count, offset int) ([]*User, int, error)
+	Search(q *SearchQuery, pagination Pagination) ([]*User, int, error)
 	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
 
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken

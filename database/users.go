@@ -259,9 +259,9 @@ func (db *DB) SetAvatar(user, avatar bson.ObjectId) error {
 	return err
 }
 
-func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, int, error) {
-	if count == 0 {
-		count = searchCount
+func (db *DB) Search(q *SearchQuery, pagination Pagination) ([]*User, int, error) {
+	if pagination.Count == 0 {
+		pagination.Count = searchCount
 	}
 
 	query := q.ToBson()
@@ -271,7 +271,7 @@ func (db *DB) Search(q *SearchQuery, count, offset int) ([]*User, int, error) {
 	if err != nil {
 		return u, 0, err
 	}
-	return u, count, db.users.Find(query).Skip(offset).Limit(count).All(&u)
+	return u, count, db.users.Find(query).Skip(pagination.Offset).Limit(pagination.Count).All(&u)
 }
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {
