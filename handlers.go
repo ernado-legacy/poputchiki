@@ -1341,7 +1341,7 @@ func ResetPassword(db DataBase, r *http.Request, w http.ResponseWriter, args mar
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 	http.SetCookie(w, userToken.GetCookie())
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/settings/password", http.StatusTemporaryRedirect)
 }
 
 func VkontakteAuthStart(r *http.Request, w http.ResponseWriter, client *govkauth.Client) {
