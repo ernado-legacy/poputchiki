@@ -72,7 +72,7 @@ func TestStripeUpdate(t *testing.T) {
 			})
 
 			Convey("Stipe add", func() {
-				sreq := &StripeItemRequest{image.Id, "photo"}
+				sreq := &StripeItemRequest{image.Id, image.Id, "photo"}
 				j, err := json.Marshal(sreq)
 				So(err, ShouldBeNil)
 				res := httptest.NewRecorder()
@@ -256,7 +256,7 @@ func TestUpload(t *testing.T) {
 			})
 
 			Convey("Stipe", func() {
-				sreq := &StripeItemRequest{image.Id, "photo"}
+				sreq := &StripeItemRequest{image.Id, image.Id, "photo"}
 				j, err := json.Marshal(sreq)
 				So(err, ShouldBeNil)
 				res := httptest.NewRecorder()
