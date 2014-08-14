@@ -20,7 +20,7 @@ func capitalize(s string) string {
 func (db *DB) GetCountries(start string) (countries []string, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern}
-	err = db.countries.Find(query).Distinct("title", &countries)
+	err = db.countries.Find(query).Sort("title").Limit(100).Distinct("title", &countries)
 	sort.Strings(countries)
 	return countries, err
 }
@@ -38,7 +38,7 @@ func (db *DB) CityExists(name string) bool {
 func (db *DB) GetCities(start, country string) (cities []string, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern, "country": country}
-	err = db.cities.Find(query).Distinct("title", &cities)
+	err = db.cities.Find(query).Sort("title").Limit(100).Distinct("title", &cities)
 	sort.Strings(cities)
 	return cities, err
 }
@@ -48,10 +48,10 @@ func (db *DB) GetPlaces(start string) (places []string, err error) {
 	var countries []string
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern}
-	if err = db.cities.Find(query).Distinct("title", &cities); err != nil {
+	if err = db.cities.Find(query).Sort("title").Limit(100).Distinct("title", &cities); err != nil {
 		return
 	}
-	if err = db.countries.Find(query).Distinct("title", &countries); err != nil {
+	if err = db.countries.Find(query).Sort("title").Limit(100).Distinct("title", &countries); err != nil {
 		return
 	}
 	sort.Strings(cities)
@@ -63,5 +63,5 @@ func (db *DB) GetPlaces(start string) (places []string, err error) {
 
 func (db *DB) GetCityPairs(start string) (cities []models.City, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
-	return cities, db.cities.Find(bson.M{"title": pattern}).All(&cities)
+	return cities, db.cities.Find(bson.M{"title": pattern}).Sort("title").Limit(100).All(&cities)
 }
