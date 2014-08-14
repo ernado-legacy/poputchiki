@@ -1259,12 +1259,17 @@ func GetCities(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	country := req.URL.Query().Get("country")
 	if country == "" {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("Blank country")))
+	}
+	if !db.CountryExists(country) {
+		return Render(ValidationError(errors.New("Country does not exist")))
 	}
 	cities, err := db.GetCities(start, country)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
+	}
+	if len(cities) > 100 {
+		cities = cities[:100]
 	}
 	return Render(cities)
 }
