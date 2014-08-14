@@ -480,16 +480,15 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	message := &MessageText{}
 	err := parser.Parse(message)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
-	log.Println(err, message)
+
 	text := message.Text
 	origin := t.Id
 	now := time.Now()
 
 	if text == "" {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("Blank text")))
 	}
 
 	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, false}
@@ -521,10 +520,6 @@ func SendInvite(db DataBase, parser Parser, destination bson.ObjectId, r *http.R
 	origin := t.Id
 	now := time.Now()
 
-	if text == "" {
-		return Render(ErrorBadRequest)
-	}
-
 	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
 	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, true}
 
@@ -552,8 +547,7 @@ func SendInvite(db DataBase, parser Parser, destination bson.ObjectId, r *http.R
 func RemoveMessage(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	message, err := db.GetMessage(id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if message.User != t.Id {
 		return Render(ErrorNotAllowed)
@@ -567,8 +561,7 @@ func RemoveMessage(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Toke
 func MarkReadMessage(db DataBase, id bson.ObjectId, t *gotok.Token) (int, []byte) {
 	err := db.SetRead(t.Id, id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render("message marked as read")
 }
@@ -576,8 +569,7 @@ func MarkReadMessage(db DataBase, id bson.ObjectId, t *gotok.Token) (int, []byte
 func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
 	n, err := db.GetUnreadCount(t.Id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(UnreadCount{n})
 }
@@ -585,7 +577,7 @@ func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
 func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
 	messages, err := db.GetMessagesFromUser(t.Id, origin)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if messages == nil {
 		return Render([]interface{}{})
@@ -600,8 +592,7 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	users, err := db.GetChats(id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	for k := range users {
 		users[k].Prepare(adapter, db, webp, audio)
@@ -719,10 +710,10 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err == ErrBadRequest {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(photo)
 }

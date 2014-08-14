@@ -26,3 +26,7 @@ var (
 func ValidationError(err error) Error {
 	return Error{http.StatusBadRequest, err.Error()}
 }
+
+func BackendError(err error) Error {
+	return Error{http.StatusInternalServerError, err.Error()}
+}
