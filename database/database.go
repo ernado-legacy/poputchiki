@@ -27,6 +27,7 @@ var (
 	audioCollection      = "audio"
 	stripeCollection     = "stripe"
 	tokenCollection      = "tokens"
+	activitiesCollection = "activities"
 )
 
 type DB struct {
@@ -36,7 +37,6 @@ type DB struct {
 	messages       *mgo.Collection
 	statuses       *mgo.Collection
 	photo          *mgo.Collection
-	albums         *mgo.Collection
 	files          *mgo.Collection
 	video          *mgo.Collection
 	audio          *mgo.Collection
@@ -44,6 +44,7 @@ type DB struct {
 	conftokens     *mgo.Collection
 	cities         *mgo.Collection
 	countries      *mgo.Collection
+	activities     *mgo.Collection
 	salt           string
 	offlineTimeout time.Duration
 }
@@ -59,7 +60,7 @@ func TestDatabase() *DB {
 // Drop all collections of database
 func (db *DB) Drop() {
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
-		db.albums, db.files, db.video, db.audio, db.stripe, db.conftokens}
+		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities}
 
 	for k := range collections {
 		collections[k].DropCollection()
@@ -128,22 +129,24 @@ func (database *DB) Init() {
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	db := session.DB(name)
-	coll := db.C(collection)
-	gcoll := db.C(guestsCollection)
-	mcoll := db.C(messagesCollection)
-	scoll := db.C(statusesCollection)
-	pcoll := db.C(photoCollection)
-	acoll := db.C(albumsCollection)
-	fcoll := db.C(filesCollection)
-	vcoll := db.C(videoCollection)
-	aucoll := db.C(audioCollection)
-	stcoll := db.C(stripeCollection)
-	ctcoll := db.C(conftokensCollection)
-	citb := session.DB("countries")
-	cotc := citb.C(countriesCollection)
-	citc := citb.C(citiesCollection)
-	database := &DB{db, coll, gcoll, mcoll, scoll, pcoll, acoll, fcoll, vcoll, aucoll,
-		stcoll, ctcoll, citc, cotc, salt, timeout}
+	cityDB := session.DB("countries")
+	database := new(DB)
+	database.db = db
+	database.offlineTimeout = timeout
+	database.salt = salt
+	database.activities = db.C(activitiesCollection)
+	database.users = db.C(collection)
+	database.guests = db.C(guestsCollection)
+	database.messages = db.C(messagesCollection)
+	database.statuses = db.C(statusesCollection)
+	database.photo = db.C(photoCollection)
+	database.files = db.C(filesCollection)
+	database.video = db.C(videoCollection)
+	database.audio = db.C(audioCollection)
+	database.stripe = db.C(stripeCollection)
+	database.conftokens = db.C(conftokensCollection)
+	database.countries = cityDB.C(countriesCollection)
+	database.cities = cityDB.C(citiesCollection)
 	database.Init()
 	return database
 }

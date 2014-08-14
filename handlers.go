@@ -14,6 +14,7 @@ import (
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
+	"github.com/ernado/poputchiki/activities"
 	. "github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
@@ -508,7 +509,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	return Render("message sent")
 }
 
-func SendInvite(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
 	text := "Вас пригласили в путешествие"
 	origin := t.Id
 	now := time.Now()
@@ -532,6 +533,7 @@ func SendInvite(db DataBase, parser Parser, destination bson.ObjectId, r *http.R
 		Must(realtime.Push(destination, m2))
 		Must(db.AddMessage(&m1))
 		Must(db.AddMessage(&m2))
+		engine.Handle(activities.Invite)
 	}()
 
 	return Render("message sent")
@@ -700,7 +702,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err == ErrBadRequest {
 		return Render(ValidationError(err))
@@ -708,19 +710,19 @@ func UploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	if err != nil {
 		return Render(BackendError(err))
 	}
+	engine.Handle(activities.Photo)
 	return Render(photo)
 }
 
-func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int, []byte) {
+func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engine activities.Handler) (int, []byte) {
 	status := &StatusUpdate{}
 	if err := parser.Parse(status); err != nil {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 
 	count, err := db.GetLastDayStatusesAmount(t.Id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 
 	allowed := statusesPerDay
@@ -733,11 +735,10 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser) (int
 	}
 	status, err = db.AddStatus(t.Id, status.Text)
 	if err != nil {
-		log.Println(err)
 		go db.IncBalance(t.Id, PromoCost)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
-	db.ChangeRating(t.Id, 50.0*count)
+	engine.Handle(activities.Status)
 	return Render(status)
 }
 
@@ -775,12 +776,13 @@ func GetCurrentStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byt
 func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token, parser Parser) (int, []byte) {
 	status := &StatusUpdate{}
 	if err := parser.Parse(status); err != nil {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 	status, err := db.UpdateStatusSecure(t.Id, id, status.Text)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
+
 	return Render(status)
 }
 
@@ -894,7 +896,7 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter 
 	return Render(photo)
 }
 
-func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	var media interface{}
 	request := &StripeItemRequest{}
 	if parser.Parse(request) != nil {
@@ -956,7 +958,7 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 		i.ImageWebp = p.ImageWebp
 		media = p
 	default:
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("Bad type")))
 	}
 	if media == nil {
 		return Render(ErrorObjectNotFound)
@@ -965,11 +967,11 @@ func AddStripeItem(db DataBase, t *gotok.Token, parser Parser, adapter *weed.Ada
 	log.Printf("media: %+v", media)
 	s, err := db.AddStripeItem(i, media)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
+	engine.Handle(activities.Promo)
 	s.Prepare(db, adapter, webp, video, audio)
-	db.SetRating(t.Id, 100.0)
+
 	return Render(s)
 }
 
@@ -1021,10 +1023,10 @@ func EnableVip(db DataBase, t *gotok.Token, parm martini.Params) (int, []byte) {
 	}
 	till := user.VipTill.AddDate(0, months, days)
 	if err := db.SetVipTill(t.Id, till); err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if err := db.SetVip(t.Id, true); err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render("ok")
 }
@@ -1143,18 +1145,19 @@ func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionH
 	return Render(transaction)
 }
 
-func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler) (int, []byte) {
 	err := db.AddLikeVideo(t.Id, id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
+	engine.Handle(activities.Like)
 	return Render(db.GetVideo(id))
 }
 
 func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.RemoveLikeVideo(t.Id, id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(db.GetVideo(id))
 }
@@ -1168,11 +1171,12 @@ func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 	return Render(likers)
 }
 
-func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler) (int, []byte) {
 	err := db.AddLikePhoto(t.Id, id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
+	engine.Handle(activities.Like)
 	p, _ := db.GetPhoto(id)
 	return Render(p)
 }
@@ -1180,7 +1184,7 @@ func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.RemoveLikePhoto(t.Id, id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	p, _ := db.GetPhoto(id)
 	return Render(p)
@@ -1192,7 +1196,7 @@ func RemovePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 		return Render(ErrorObjectNotFound)
 	}
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render("ok")
 }
@@ -1203,7 +1207,7 @@ func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 		return Render(ErrorObjectNotFound)
 	}
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render("ok")
 }
@@ -1230,7 +1234,7 @@ func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	err := db.RemoveLikeStatus(t.Id, id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	s, _ := db.GetStatus(id)
 	return Render(s)
@@ -1249,8 +1253,7 @@ func GetCountries(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	coutries, err := db.GetCountries(start)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(coutries)
 }
@@ -1278,8 +1281,7 @@ func GetPlaces(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	places, err := db.GetPlaces(start)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(places)
 }

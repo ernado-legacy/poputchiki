@@ -298,7 +298,7 @@ func (db *DB) SetRating(id bson.ObjectId, rating float64) error {
 	return db.users.UpdateId(id, bson.M{"$set": bson.M{"rating": rating}})
 }
 
-func (db *DB) ChangeRating(id bson.ObjectId, delta int) error {
+func (db *DB) ChangeRating(id bson.ObjectId, delta float64) error {
 	return db.users.UpdateId(id, bson.M{"$inc": bson.M{"rating": delta}})
 }
 

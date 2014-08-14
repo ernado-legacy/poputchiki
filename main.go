@@ -10,6 +10,7 @@ import (
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
+	"github.com/ernado/poputchiki/activities"
 	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
@@ -25,41 +26,42 @@ import (
 )
 
 var (
-	salt                           = "salt"
-	projectName                    = "poputchiki"
-	premiumTime                    = time.Hour * 24 * 30
-	vipWeek                        = 400
-	vipMonth                       = 1000
-	ratingDegradationDuration      = time.Hour * 24 * 3
-	ratingUpdateDelta              = time.Second * 5
-	statusUpdateTime               = time.Hour * 24
-	dbName                         = projectName
-	statusesPerDay                 = 1
-	statusesPerDayVip              = 3
-	dbCity                         = "countries"
-	tokenCollection                = "tokens"
-	mongoHost                      = "localhost"
-	robokassaLogin                 = "poputchiki.ru"
-	robokassaPassword1             = "pcZKT5Qm84MJAIudLAbR"
-	robokassaPassword2             = "8x3cVXUt08Uc9TV70mx3"
-	robokassaDescription           = "Пополнение счета Попутчики.ру"
-	production                     = false
-	processes                      = runtime.NumCPU()
-	redisName                      = projectName
-	redisAddr                      = ":6379"
-	redisQueryKey                  = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
-	mailKey                        = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
-	mailDomain                     = "mg.cydev.ru"
-	smsKey                         = "nil"
-	weedHost                       = "127.0.0.1"
-	weedPort                       = 9333
-	weedUrl                        = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
-	OfflineTimeout                 = 60 * 5 * time.Second
-	OfflineUpdateTick              = 5 * time.Second
-	PromoCost                 uint = 50
-	mobile                         = flag.Bool("mobile", false, "is mobile api")
-	development                    = flag.Bool("dev", false, "is in development")
-	sendEmail                      = flag.Bool("email", true, "send registration emails")
+	salt                      = "salt"
+	projectName               = "poputchiki"
+	premiumTime               = time.Hour * 24 * 30
+	vipWeek                   = 400
+	vipMonth                  = 1000
+	ratingDegradationDuration = time.Hour * 24 * 2
+	// ratingDegradationDuration      = time.Minute
+	ratingUpdateDelta         = time.Millisecond * 500
+	statusUpdateTime          = time.Hour * 24
+	dbName                    = projectName
+	statusesPerDay            = 1
+	statusesPerDayVip         = 3
+	dbCity                    = "countries"
+	tokenCollection           = "tokens"
+	mongoHost                 = "localhost"
+	robokassaLogin            = "poputchiki.ru"
+	robokassaPassword1        = "pcZKT5Qm84MJAIudLAbR"
+	robokassaPassword2        = "8x3cVXUt08Uc9TV70mx3"
+	robokassaDescription      = "Пополнение счета Попутчики.ру"
+	production                = false
+	processes                 = runtime.NumCPU()
+	redisName                 = projectName
+	redisAddr                 = ":6379"
+	redisQueryKey             = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
+	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
+	mailDomain                = "mg.cydev.ru"
+	smsKey                    = "nil"
+	weedHost                  = "127.0.0.1"
+	weedPort                  = 9333
+	weedUrl                   = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	OfflineTimeout            = 60 * 5 * time.Second
+	OfflineUpdateTick         = 5 * time.Second
+	PromoCost            uint = 50
+	mobile                    = flag.Bool("mobile", false, "is mobile api")
+	development               = flag.Bool("dev", false, "is in development")
+	sendEmail                 = flag.Bool("email", true, "send registration emails")
 )
 
 func getHash(password string, s string) string {
@@ -129,6 +131,7 @@ func NewApp() *Application {
 	if *mobile {
 		root = "/api/mobile"
 	}
+	activityEngine := activities.New(db, ratingDegradationDuration)
 	smsClient := gosmsru.New(smsKey)
 	m.Map(smsClient)
 	mailgunClient := mailgun.New(mailKey)
@@ -149,6 +152,7 @@ func NewApp() *Application {
 	weedAdapter := weed.NewAdapter(weedUrl)
 	m.Map(weedAdapter)
 	m.Map(db)
+	m.Use(activityEngine.Wrapper)
 	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))
 
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}
@@ -398,6 +402,7 @@ func (a *Application) Run() {
 	go a.VipCycle()
 	go a.ConvertResultListener()
 	go a.RatingDegradatingCycle()
+	go a.NormalizeRatingCycle()
 	a.m.Run()
 }
 

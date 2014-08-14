@@ -69,7 +69,7 @@ type DataBase interface {
 	SetOffline(id bson.ObjectId) error
 
 	SetRating(id bson.ObjectId, rating float64) error
-	ChangeRating(id bson.ObjectId, delta int) error
+	ChangeRating(id bson.ObjectId, delta float64) error
 
 	// statuses
 	// api/user/:id/status/
@@ -147,6 +147,9 @@ type DataBase interface {
 	UpdateAllVip() (*mgo.ChangeInfo, error)
 	DegradeRating(amount float64) (*mgo.ChangeInfo, error)
 	NormalizeRating() (*mgo.ChangeInfo, error)
+
+	GetActivityCount(user bson.ObjectId, key string, duration time.Duration) (count int, err error)
+	AddActivity(user bson.ObjectId, key string) error
 }
 
 type RealtimeInterface interface {
