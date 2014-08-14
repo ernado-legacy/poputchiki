@@ -1288,8 +1288,7 @@ func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
 	start := req.URL.Query().Get("start")
 	cities, err := db.GetCityPairs(start)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(cities)
 }
@@ -1304,7 +1303,7 @@ func ForgotPassword(db DataBase, args martini.Params, mail *mailgun.Client) (int
 
 	confTok := db.NewConfirmationToken(u.Id)
 	if confTok == nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(errors.New("Unable to generate token")))
 	}
 	// anyncronously send email to user
 	if !*development {
@@ -1325,23 +1324,23 @@ func ForgotPassword(db DataBase, args martini.Params, mail *mailgun.Client) (int
 func ResetPassword(db DataBase, r *http.Request, w http.ResponseWriter, args martini.Params, tokens gotok.Storage) {
 	token := args["token"]
 	if token == "" {
-		code, data := Render(ErrorBadRequest)
+		code, data := Render(ValidationError(errors.New("Blank token")))
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 	tok := db.GetConfirmationToken(token)
 	if tok == nil {
-		code, data := Render(ErrorBadRequest)
+		code, data := Render(ValidationError(errors.New("Bad token")))
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 	userToken, err := tokens.Generate(tok.User)
 	if err != nil {
-		code, data := Render(ErrorBackend)
+		code, data := Render(BackendError(errors.New("Token generation error")))
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 	err = db.ConfirmEmail(userToken.Id)
 	if err != nil {
 		log.Println(err)
-		code, data := Render(ErrorBackend)
+		code, data := Render(BackendError(errors.New("Token confirmation error")))
 		http.Error(w, string(data), code) // todo: set content-type
 	}
 	http.SetCookie(w, userToken.GetCookie())
