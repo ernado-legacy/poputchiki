@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/gofbauth"
+	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
 	"github.com/ernado/poputchiki/database"
@@ -128,6 +129,8 @@ func NewApp() *Application {
 	if *mobile {
 		root = "/api/mobile"
 	}
+	smsClient := gosmsru.New(smsKey)
+	m.Map(smsClient)
 	mailgunClient := mailgun.New(mailKey)
 	m.Map(mailgunClient)
 	m.Map(queryClient)
@@ -164,6 +167,12 @@ func NewApp() *Application {
 		r.Get("/fb/redirect", FacebookAuthRedirect)
 	})
 	m.Get(root, Index)
+	m.Group(root, func(r martini.Router) {
+		r.Get("/cities", GetCities)
+		r.Get("/places", GetPlaces)
+		r.Get("/citypairs", GetCityPairs)
+		r.Get("/countries", GetCountries)
+	})
 	m.Get(root+"/pay/success", RobokassaSuccessHandler)
 	m.Group(root, func(r martini.Router) {
 		r.Get("/admin", AdminView)
@@ -247,10 +256,6 @@ func NewApp() *Application {
 		r.Get("/photo/:id/like", IdWrapper, GetLikersPhoto)
 		r.Delete("/photo/:id/like", IdWrapper, RestoreLikePhoto)
 		r.Delete("/photo/:id", IdWrapper, RemovePhoto)
-		r.Get("/countries", GetCountries)
-		r.Get("/cities", GetCities)
-		r.Get("/places", GetPlaces)
-		r.Get("/citypairs", GetCityPairs)
 	}, NeedAuth, SetOnlineWrapper)
 
 	a := &Application{session, p, m, db, weedAdapter}

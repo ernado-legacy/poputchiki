@@ -390,8 +390,7 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	// decoding json to map
 	e := parser.Parse(&query)
 	if e != nil {
-		log.Println(e)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(e))
 	}
 
 	log.Printf("query: %+v", query)
@@ -414,16 +413,14 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	}
 	// checking field count
 	if len(query) == 0 {
-		log.Println("no fields to change")
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("no fields to change")))
 	}
 
 	// encoding to user - checking type & field existance
 	user := &User{}
 	err := convert(query, user)
 	if err != nil {
-		log.Println("unable to convert", err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 
 	if user.Password != "" {
@@ -436,14 +433,12 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	newQuery := bson.M{}
 	tmp, err := bson.Marshal(user)
 	if err != nil {
-		log.Println("unable to marchal", err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 	// unmarshalling to bson map
 	err = bson.Unmarshal(tmp, &newQuery)
 	if err != nil {
-		log.Println("unable to unmarchal", err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 
 	// removing fields, that dont exist in initial query
@@ -456,8 +451,7 @@ func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int,
 	// updating user
 	_, err = db.Update(id, newQuery)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	// returning updated user
 	log.Printf("result: %+v", newQuery)
@@ -1074,16 +1068,15 @@ func ConfirmPhone(db DataBase, args martini.Params, w http.ResponseWriter, token
 	val := hex.EncodeToString(h.Sum(nil))
 	tok := db.GetConfirmationToken(val)
 	if tok == nil {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("blank token")))
 	}
 	userToken, err := tokens.Generate(tok.User)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	err = db.ConfirmPhone(userToken.Id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	http.SetCookie(w, userToken.GetCookie())
 	return Render("телефон подтвержден")
@@ -1096,7 +1089,10 @@ func ConfirmPhoneStart(db DataBase, t *gotok.Token) (int, []byte) {
 	h.Sum([]byte(codeStr))
 	h.Sum([]byte(salt))
 	token := hex.EncodeToString(h.Sum(nil))
-	db.NewConfirmationTokenValue(t.Id, token)
+	tok := db.NewConfirmationTokenValue(t.Id, token)
+	if tok == nil {
+		return Render(BackendError(errors.New("Unable to generate confirmation token")))
+	}
 	u := db.Get(t.Id)
 	if u == nil {
 		return Render(ErrorBackend)
@@ -1104,9 +1100,12 @@ func ConfirmPhoneStart(db DataBase, t *gotok.Token) (int, []byte) {
 	client := gosmsru.Client{}
 	client.Key = smsKey
 	phone := u.Phone
+	if phone == "" {
+		return Render(ValidationError(errors.New("Blank phone")))
+	}
 	err := client.Send(phone, codeStr)
 	if err != nil {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
 	return Render("ok")
 }

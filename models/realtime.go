@@ -23,6 +23,11 @@ type RealtimeEvent struct {
 	Time time.Time   `json:"time"`
 }
 
+type Dialog struct {
+	message *Message `json:"message"`
+	user    *User    `json:"user"`
+}
+
 type UnreadCount struct {
 	Count int `json:"count"`
 }
