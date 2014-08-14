@@ -28,7 +28,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -822,19 +821,9 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 		return Render(ErrorBackend)
 	}
 
-	now = time.Now()
-	g := new(sync.WaitGroup)
 	for key, _ := range result {
-		g.Add(1)
-		go func() {
-			result[key].Prepare(adapter, db, webpAccept, audio)
-			log.Println("prepared")
-			g.Done()
-		}()
+		result[key].Prepare(adapter, db, webpAccept, audio)
 	}
-	g.Wait()
-
-	log.Println("prepare", time.Now().Sub(now))
 
 	return Render(SearchResult{result, count})
 }
