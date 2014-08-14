@@ -1657,6 +1657,30 @@ func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	return Render(v)
 }
 
+func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+	v, err := db.GetUserVideo(id)
+
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
+
+	for _, videoElem := range v {
+		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
+			log.Println(err)
+		}
+	}
+
+	p, err := db.GetPhoto(id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
+	if err := p.Prepare(adapter, webp, video, audio); err != nil {
+		return Render(BackendError(err))
+	}
+
+	return Render(map[string]interface{}{"video": v, "photo": p})
+}
+
 func GetVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	v := db.GetVideo(id)
 	if v == nil {

@@ -200,6 +200,7 @@ func NewApp() *Application {
 			r.Get("/chats", GetChats)
 			r.Get("/photo", GetUserPhoto)
 			r.Get("/video", GetUserVideo)
+			r.Get("/media", GetUserMedia)
 			r.Group("", func(d martini.Router) {
 				d.Patch("", Update)
 				d.Put("", Update)
