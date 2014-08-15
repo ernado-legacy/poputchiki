@@ -1,9 +1,11 @@
 package database
 
 import (
+	"fmt"
 	"github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"sort"
 )
 
 func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (messages []*models.Message, err error) {
@@ -46,31 +48,56 @@ func (db *DB) GetUnreadCount(id bson.ObjectId) (int, error) {
 	return db.messages.Find(query).Count()
 }
 
-func (db *DB) GetChats(id bson.ObjectId) ([]*models.User, error) {
+type Dialogs []*models.Dialog
+
+func (a Dialogs) Len() int {
+	return len(a)
+}
+
+func (a Dialogs) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a Dialogs) Less(i, j int) bool {
+	return a[j].Time.Before(a[i].Time)
+}
+
+func (db *DB) GetChats(id bson.ObjectId) ([]*models.Dialog, error) {
 	var users []*models.User
 	var ids []bson.ObjectId
-	var result []bson.M
+	var result []*models.Dialog
 
+	first := func(key string) bson.M {
+		return bson.M{"$first": fmt.Sprintf("$%s", key)}
+	}
 	// preparing query
 	match := bson.M{"$match": bson.M{"user": id}}
-	sort := bson.M{"$sort": bson.M{"time": -1}}
-	group := bson.M{"$group": bson.M{"_id": bson.M{"chat": "$chat"}}}
-	project := bson.M{"$project": bson.M{"_id": "$_id.chat"}}
-	pipeline := []bson.M{match, sort, group, project}
+	s := bson.M{"$sort": bson.M{"time": -1}}
+	group := bson.M{"$group": bson.M{"_id": bson.M{"chat": "$chat"}, "time": first("time"), "text": first("text"), "origin": first("origin")}}
+	project := bson.M{"$project": bson.M{"_id": "$_id.chat", "time": "$time", "text": "$text", "origin": "$origin"}}
+	pipeline := []bson.M{match, s, group, project}
 	pipe := db.messages.Pipe(pipeline)
-
 	iter := pipe.Iter()
 	iter.All(&result)
-
-	// processing result
-	for _, v := range result {
-		switch uid := v["_id"].(type) {
-		case bson.ObjectId:
-			ids = append(ids, uid)
-		default:
-			continue
-		}
+	for i := range result {
+		ids = append(ids, result[i].Id)
+		ids = append(ids, result[i].Origin)
+	}
+	if err := db.users.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&users); err != nil {
+		return nil, err
 	}
 
-	return users, db.users.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&users)
+	usersMap := make(map[bson.ObjectId]*models.User)
+
+	for _, u := range users {
+		usersMap[u.Id] = u
+	}
+
+	for i := range result {
+		result[i].User = usersMap[result[i].Id]
+		result[i].OriginUser = usersMap[result[i].Origin]
+	}
+
+	sort.Sort(Dialogs(result))
+	return result, nil
 }

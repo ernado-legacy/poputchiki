@@ -585,14 +585,18 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 }
 
 func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
-	users, err := db.GetChats(id)
+	dialogs, err := db.GetChats(id)
 	if err != nil {
 		return Render(BackendError(err))
 	}
-	for k := range users {
-		users[k].Prepare(adapter, db, webp, audio)
+	for k := range dialogs {
+		dialogs[k].User.Prepare(adapter, db, webp, audio)
+		dialogs[k].User.CleanPrivate()
+
+		dialogs[k].OriginUser.Prepare(adapter, db, webp, audio)
+		dialogs[k].OriginUser.CleanPrivate()
 	}
-	return Render(users)
+	return Render(dialogs)
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
@@ -1553,12 +1557,14 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase) {
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
 		http.Error(w, string(data), code)
+		return
 	}
 
 	view, err := template.ParseFiles("static/html/index.html")
 	if err != nil {
-		code, data := Render(ErrorBackend)
+		code, data := Render(BackendError(err))
 		http.Error(w, string(data), code)
+		return
 	}
 	w.Header().Set("Content-Type", "text/html")
 	view.Execute(w, nil)
@@ -1574,7 +1580,7 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 
 	userToken, err := tokens.Generate(id)
 	if err != nil {
-		code, data := Render(ErrorBackend)
+		code, data := Render(BackendError(err))
 		http.Error(w, string(data), code)
 		return
 	}

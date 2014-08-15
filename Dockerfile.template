@@ -18,4 +18,6 @@ RUN cd $ROOT && go get .
 RUN cd $ROOT && version=VERSION git pull
 RUN cd $ROOT && go get -u -v .
 
+WORKDIR /go/src/github.com/ernado/poputchiki
+
 ENTRYPOINT ["/go/bin/poputchiki"]

@@ -24,8 +24,12 @@ type RealtimeEvent struct {
 }
 
 type Dialog struct {
-	message *Message `json:"message"`
-	user    *User    `json:"user"`
+	Id         bson.ObjectId `json:"id"     bson:"_id,omitempty"`
+	Time       time.Time     `json:"time"   bson:"time"`
+	Text       string        `json:"text"   bson:"text"`
+	Origin     bson.ObjectId `json:"-"      bson:"origin,omitempty"`
+	User       *User         `json:"user"`
+	OriginUser *User         `json:"origin"`
 }
 
 type UnreadCount struct {

@@ -50,7 +50,7 @@ type DataBase interface {
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
-	GetChats(id bson.ObjectId) ([]*User, error)
+	GetChats(id bson.ObjectId) ([]*Dialog, error)
 	SetRead(user, id bson.ObjectId) error
 	SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error
 	GetUnreadCount(id bson.ObjectId) (int, error)
