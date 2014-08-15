@@ -86,6 +86,7 @@
 
   $('.next').click(function(e){
     e.preventDefault();
+    if ($(this).hasClass("disabled"))
     page++;
     update();
   });
@@ -150,13 +151,13 @@
     $.getJSON( "/api/search?" + urlparams, function(data) {
       var users = $('#users');
       users.html('');
-      var length = data.length;
+      var length = data.result.length;
       if (length < count) {
         next.addClass('disabled');
       } else {
         next.removeClass('disabled');
       }
-      $.each(data, function(key, val) {
+      $.each(data.result, function(key, val) {
         users.append(getTemplate(val));
       });
     });
