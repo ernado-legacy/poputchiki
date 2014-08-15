@@ -76,7 +76,7 @@ func (a StatusByTime) Swap(i, j int) {
 }
 
 func (a StatusByTime) Less(i, j int) bool {
-	return a[i].Time.Before(a[j].Time)
+	return a[j].Time.Before(a[i].Time)
 }
 
 func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.StatusUpdate, error) {
