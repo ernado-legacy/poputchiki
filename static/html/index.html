@@ -86,7 +86,7 @@
 
   $('.next').click(function(e){
     e.preventDefault();
-    if ($(this).hasClass("disabled"))
+    if ($(this).hasClass("disabled")) return;
     page++;
     update();
   });
