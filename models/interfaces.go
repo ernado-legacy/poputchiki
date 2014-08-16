@@ -47,7 +47,7 @@ type DataBase interface {
 	GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error)
 
 	AddMessage(m *Message) error
-	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) ([]*Message, error)
+	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, paginaton Pagination) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
 	GetChats(id bson.ObjectId) ([]*Dialog, error)

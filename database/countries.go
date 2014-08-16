@@ -20,7 +20,7 @@ func capitalize(s string) string {
 func (db *DB) GetCountries(start string) (countries []string, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern}
-	err = db.countries.Find(query).Sort("title").Limit(100).Distinct("title", &countries)
+	err = db.countries.Find(query).Sort("title").Limit(100)Distinct("title", &countries)
 	sort.Strings(countries)
 	return countries, err
 }

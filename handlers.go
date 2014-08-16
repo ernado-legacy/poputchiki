@@ -569,8 +569,8 @@ func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
 	return Render(UnreadCount{n})
 }
 
-func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token) (int, []byte) {
-	messages, err := db.GetMessagesFromUser(t.Id, origin)
+func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token, pagination Pagination) (int, []byte) {
+	messages, err := db.GetMessagesFromUser(t.Id, origin, pagination)
 	if err != nil {
 		return Render(BackendError(err))
 	}
