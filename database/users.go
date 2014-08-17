@@ -307,5 +307,16 @@ func (db *DB) DegradeRating(amount float64) (*mgo.ChangeInfo, error) {
 }
 
 func (db *DB) NormalizeRating() (*mgo.ChangeInfo, error) {
-	return db.users.UpdateAll(bson.M{"rating": bson.M{"$gt": 100}}, bson.M{"$set": bson.M{"rating": 100.0}})
+	info := new(mgo.ChangeInfo)
+	t, err := db.users.UpdateAll(bson.M{"rating": bson.M{"$gt": 100}}, bson.M{"$set": bson.M{"rating": 100.0}})
+	if err != nil {
+		return nil, err
+	}
+	info.Updated += t.Updated
+	t, err = db.users.UpdateAll(bson.M{"rating": bson.M{"$lt": 0}}, bson.M{"$set": bson.M{"rating": 0.0}})
+	if err != nil {
+		return nil, err
+	}
+	info.Updated += t.Updated
+	return info, nil
 }
