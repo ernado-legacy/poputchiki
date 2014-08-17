@@ -300,7 +300,7 @@ func TestDBMethods(t *testing.T) {
 				Convey("Search", func() {
 					query := &SearchQuery{}
 					query.Sex = "male"
-					photos, err := db.SearchPhoto(query, 1, 0)
+					photos, err := db.SearchPhoto(query, Pagination{})
 					So(err, ShouldBeNil)
 
 					found := false

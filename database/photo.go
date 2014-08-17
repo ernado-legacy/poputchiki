@@ -52,15 +52,37 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 }
 
 // SearchPhoto returns photo filtered by query and adjusted by count and offset
-func (db *DB) SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error) {
-	if count == 0 {
-		count = searchCount
+func (db *DB) SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, error) {
+	if pagination.Count == 0 {
+		pagination.Count = searchCount
 	}
 
 	photos := []*Photo{}
 	query := q.ToBson()
 	u := []*User{}
-	if err := db.users.Find(query).Sort("-rating").Skip(offset).Limit(count).All(&u); err != nil {
+	if err := db.users.Find(query).Sort("-rating").Skip(pagination.Offset).Limit(pagination.Count).All(&u); err != nil {
+		return photos, err
+	}
+	users := make([]bson.ObjectId, len(u))
+	for i, user := range u {
+		users[i] = user.Id
+	}
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
+		return photos, err
+	}
+	return photos, nil
+}
+
+// SearchPhoto returns photo filtered by query and adjusted by count and offset
+func (db *DB) SearchMedia(q *SearchQuery, pagination Pagination) ([]*Photo, error) {
+	if pagination.Count == 0 {
+		pagination.Count = searchCount
+	}
+
+	photos := []*Photo{}
+	query := q.ToBson()
+	u := []*User{}
+	if err := db.users.Find(query).Sort("-rating").Skip(pagination.Offset).Limit(pagination.Count).All(&u); err != nil {
 		return photos, err
 	}
 	users := make([]bson.ObjectId, len(u))

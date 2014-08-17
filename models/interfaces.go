@@ -91,7 +91,7 @@ type DataBase interface {
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
-	SearchPhoto(q *SearchQuery, count, offset int) ([]*Photo, error)
+	SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, error)
 	AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesPhoto(id bson.ObjectId) []*User

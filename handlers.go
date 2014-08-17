@@ -869,7 +869,7 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 	if !u.Vip {
 		query.Sponsor = ""
 	}
-	result, err := db.SearchPhoto(query, pagination.Count, pagination.Offset)
+	result, err := db.SearchPhoto(query, pagination)
 	if err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
