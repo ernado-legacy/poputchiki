@@ -13,6 +13,7 @@ func TestMessages(t *testing.T) {
 	origin := bson.NewObjectId()
 	destination := bson.NewObjectId()
 	text := "Привет"
+	pagination := models.Pagination{}
 
 	Convey("Add users", t, func() {
 		Reset(func() {
@@ -65,7 +66,7 @@ func TestMessages(t *testing.T) {
 						So(n, ShouldEqual, 2)
 						So(err, ShouldBeNil)
 						Convey("Fist message should be second", func() {
-							messages, err := db.GetMessagesFromUser(destination, origin)
+							messages, err := db.GetMessagesFromUser(destination, origin, pagination)
 							So(err, ShouldBeNil)
 							So(len(messages), ShouldEqual, 2)
 							So(messages[1].Text, ShouldEqual, text2)
@@ -103,7 +104,7 @@ func TestMessages(t *testing.T) {
 							So(n, ShouldEqual, 3)
 							So(err, ShouldBeNil)
 							Convey("Fist message should be second", func() {
-								messages, err := db.GetMessagesFromUser(destination, origin)
+								messages, err := db.GetMessagesFromUser(destination, origin, pagination)
 								So(err, ShouldBeNil)
 								So(len(messages), ShouldEqual, 3)
 								So(messages[2].Text, ShouldEqual, text3)
