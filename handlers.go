@@ -386,7 +386,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 }
 
 // Update updates user information with provided key-value document
-func Update(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int, []byte) {
+func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int, []byte) {
 	query := bson.M{}
 	// decoding json to map
 	e := parser.Parse(&query)
@@ -803,7 +803,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
-		return Render(ValidationError(err)))
+		return Render(ValidationError(err))
 	}
 	if err := query.Validate(db); err != nil {
 		return Render(ValidationError(err))
@@ -831,7 +831,7 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
-		return Render(ValidationError(err)))
+		return Render(ValidationError(err))
 	}
 	if err := query.Validate(db); err != nil {
 		return Render(ValidationError(err))

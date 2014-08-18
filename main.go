@@ -202,9 +202,9 @@ func NewApp() *Application {
 			r.Get("/video", GetUserVideo)
 			r.Get("/media", GetUserMedia)
 			r.Group("", func(d martini.Router) {
-				d.Patch("", Update)
-				d.Put("", Update)
-				d.Post("", Update)
+				d.Patch("", UpdateUser)
+				d.Put("", UpdateUser)
+				d.Post("", UpdateUser)
 
 				d.Post("/fav", AddToFavorites)
 				d.Put("/fav", AddToFavorites)
