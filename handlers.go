@@ -880,6 +880,10 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 
 	for key, _ := range result {
 		result[key].Prepare(adapter, webpAccept, video, audio)
+		if result[key].UserObject != nil {
+			result[key].UserObject.Prepare(adapter, db, webpAccept, audio)
+			result[key].UserObject.CleanPrivate()
+		}
 	}
 
 	return Render(result)

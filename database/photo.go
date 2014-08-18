@@ -64,11 +64,16 @@ func (db *DB) SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 		return photos, err
 	}
 	users := make([]bson.ObjectId, len(u))
+	usersMap := make(map[bson.ObjectId]*User)
 	for i, user := range u {
 		users[i] = user.Id
+		usersMap[user.Id] = user
 	}
 	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
 		return photos, err
+	}
+	for _, photo := range photos {
+		photo.UserObject = usersMap[photo.User]
 	}
 	return photos, nil
 }
@@ -86,11 +91,16 @@ func (db *DB) SearchMedia(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 		return photos, err
 	}
 	users := make([]bson.ObjectId, len(u))
+	usersMap := make(map[bson.ObjectId]*User)
 	for i, user := range u {
 		users[i] = user.Id
+		usersMap[user.Id] = user
 	}
 	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
 		return photos, err
+	}
+	for _, photo := range photos {
+		photo.UserObject = usersMap[photo.User]
 	}
 	return photos, nil
 }

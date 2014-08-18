@@ -16,6 +16,7 @@ type Image struct {
 type Photo struct {
 	Id            bson.ObjectId   `json:"id,omitempty"          bson:"_id,omitempty"`
 	User          bson.ObjectId   `json:"user"                  bson:"user"`
+	UserObject    *User           `json:"user_object,omitempty" bson:"-"`
 	ImageWebp     string          `json:"-"                     bson:"image_webp"`
 	ImageJpeg     string          `json:"-"                     bson:"image_jpeg"`
 	ImageUrl      string          `json:"url"                   bson:"-"`
