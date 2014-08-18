@@ -11,7 +11,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -112,33 +111,16 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w ht
 	}
 
 	tCookie, err := r.Cookie("token")
-
 	if err == nil {
 		hexToken = tCookie.Value
 	}
-	tokenChannel := make(chan *gotok.Token)
-	errorChannel := make(chan error)
-	go func() {
-		token, err := tokens.Get(hexToken)
-		if err == nil {
-			tokenChannel <- token
-		} else {
-			errorChannel <- err
-		}
-	}()
-
-	select {
-	case err := <-errorChannel:
-		log.Println(err)
-		code, data := Render(ErrorBackend)
-		http.Error(w, string(data), code) // todo: set content-type
-	case token := <-tokenChannel:
-		c.Map(token)
-	case <-time.After(time.Second * 5):
-		log.Println("token system timed out")
-		code, data := Render(ErrorBackend)
-		http.Error(w, string(data), code) // todo: set content-type
+	token, err := tokens.Get(hexToken)
+	if err != nil {
+		code, data := Render(BackendError(err))
+		http.Error(w, string(data), code)
+		return
 	}
+	c.Map(token)
 }
 
 func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token) {
