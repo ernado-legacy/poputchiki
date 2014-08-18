@@ -153,6 +153,7 @@ type DataBase interface {
 	UserIsSubscribed(id bson.ObjectId, subscription string) (bool, error)
 
 	AddUpdateDirect(u *Update) (*Update, error)
+	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
 }
 
 type RealtimeInterface interface {

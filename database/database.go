@@ -129,6 +129,7 @@ func (database *DB) Init() {
 	}
 	must(db.C(collection).EnsureIndex(index))
 	must(db.C(collection).EnsureIndexKey("$text:status"))
+	must(db.C(updatesCollection).EnsureIndexKey("destination"))
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {

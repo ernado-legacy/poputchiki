@@ -218,24 +218,34 @@ func (u *RealtimeUpdater) AutoHandle(user, destination bson.ObjectId, body inter
 }
 
 func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
+
 	update := models.NewUpdate(destination, user, eventType, body)
-	target := u.db.Get(destination)
+	return u.Push(update)
+}
+
+func (u *RealtimeUpdater) Push(update models.Update) error {
+	log.Println("handling", update.Type)
+	target := u.db.Get(update.Destination)
 	_, err := u.db.AddUpdateDirect(&update)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	if target.Online {
 		u.realtime.Push(update)
 	} else {
-		subscription := models.GetEventType(eventType, body)
-		subscribed, err := u.db.UserIsSubscribed(destination, subscription)
+		subscription := models.GetEventType(update.Type, update.TargetType)
+		subscribed, err := u.db.UserIsSubscribed(update.Destination, subscription)
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 		if subscribed && u.email != nil {
+			log.Println("sending email")
 			return u.email.Push(update)
 		}
 	}
+	log.Println("handled")
 	return nil
 }
 

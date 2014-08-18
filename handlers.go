@@ -1238,7 +1238,7 @@ func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, 
 		return Render(ErrorBackend)
 	}
 	s, _ := db.GetStatus(id)
-	go u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s))
+	log.Println(u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s)))
 	return Render(s)
 }
 
@@ -1638,6 +1638,10 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 		return Render(ErrorBackend)
 	}
 
+	if err := client.Push(id.Hex(), fid, conv.ThumbnailType, optsThmb); err != nil {
+		log.Println(err)
+		return Render(ErrorBackend)
+	}
 	if err := client.Push(id.Hex(), fid, conv.VideoType, optsWebm); err != nil {
 		log.Println(err)
 		return Render(ErrorBackend)
@@ -1647,10 +1651,6 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 		return Render(ErrorBackend)
 	}
 
-	if err := client.Push(id.Hex(), fid, conv.ThumbnailType, optsThmb); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
-	}
 	return Render(video)
 }
 
@@ -1746,6 +1746,17 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 		return Render(BackendError(err))
 	}
 	return Render(audio)
+}
+
+func GetCounters(db DataBase, t *gotok.Token) (int, []byte) {
+	counters, err := db.GetUpdatesCount(t.Id)
+	if err != nil && err != mgo.ErrNotFound {
+		return Render(BackendError(err))
+	}
+	if err == mgo.ErrNotFound || len(counters) == 0 {
+		return Render([]string{})
+	}
+	return Render(counters)
 }
 
 // init for random
