@@ -220,12 +220,12 @@ func (u *RealtimeUpdater) AutoHandle(user, destination bson.ObjectId, body inter
 func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
 	update := models.NewUpdate(destination, user, eventType, body)
 	target := u.db.Get(destination)
-	_, err := u.db.AddUpdateDirect(update)
+	_, err := u.db.AddUpdateDirect(&update)
 	if err != nil {
 		return err
 	}
 	if target.Online {
-		u.realtime.Push(*update)
+		u.realtime.Push(update)
 	} else {
 		subscription := models.GetEventType(eventType, body)
 		subscribed, err := u.db.UserIsSubscribed(destination, subscription)
@@ -233,7 +233,7 @@ func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.Object
 			return err
 		}
 		if subscribed && u.email != nil {
-			return u.email.Push(*update)
+			return u.email.Push(update)
 		}
 	}
 	return nil
@@ -246,8 +246,7 @@ type autoUpdater struct {
 
 func (a *autoUpdater) Push(destination bson.ObjectId, body interface{}) error {
 	t := strings.ToLower(reflect.TypeOf(body).Name())
-	u := models.NewUpdate(destination, a.token.Id, t, body)
-	return a.updater.Push(*u)
+	return a.updater.Push(models.NewUpdate(destination, a.token.Id, t, body))
 }
 
 func AutoUpdaterWrapper(u models.Updater, t *gotok.Token, c martini.Context) {

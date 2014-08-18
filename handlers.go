@@ -76,7 +76,7 @@ func Index() (int, []byte) {
 }
 
 // GetUser handler for getting full user information
-func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, u Updater) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -100,6 +100,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 				return
 			}
 			db.AddGuest(id, t.Id)
+			u.Push(NewUpdate(id, t.Id, UpdateGuests, nil))
 		}()
 	}
 	// preparing for rendering to json
@@ -1151,13 +1152,15 @@ func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionH
 	return Render(transaction)
 }
 
-func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler) (int, []byte) {
+func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler, u Updater) (int, []byte) {
 	err := db.AddLikeVideo(t.Id, id)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	engine.Handle(activities.Like)
-	return Render(db.GetVideo(id))
+	v := db.GetVideo(id)
+	go u.Push(NewUpdate(v.User, t.Id, UpdateLikes, v))
+	return Render(v)
 }
 
 func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
@@ -1177,13 +1180,14 @@ func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 	return Render(likers)
 }
 
-func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler) (int, []byte) {
+func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler, u Updater) (int, []byte) {
 	err := db.AddLikePhoto(t.Id, id)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	engine.Handle(activities.Like)
 	p, _ := db.GetPhoto(id)
+	go u.Push(NewUpdate(p.User, t.Id, UpdateLikes, p))
 	return Render(p)
 }
 
@@ -1228,12 +1232,13 @@ func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 	return Render(p)
 }
 
-func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, []byte) {
 	err := db.AddLikeStatus(t.Id, id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
 	s, _ := db.GetStatus(id)
+	go u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s))
 	return Render(s)
 }
 
