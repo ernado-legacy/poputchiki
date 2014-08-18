@@ -33,6 +33,10 @@ func mapToStruct(q url.Values, val interface{}) error {
 			continue
 		}
 		value := q[key]
+		if field.Type.Kind() == reflect.Slice {
+			nQ[key] = value
+			continue
+		}
 		if len(value) == 1 {
 			v := value[0]
 			if field.Type.Name() == "ObjectId" && bson.IsObjectIdHex(v) {

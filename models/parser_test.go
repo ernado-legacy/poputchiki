@@ -19,6 +19,10 @@ type TestStructStr struct {
 	World string `json:"world"`
 }
 
+type TestStructList struct {
+	World []string `json:"world"`
+}
+
 func TestParser(t *testing.T) {
 	Convey("Parser", t, func() {
 		Convey("json", func() {
@@ -60,6 +64,25 @@ func TestParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(v.Hello, ShouldEqual, "world")
 			So(v.World, ShouldEqual, 1)
+		})
+		Convey("arrays", func() {
+			Convey("String to array", func() {
+				req, _ := http.NewRequest("GET", "/?world=world", nil)
+				v := &TestStructList{}
+				err := Parse(req, v)
+				So(err, ShouldBeNil)
+				So(len(v.World), ShouldEqual, 1)
+				So(v.World[0], ShouldEqual, "world")
+			})
+			Convey("Array to array", func() {
+				req, _ := http.NewRequest("GET", "/?world=world&world=hello", nil)
+				v := &TestStructList{}
+				err := Parse(req, v)
+				So(err, ShouldBeNil)
+				So(len(v.World), ShouldEqual, 2)
+				So(v.World[0], ShouldEqual, "world")
+				So(v.World[1], ShouldEqual, "hello")
+			})
 		})
 	})
 }
