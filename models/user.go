@@ -13,7 +13,7 @@ import (
 var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday", "seasons",
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
 	"likings_sex", "likings_destinations", "likings_seasons", "likings_country", "likings_city",
-	"about", "location", "likings_age_min", "likings_age_max", "password", "invisible",
+	"about", "location", "likings_age_min", "likings_age_max", "password", "invisible", "subscriptions",
 }
 
 const (
@@ -87,6 +87,7 @@ type User struct {
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
 	VipTill             time.Time       `json:"vip_till"               bson:"vip_till"`
 	Rating              float64         `json:"rating"                 bson:"rating"`
+	Subscriptions       []string        `json:"subscriptions"          bson:"subscriptions"`
 }
 
 type GuestUser struct {
