@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki/models"
 	"github.com/garyburd/redigo/redis"
+	"github.com/go-martini/martini"
 	"github.com/gorilla/websocket"
+	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
@@ -42,27 +45,16 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 	return realtime.pool.Get()
 }
 
-func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
-	t := strings.ToLower(reflect.TypeOf(event).Name())
-	return realtime.PushEvent(id, t, event)
-}
-
-func (r *RealtimeRedis) PushEvent(id bson.ObjectId, t string, event interface{}) error {
+func (r *RealtimeRedis) Push(update models.Update) error {
 	conn := r.Conn()
 	defer conn.Close()
-	e := models.RealtimeEvent{t, event, time.Now()}
-	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
+	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, update.Destination.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
-	eJson, err := json.Marshal(e)
+	eJson, err := json.Marshal(update)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
-	// log.Println("pushing event", string(eJson), key)
 	_, err = conn.Do("PUBLISH", key, eJson)
-	if err != nil {
-		log.Println(err)
-	}
 	return err
 }
 
@@ -120,10 +112,9 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	return Render("ok")
 }
 
-func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.RealtimeEvent {
+func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.Update {
 	// creating new channel
-	c := make(chan models.RealtimeEvent, RELT_BUFF_SIZE)
-
+	c := make(chan models.Update, RELT_BUFF_SIZE)
 	conn := realtime.Conn()
 	psc := redis.PubSubConn{}
 	psc.Conn = conn
@@ -137,13 +128,13 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.Realtime
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
-				e := models.RealtimeEvent{}
-				err := json.Unmarshal(v.Data, &e)
+				e := new(models.Update)
+				err := json.Unmarshal(v.Data, e)
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				c <- e
+				c <- *e
 			case error:
 				log.Println(v)
 				return
@@ -153,7 +144,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.Realtime
 	return c
 }
 
-func pushAll(event models.RealtimeEvent, chans map[bson.ObjectId]chan models.RealtimeEvent) {
+func pushAll(event models.Update, chans map[bson.ObjectId]chan models.Update) {
 	for _, channel := range chans {
 		channel <- event
 	}
@@ -161,7 +152,7 @@ func pushAll(event models.RealtimeEvent, chans map[bson.ObjectId]chan models.Rea
 
 func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 	log.Println("getting realtime channel")
-	c := ReltChannel{make(map[bson.ObjectId](chan models.RealtimeEvent)), realtime.getChannel(id)}
+	c := ReltChannel{make(map[bson.ObjectId](chan models.Update)), realtime.getChannel(id)}
 	go func() {
 		for event := range c.events {
 			go pushAll(event, c.chans)
@@ -172,7 +163,7 @@ func (realtime *RealtimeRedis) GetReltChannel(id bson.ObjectId) ReltChannel {
 
 func (realtime *RealtimeRedis) GetWSChannel(id bson.ObjectId) ReltWSChannel {
 	log.Println("getting websocket channel for", id.Hex())
-	c := make(chan models.RealtimeEvent, RELT_WS_BUFF_SIZE)
+	c := make(chan models.Update, RELT_WS_BUFF_SIZE)
 	_, ok := realtime.chans[id]
 	if !ok {
 		log.Println("realtime channel not found, creating")
@@ -191,39 +182,78 @@ func (realtime *RealtimeRedis) CloseWs(c ReltWSChannel) {
 type ReltWSChannel struct {
 	id            bson.ObjectId
 	user          bson.ObjectId
-	channel       chan models.RealtimeEvent
+	channel       chan models.Update
 	subscriptions []bson.ObjectId
 }
 
 type ReltChannel struct {
-	chans  map[bson.ObjectId](chan models.RealtimeEvent)
-	events chan models.RealtimeEvent
+	chans  map[bson.ObjectId](chan models.Update)
+	events chan models.Update
 }
 
-type Updater struct {
+type RealtimeUpdater struct {
 	db       models.DataBase
-	realtime models.RealtimeInterface
-	email    models.RealtimeInterface
+	realtime models.Updater
+	email    models.Updater
 }
 
-func (u *Updater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
+type EmailUpdater struct {
+	db     models.DataBase
+	client *mailgun.Client
+}
+
+func (e *EmailUpdater) Push(update models.Update) error {
+	u := e.db.Get(update.Destination)
+	message := models.ConfirmationMail{}
+	message.Destination = u.Email
+	message.Origin = "noreply@" + mailDomain
+	message.Mail = fmt.Sprintf("%+v", update)
+	_, err := e.client.Send(message)
+	return err
+}
+
+func (u *RealtimeUpdater) AutoHandle(user, destination bson.ObjectId, body interface{}) error {
+	t := strings.ToLower(reflect.TypeOf(body).Name())
+	return u.Handle(t, user, destination, body)
+}
+
+func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
 	update := models.NewUpdate(destination, user, eventType, body)
 	target := u.db.Get(destination)
+	_, err := u.db.AddUpdateDirect(update)
+	if err != nil {
+		return err
+	}
 	if target.Online {
-		u.realtime.PushEvent(destination, eventType, body)
+		u.realtime.Push(*update)
 	} else {
-		_, err := u.db.AddUpdateDirect(update)
-		if err != nil {
-			return err
-		}
 		subscription := models.GetEventType(eventType, body)
 		subscribed, err := u.db.UserIsSubscribed(destination, subscription)
 		if err != nil {
 			return err
 		}
-		if subscribed {
-			return u.email.PushEvent(destination, subscription, body)
+		if subscribed && u.email != nil {
+			return u.email.Push(*update)
 		}
 	}
 	return nil
+}
+
+type autoUpdater struct {
+	updater models.Updater
+	token   *gotok.Token
+}
+
+func (a *autoUpdater) Push(destination bson.ObjectId, body interface{}) error {
+	t := strings.ToLower(reflect.TypeOf(body).Name())
+	u := models.NewUpdate(destination, a.token.Id, t, body)
+	return a.updater.Push(*u)
+}
+
+func AutoUpdaterWrapper(u models.Updater, t *gotok.Token, c martini.Context) {
+	if t != nil && u != nil {
+		var auto models.AutoUpdater
+		auto = &autoUpdater{u, t}
+		c.Map(auto)
+	}
 }

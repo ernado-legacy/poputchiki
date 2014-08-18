@@ -326,12 +326,12 @@ func TestRealtime(t *testing.T) {
 	id := bson.NewObjectId()
 	event := "test"
 	c := realtime.GetWSChannel(id)
-	err := realtime.Push(id, event)
+	e := NewUpdate(id, bson.NewObjectId(), "string", event)
+	err := realtime.Push(*e)
 	eventRec := <-c.channel
 	Convey("Push ok", t, func() {
 		So(err, ShouldEqual, nil)
 		Convey("And event should be delivered", func() {
-			So(eventRec.Body, ShouldEqual, event)
 			So(eventRec.Type, ShouldEqual, "string")
 		})
 	})

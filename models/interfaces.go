@@ -156,9 +156,16 @@ type DataBase interface {
 }
 
 type RealtimeInterface interface {
-	Push(id bson.ObjectId, event interface{}) error
-	PushEvent(id bson.ObjectId, t string, event interface{}) error
+	Updater
 	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte)
+}
+
+type Updater interface {
+	Push(update Update) error
+}
+
+type AutoUpdater interface {
+	Push(destination bson.ObjectId, body interface{}) error
 }
 
 type PrepareInterface interface {

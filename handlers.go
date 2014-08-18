@@ -274,7 +274,7 @@ func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, 
 	return Render(guests)
 }
 
-func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime RealtimeInterface) (int, []byte) {
+func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime AutoUpdater) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -470,7 +470,7 @@ type MessageText struct {
 	Text string `json:"text"`
 }
 
-func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
 	message := &MessageText{}
 	err := parser.Parse(message)
 	if err != nil {
@@ -509,7 +509,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	return Render("message sent")
 }
 
-func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime RealtimeInterface) (int, []byte) {
+func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
 	text := "Вас пригласили в путешествие"
 	origin := t.Id
 	now := time.Now()
@@ -628,7 +628,7 @@ func uploadImageToWeed(adapter *weed.Adapter, image *magick.Image, format string
 	return uploadToWeed(adapter, encodeReader, "image", format)
 }
 
-func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime RealtimeInterface, t *gotok.Token) {
+func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progressReader *io.PipeReader, realtime AutoUpdater, t *gotok.Token) {
 	defer progressWriter.Close()
 	var p float32
 	var read int64
@@ -648,7 +648,7 @@ func pushProgress(length int64, rate int64, progressWriter *io.PipeWriter, progr
 	}
 }
 
-func realtimeProgress(progress chan float32, realtime RealtimeInterface, t *gotok.Token) {
+func realtimeProgress(progress chan float32, realtime AutoUpdater, t *gotok.Token) {
 	message := ProgressMessage{t.Id, 0.0}
 	for currentProgress := range progress {
 		message.Progress = currentProgress
@@ -664,7 +664,7 @@ func convert(input interface{}, output interface{}) error {
 	return json.Unmarshal(inputJson, output)
 }
 
-func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
+func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -706,7 +706,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime RealtimeInterface, db
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime RealtimeInterface, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
 	if err == ErrBadRequest {
 		return Render(ValidationError(err))

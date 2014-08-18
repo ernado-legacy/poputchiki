@@ -136,6 +136,12 @@ func NewApp() *Application {
 	m.Map(smsClient)
 	mailgunClient := mailgun.New(mailKey)
 	m.Map(mailgunClient)
+
+	updater := new(RealtimeUpdater)
+	updater.db = db
+	updater.email = &EmailUpdater{db, mailgunClient}
+	updater.realtime = realtime
+
 	m.Map(queryClient)
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
@@ -147,6 +153,7 @@ func NewApp() *Application {
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
 	m.Use(ParserWrapper)
+	m.Use(AutoUpdaterWrapper)
 	m.Map(tokenStorage)
 	m.Map(realtime)
 	weedAdapter := weed.NewAdapter(weedUrl)
