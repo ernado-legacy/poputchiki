@@ -719,7 +719,7 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 }
 
 func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engine activities.Handler) (int, []byte) {
-	status := &StatusUpdate{}
+	status := &Status{}
 	if err := parser.Parse(status); err != nil {
 		return Render(ValidationError(err))
 	}
@@ -778,7 +778,7 @@ func GetCurrentStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byt
 }
 
 func UpdateStatus(db DataBase, id bson.ObjectId, r *http.Request, t *gotok.Token, parser Parser) (int, []byte) {
-	status := &StatusUpdate{}
+	status := &Status{}
 	if err := parser.Parse(status); err != nil {
 		return Render(ValidationError(err))
 	}
@@ -1719,6 +1719,7 @@ func GetPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAcc
 func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
 	audio := &Audio{Id: id, User: t.Id, Time: time.Now()}
+
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		return Render(ValidationError(err))

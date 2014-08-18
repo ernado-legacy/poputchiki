@@ -147,7 +147,7 @@ func TestStripeUpdate(t *testing.T) {
 		})
 	})
 }
-func TestStatusUpdate(t *testing.T) {
+func TestStatus(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"
 	*development = true
@@ -183,7 +183,7 @@ func TestStatusUpdate(t *testing.T) {
 			So(res.Code, ShouldEqual, http.StatusOK)
 			Convey("Status get", func() {
 				res := httptest.NewRecorder()
-				s := new(StatusUpdate)
+				s := new(Status)
 				url := fmt.Sprintf("/api/user/%s/status?token=%s", token.Id.Hex(), token.Token)
 				req, _ := http.NewRequest("GET", url, nil)
 				a.ServeHTTP(res, req)
@@ -543,7 +543,7 @@ func TestMethods(t *testing.T) {
 			err := json.Unmarshal(tokenBody, &token1)
 			So(err, ShouldEqual, nil)
 			reqUrl := fmt.Sprintf("/api/status?token=%s", token1.Token)
-			status := new(StatusUpdate)
+			status := new(Status)
 			status.Text = "Hello world"
 			body, err := json.Marshal(status)
 			So(err, ShouldBeNil)

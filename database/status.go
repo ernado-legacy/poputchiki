@@ -11,8 +11,8 @@ import (
 )
 
 // AddStatus adds new status to database with provided text and id
-func (db *DB) AddStatus(u bson.ObjectId, text string) (*models.StatusUpdate, error) {
-	p := &models.StatusUpdate{}
+func (db *DB) AddStatus(u bson.ObjectId, text string) (*models.Status, error) {
+	p := &models.Status{}
 	p.Id = bson.NewObjectId()
 	p.Text = text
 	p.Time = time.Now()
@@ -22,15 +22,15 @@ func (db *DB) AddStatus(u bson.ObjectId, text string) (*models.StatusUpdate, err
 		return nil, err
 	}
 
-	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": time.Now(), "status": text}}}
+	update := mgo.Change{Update: bson.M{"$set": bson.M{"Status": time.Now(), "status": text}}}
 	_, err := db.users.FindId(u).Apply(update, &models.User{})
 
 	return p, err
 }
 
 // UpdateStatusSecure updates status ensuring ownership
-func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*models.StatusUpdate, error) {
-	s := &models.StatusUpdate{}
+func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*models.Status, error) {
+	s := &models.Status{}
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
 	query := bson.M{"_id": id, "user": user}
 	_, err := db.statuses.Find(query).Apply(change, s)
@@ -38,22 +38,22 @@ func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text stri
 	return s, err
 }
 
-func (db *DB) GetStatus(id bson.ObjectId) (status *models.StatusUpdate, err error) {
-	status = &models.StatusUpdate{}
+func (db *DB) GetStatus(id bson.ObjectId) (status *models.Status, err error) {
+	status = &models.Status{}
 	err = db.statuses.FindId(id).One(status)
 	return status, err
 }
 
 // GetCurrentStatus returs current status of user with provided id
-func (db *DB) GetCurrentStatus(user bson.ObjectId) (status *models.StatusUpdate, err error) {
-	status = &models.StatusUpdate{}
+func (db *DB) GetCurrentStatus(user bson.ObjectId) (status *models.Status, err error) {
+	status = &models.Status{}
 	err = db.statuses.Find(bson.M{"user": user}).Sort("-time").Limit(1).One(status)
 	return status, err
 }
 
 // GetLastStatuses returns global most auctual statuses
-func (db *DB) GetLastStatuses(count int) (status []*models.StatusUpdate, err error) {
-	status = []*models.StatusUpdate{}
+func (db *DB) GetLastStatuses(count int) (status []*models.Status, err error) {
+	status = []*models.Status{}
 	err = db.statuses.Find(nil).Sort("-time").Limit(count).All(&status)
 	return status, err
 }
@@ -65,7 +65,7 @@ func (db *DB) RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error {
 	return err
 }
 
-type StatusByTime []*models.StatusUpdate
+type StatusByTime []*models.Status
 
 func (a StatusByTime) Len() int {
 	return len(a)
@@ -79,16 +79,16 @@ func (a StatusByTime) Less(i, j int) bool {
 	return a[j].Time.Before(a[i].Time)
 }
 
-func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.StatusUpdate, error) {
+func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.Status, error) {
 	if count == 0 {
 		count = searchCount
 	}
 
-	statuses := []*models.StatusUpdate{}
+	statuses := []*models.Status{}
 	query := q.ToBson()
 	u := []*models.User{}
-	query["statusupdate"] = bson.M{"$exists": true}
-	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
+	query["Status"] = bson.M{"$exists": true}
+	if err := db.users.Find(query).Sort("-Status").Skip(offset).Limit(count).All(&u); err != nil {
 		return statuses, err
 	}
 	userIds := make([]bson.ObjectId, len(u))
@@ -110,9 +110,9 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	return statuses, nil
 }
 
-func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.StatusUpdate, err error) {
+func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.Status, err error) {
 	var userIds []bson.ObjectId
-	statuses = []*models.StatusUpdate{}
+	statuses = []*models.Status{}
 	users := []*models.User{}
 	userMap := make(map[bson.ObjectId]*models.User)
 

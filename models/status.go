@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type StatusUpdate struct {
+type Status struct {
 	Id         bson.ObjectId   `json:"id,omitempty"     bson:"_id"`
 	User       bson.ObjectId   `json:"user,omitempty"   bson:"user"`
 	UserObject *User           `json:"user_object,omitempty" bson:"-"`
@@ -17,7 +17,7 @@ type StatusUpdate struct {
 	LikedUsers []bson.ObjectId `json:"liked_users"      bson:"liked_users"`
 }
 
-func (u *StatusUpdate) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (err error) {
+func (u *Status) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (err error) {
 	if len(u.LikedUsers) == 0 {
 		u.LikedUsers = []bson.ObjectId{}
 	}

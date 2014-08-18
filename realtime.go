@@ -43,10 +43,13 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 }
 
 func (realtime *RealtimeRedis) Push(id bson.ObjectId, event interface{}) error {
-	conn := realtime.Conn()
-	defer conn.Close()
-
 	t := strings.ToLower(reflect.TypeOf(event).Name())
+	return realtime.PushEvent(id, t, event)
+}
+
+func (r *RealtimeRedis) PushEvent(id bson.ObjectId, t string, event interface{}) error {
+	conn := r.Conn()
+	defer conn.Close()
 	e := models.RealtimeEvent{t, event, time.Now()}
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, id.Hex()}
 	key := strings.Join(args, REDIS_SEPARATOR)
@@ -195,4 +198,32 @@ type ReltWSChannel struct {
 type ReltChannel struct {
 	chans  map[bson.ObjectId](chan models.RealtimeEvent)
 	events chan models.RealtimeEvent
+}
+
+type Updater struct {
+	db       models.DataBase
+	realtime models.RealtimeInterface
+	email    models.RealtimeInterface
+}
+
+func (u *Updater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
+	update := models.NewUpdate(destination, user, eventType, body)
+	target := u.db.Get(destination)
+	if target.Online {
+		u.realtime.PushEvent(destination, eventType, body)
+	} else {
+		_, err := u.db.AddUpdateDirect(update)
+		if err != nil {
+			return err
+		}
+		subscription := models.GetEventType(eventType, body)
+		subscribed, err := u.db.UserIsSubscribed(destination, subscription)
+		if err != nil {
+			return err
+		}
+		if subscribed {
+			return u.email.PushEvent(destination, subscription, body)
+		}
+	}
+	return nil
 }

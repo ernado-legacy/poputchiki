@@ -73,12 +73,12 @@ type DataBase interface {
 
 	// statuses
 	// api/user/:id/status/
-	GetCurrentStatus(user bson.ObjectId) (status *StatusUpdate, err error)
+	GetCurrentStatus(user bson.ObjectId) (status *Status, err error)
 	// api/status/:id/
-	GetStatus(id bson.ObjectId) (status *StatusUpdate, err error)
-	GetLastStatuses(count int) (status []*StatusUpdate, err error)
-	AddStatus(u bson.ObjectId, text string) (*StatusUpdate, error)
-	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*StatusUpdate, error)
+	GetStatus(id bson.ObjectId) (status *Status, err error)
+	GetLastStatuses(count int) (status []*Status, err error)
+	AddStatus(u bson.ObjectId, text string) (*Status, error)
+	UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text string) (*Status, error)
 	RemoveStatusSecure(user bson.ObjectId, id bson.ObjectId) error
 	AddLikeStatus(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikeStatus(user bson.ObjectId, target bson.ObjectId) error
@@ -120,7 +120,7 @@ type DataBase interface {
 	GetStripe(count, offset int) ([]*StripeItem, error)
 
 	Search(q *SearchQuery, pagination Pagination) ([]*User, int, error)
-	SearchStatuses(q *SearchQuery, count, offset int) ([]*StatusUpdate, error)
+	SearchStatuses(q *SearchQuery, count, offset int) ([]*Status, error)
 
 	NewConfirmationToken(id bson.ObjectId) *EmailConfirmationToken
 	GetConfirmationToken(token string) *EmailConfirmationToken
@@ -151,10 +151,13 @@ type DataBase interface {
 	GetActivityCount(user bson.ObjectId, key string, duration time.Duration) (count int, err error)
 	AddActivity(user bson.ObjectId, key string) error
 	UserIsSubscribed(id bson.ObjectId, subscription string) (bool, error)
+
+	AddUpdateDirect(u *Update) (*Update, error)
 }
 
 type RealtimeInterface interface {
 	Push(id bson.ObjectId, event interface{}) error
+	PushEvent(id bson.ObjectId, t string, event interface{}) error
 	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte)
 }
 
