@@ -135,6 +135,10 @@ func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token)
 func WebpWrapper(c martini.Context, r *http.Request) {
 	var accept models.WebpAccept
 	accept = false
+	if r.URL.Query().Get("webp") == "true" {
+		accept = true
+		c.Map(accept)
+	}
 	cookie, err := r.Cookie("webp")
 	if err != nil {
 		c.Map(accept)
@@ -151,6 +155,11 @@ func WebpWrapper(c martini.Context, r *http.Request) {
 
 func VideoWrapper(c martini.Context, r *http.Request) {
 	var accept models.VideoAccept = models.VaMp4
+	urlAccept := r.URL.Query().Get("video")
+	if urlAccept != "" {
+		accept = models.VideoAccept(urlAccept)
+		return
+	}
 	cookie, err := r.Cookie("video")
 	if err != nil {
 		c.Map(accept)
@@ -164,6 +173,11 @@ func VideoWrapper(c martini.Context, r *http.Request) {
 
 func AudioWrapper(c martini.Context, r *http.Request) {
 	var accept models.AudioAccept = models.AaAac
+	urlAccept := r.URL.Query().Get("audio")
+	if urlAccept != "" {
+		accept = models.AudioAccept(urlAccept)
+		return
+	}
 	cookie, err := r.Cookie("audio")
 	if err != nil {
 		c.Map(accept)
