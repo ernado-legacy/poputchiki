@@ -30,6 +30,7 @@ func TestDBMethods(t *testing.T) {
 			u.Sex = SexMale
 			u.Growth = 180
 			u.Seasons = []string{SeasonSummer, SeasonSpring}
+			u.Subscriptions = []string{SubscriptionLikesPhoto, SubscriptionNews}
 			err = db.Add(&u)
 			So(err, ShouldBeNil)
 
@@ -45,6 +46,18 @@ func TestDBMethods(t *testing.T) {
 				So(err, ShouldBeNil)
 				user = db.Get(id)
 				So(user.Online, ShouldBeFalse)
+			})
+
+			Convey("Subscriptions", func() {
+				v, err := db.UserIsSubscribed(id, SubscriptionLikesPhoto)
+				So(err, ShouldBeNil)
+				So(v, ShouldBeTrue)
+				v, err = db.UserIsSubscribed(id, SubscriptionNews)
+				So(err, ShouldBeNil)
+				So(v, ShouldBeTrue)
+				v, err = db.UserIsSubscribed(id, SubscriptionLikesStatus)
+				So(err, ShouldBeNil)
+				So(v, ShouldBeFalse)
 			})
 
 			Convey("Confirmation", func() {

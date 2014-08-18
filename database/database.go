@@ -27,6 +27,7 @@ var (
 	audioCollection      = "audio"
 	stripeCollection     = "stripe"
 	tokenCollection      = "tokens"
+	updatesCollection    = "updates"
 	activitiesCollection = "activities"
 )
 
@@ -45,6 +46,7 @@ type DB struct {
 	cities         *mgo.Collection
 	countries      *mgo.Collection
 	activities     *mgo.Collection
+	updates        *mgo.Collection
 	salt           string
 	offlineTimeout time.Duration
 }
@@ -60,7 +62,7 @@ func TestDatabase() *DB {
 // Drop all collections of database
 func (db *DB) Drop() {
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
-		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities}
+		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities, db.updates}
 
 	for k := range collections {
 		collections[k].DropCollection()
@@ -112,6 +114,8 @@ func (database *DB) Init() {
 	must(db.C(filesCollection).EnsureIndex(index))
 	must(db.C(stripeCollection).EnsureIndex(index))
 
+	index = mgo.Index{Key: []string{"read", "time", "destination", "type"}}
+	must(db.C(updatesCollection).EnsureIndex(index))
 	index = mgo.Index{Key: []string{"online", "lastaction"}}
 	must(db.C(collection).EnsureIndex(index))
 
@@ -145,6 +149,7 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	database.audio = db.C(audioCollection)
 	database.stripe = db.C(stripeCollection)
 	database.conftokens = db.C(conftokensCollection)
+	database.updates = db.C(updatesCollection)
 	database.countries = cityDB.C(countriesCollection)
 	database.cities = cityDB.C(citiesCollection)
 	database.Init()

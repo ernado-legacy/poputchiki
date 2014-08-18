@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	. "github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -319,4 +320,25 @@ func (db *DB) NormalizeRating() (*mgo.ChangeInfo, error) {
 	}
 	info.Updated += t.Updated
 	return info, nil
+}
+
+func (db *DB) UserIsSubscribed(id bson.ObjectId, subscription string) (bool, error) {
+	var found bool
+	for _, v := range Subscriptions {
+		if v == subscription {
+			found = true
+		}
+	}
+	if !found {
+		return false, errors.New("bad subscription")
+	}
+	query := bson.M{"_id": id, "subscriptions": subscription}
+	n, err := db.users.Find(query).Count()
+	if err == mgo.ErrNotFound {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return n == 1, nil
 }

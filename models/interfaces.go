@@ -150,6 +150,7 @@ type DataBase interface {
 
 	GetActivityCount(user bson.ObjectId, key string, duration time.Duration) (count int, err error)
 	AddActivity(user bson.ObjectId, key string) error
+	UserIsSubscribed(id bson.ObjectId, subscription string) (bool, error)
 }
 
 type RealtimeInterface interface {

@@ -17,12 +17,23 @@ var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday"
 }
 
 const (
-	FormEmail      = "email"     // email field
-	FormPassword   = "password"  // password field
-	FormFirstname  = "firstname" // user name field
-	FormPhone      = "phone"
-	femaleNoAvater = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_f.gif"
-	maleNoAvatar   = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_m.gif"
+	FormEmail               = "email"     // email field
+	FormPassword            = "password"  // password field
+	FormFirstname           = "firstname" // user name field
+	FormPhone               = "phone"
+	femaleNoAvater          = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_f.gif"
+	maleNoAvatar            = "https://poputchiki.cydev.ru/static/img/defaultavatars/no_avatar_m.gif"
+	SubscriptionLikesPhoto  = "likes_photo"
+	SubscriptionLikesStatus = "likes_status"
+	SubscriptionMessages    = "messages"
+	SubscriptionInvites     = "invites"
+	SubscriptionGuests      = "guests"
+	SubscriptionNews        = "news"
+)
+
+var (
+	Subscriptions = []string{SubscriptionLikesPhoto, SubscriptionLikesStatus, SubscriptionMessages,
+		SubscriptionInvites, SubscriptionGuests, SubscriptionNews}
 )
 
 // UserInfo additional user information

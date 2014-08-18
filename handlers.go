@@ -803,8 +803,7 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err)))
 	}
 	if err := query.Validate(db); err != nil {
 		return Render(ValidationError(err))
@@ -832,8 +831,7 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err)))
 	}
 	if err := query.Validate(db); err != nil {
 		return Render(ValidationError(err))
