@@ -1721,27 +1721,23 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 	audio := &Audio{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
-		log.Println("unable to read from file", err)
-		return Render(ErrorBackend)
+		return Render(ValidationError(err))
 	}
 	_, err = db.AddAudio(audio)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	optsAac := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "aac"}
 	optsVorbis := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "libvorbis"}
 	fid, _, _, err := adapter.Upload(f, "audio", "audio")
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if err := client.Push(id.Hex(), fid, conv.AudioType, optsAac); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if err := client.Push(id.Hex(), fid, conv.AudioType, optsVorbis); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render(audio)
 }
