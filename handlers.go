@@ -486,27 +486,32 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		return Render(ValidationError(errors.New("Blank text")))
 	}
 
-	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, false}
-	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, false}
+	m1 := &Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, false}
+	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, false}
 
-	go func() {
-		u := db.Get(destination)
-		if u == nil {
-			return
+	u := db.Get(destination)
+	if u == nil {
+		return Render(ErrorUserNotFound)
+	}
+	// check blacklist of destination
+	for _, id := range u.Blacklist {
+		if id == origin {
+			Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
+			return Render(ErrorBlacklisted)
 		}
-		// check blacklist of destination
-		for _, id := range u.Blacklist {
-			if id == origin {
-				Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
-				return
-			}
-		}
-		Must(realtime.Push(origin, m1))
-		Must(realtime.Push(destination, m2))
-		Must(db.AddMessage(&m1))
-		Must(db.AddMessage(&m2))
-	}()
-
+	}
+	// if err := realtime.Push(origin, m1); err != nil {
+	// 	Render(BackendError(err))
+	// }
+	// if err := realtime.Push(destination, m2); err != nil {
+	// 	Render(BackendError(err))
+	// }
+	if err := db.AddMessage(m1); err != nil {
+		Render(BackendError(err))
+	}
+	if err := db.AddMessage(m2); err != nil {
+		Render(BackendError(err))
+	}
 	return Render("message sent")
 }
 
@@ -679,7 +684,11 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataB
 
 	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
 	progress := make(chan float32)
-	go realtimeProgress(progress, realtime, t)
+	go func() {
+		for _ = range progress {
+			continue
+		}
+	}()
 	p, err := uploader.Upload(length, f, progress)
 
 	if err != nil {

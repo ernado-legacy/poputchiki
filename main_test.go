@@ -752,8 +752,6 @@ func TestMethods(t *testing.T) {
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
 
-					time.Sleep(10 * time.Millisecond)
-
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
@@ -761,8 +759,6 @@ func TestMethods(t *testing.T) {
 					req.PostForm.Add(FORM_TEXT, messageText2)
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
-					time.Sleep(10 * time.Millisecond)
-
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
@@ -771,7 +767,6 @@ func TestMethods(t *testing.T) {
 					a.ServeHTTP(res, req)
 					So(res.Code, ShouldEqual, http.StatusOK)
 
-					time.Sleep(10 * time.Millisecond)
 					reqUrl = fmt.Sprintf("/api/user/%s/messages/?token=%s", token1.Id.Hex(), token2.Token)
 					req, _ = http.NewRequest("PUT", reqUrl, nil)
 					req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
@@ -794,10 +789,12 @@ func TestMethods(t *testing.T) {
 						So(res.Code, ShouldEqual, http.StatusOK)
 						err := json.Unmarshal(messagesBody, &m)
 						So(err, ShouldEqual, nil)
+						So(len(m), ShouldEqual, 4)
 						for _, value := range m {
 							foundMessage = value
 							break
 						}
+						log.Printf("%+v", foundMessage)
 						So(foundMessage.Destination, ShouldEqual, token1.Id)
 						So(foundMessage.Origin, ShouldEqual, token2.Id)
 						So(foundMessage.Text, ShouldEqual, messageText)
@@ -997,7 +994,7 @@ func TestMethods(t *testing.T) {
 								})
 							})
 						})
-						Convey("Other user should be able to send message", func() {
+						Convey("Other user should not be able to send message", func() {
 							res = httptest.NewRecorder()
 
 							json.Unmarshal(tokenBody, &token1)
@@ -1008,7 +1005,7 @@ func TestMethods(t *testing.T) {
 							req.PostForm = url.Values{FORM_TEXT: {messageText}}
 							req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
 							a.ServeHTTP(res, req)
-							So(res.Code, ShouldEqual, http.StatusOK)
+							So(res.Code, ShouldEqual, http.StatusMethodNotAllowed)
 
 							Convey("But it should not be in inbox", func() {
 								time.Sleep(5 * time.Millisecond)
