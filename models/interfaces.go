@@ -154,6 +154,8 @@ type DataBase interface {
 
 	AddUpdateDirect(u *Update) (*Update, error)
 	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
+	GetUpdates(destination bson.ObjectId, t string, pagination Pagination) ([]*Update, error)
+	SetUpdateRead(destination, id bson.ObjectId) error
 }
 
 type RealtimeInterface interface {

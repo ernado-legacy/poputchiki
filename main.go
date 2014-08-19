@@ -236,6 +236,8 @@ func NewApp() *Application {
 		r.Put("/stripe", AddStripeItem)
 
 		r.Get("/updates/counters", GetCounters)
+		r.Get("/updates", GetUpdates)
+		r.Post("/updates/:id", SetUpdateRead)
 
 		r.Put("/status", AddStatus)
 		r.Post("/status", AddStatus)

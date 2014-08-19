@@ -985,8 +985,7 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	stripe, err := db.GetStripe(pagination.Count, pagination.Offset)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	for _, v := range stripe {
 		if err := v.Prepare(db, adapter, webp, video, audio); err != nil {
@@ -1009,7 +1008,7 @@ func EnableVip(db DataBase, t *gotok.Token, parm martini.Params) (int, []byte) {
 		price = vipMonth
 	}
 	if price == 0 {
-		return Render(ErrBadRequest)
+		return Render(ValidationError(errors.New("Duration must me month or week")))
 	}
 
 	if !*development {
@@ -1757,6 +1756,30 @@ func GetCounters(db DataBase, t *gotok.Token) (int, []byte) {
 		return Render([]string{})
 	}
 	return Render(counters)
+}
+
+func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *http.Request, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+	t := req.URL.Query().Get("type")
+	updates, err := db.GetUpdates(token.Id, t, pagination)
+	if err == mgo.ErrNotFound {
+		return Render([]string{})
+	}
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	for _, u := range updates {
+		if err := u.Prepare(db, adapter, webp, video, audio); err != nil {
+			log.Println(err)
+		}
+	}
+	return Render(updates)
+}
+
+func SetUpdateRead(db DataBase, token *gotok.Token, id bson.ObjectId) (int, []byte) {
+	if err := db.SetUpdateRead(token.Id, id); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render("ok")
 }
 
 // init for random
