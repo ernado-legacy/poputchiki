@@ -88,7 +88,6 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 		}
 	}
 	// hiding private fields for non-owner
-	log.Println(t.Id, id)
 	if t.Id != id {
 		user.CleanPrivate()
 		go func() {
@@ -102,6 +101,22 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 			db.AddGuest(id, t.Id)
 			u.Push(NewUpdate(id, t.Id, UpdateGuests, nil))
 		}()
+	}
+	// preparing for rendering to json
+	user.Prepare(adapter, db, webp, audio)
+	return Render(user)
+}
+
+func GetCurrentUser(db DataBase, t *gotok.Token, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, u Updater) (int, []byte) {
+	user := db.Get(t.Id)
+	if user == nil {
+		return Render(ErrorUserNotFound)
+	}
+	// checking for blacklist
+	for _, u := range user.Blacklist {
+		if u == t.Id {
+			return Render(ErrorBlacklisted)
+		}
 	}
 	// preparing for rendering to json
 	user.Prepare(adapter, db, webp, audio)
@@ -1625,6 +1640,7 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	optsMpeg.Audio.Bitrate = AUDIO_BITRATE
 	optsMpeg.Video.Bitrate = VIDEO_BITRATE
 	optsMpeg.Video.Square = true
+	optsMpeg.Duration = 10
 	optsMpeg.Video.Height = VIDEO_SIZE
 	optsMpeg.Video.Width = VIDEO_SIZE
 
@@ -1634,6 +1650,7 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	optsWebm.Audio.Bitrate = AUDIO_BITRATE
 	optsWebm.Video.Bitrate = VIDEO_BITRATE
 	optsWebm.Video.Square = true
+	optsWebm.Duration = 10
 	optsWebm.Video.Height = VIDEO_SIZE
 	optsWebm.Video.Width = VIDEO_SIZE
 
