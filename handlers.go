@@ -1769,6 +1769,9 @@ func GetCounters(db DataBase, t *gotok.Token) (int, []byte) {
 
 func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *http.Request, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	t := req.URL.Query().Get("type")
+	if t == "" {
+		return Render(ValidationError(errors.New("Blank type")))
+	}
 	updates, err := db.GetUpdates(token.Id, t, pagination)
 	if err == mgo.ErrNotFound {
 		return Render([]string{})
