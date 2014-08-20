@@ -87,8 +87,8 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	statuses := []*models.Status{}
 	query := q.ToBson()
 	u := []*models.User{}
-	query["Status"] = bson.M{"$exists": true}
-	if err := db.users.Find(query).Sort("-Status").Skip(offset).Limit(count).All(&u); err != nil {
+	query["statusupdate"] = bson.M{"$exists": true}
+	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
 		return statuses, err
 	}
 	userIds := make([]bson.ObjectId, len(u))
