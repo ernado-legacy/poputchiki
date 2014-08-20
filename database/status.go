@@ -38,6 +38,8 @@ func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text stri
 		return nil, err
 	}
 	s.Text = text
+
+	// sync user status
 	update := bson.M{"$set": bson.M{"status": text}}
 	err = db.users.UpdateId(user, update)
 	return s, err
