@@ -22,7 +22,7 @@ func (db *DB) AddStatus(u bson.ObjectId, text string) (*models.Status, error) {
 		return nil, err
 	}
 
-	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": time.Now(), "status": text}}}
+	update := mgo.Change{Update: bson.M{"$set": bson.M{"statusupdate": p.Time, "status": text}}}
 	_, err := db.users.FindId(u).Apply(update, &models.User{})
 
 	return p, err
@@ -34,7 +34,12 @@ func (db *DB) UpdateStatusSecure(user bson.ObjectId, id bson.ObjectId, text stri
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"text": text}}}
 	query := bson.M{"_id": id, "user": user}
 	_, err := db.statuses.Find(query).Apply(change, s)
+	if err != nil {
+		return nil, err
+	}
 	s.Text = text
+	update := bson.M{"$set": bson.M{"status": text}}
+	err = db.users.UpdateId(user, update)
 	return s, err
 }
 
