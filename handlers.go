@@ -841,12 +841,12 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	result, count, err := db.Search(query, pagination)
 	log.Println("query", time.Now().Sub(now))
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 
 	for key, _ := range result {
 		result[key].Prepare(adapter, db, webpAccept, audio)
+		result[key].CleanPrivate()
 	}
 
 	return Render(SearchResult{result, count})
@@ -866,13 +866,14 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 		query.Sponsor = ""
 	}
 	result, err := db.SearchStatuses(query, pagination.Count, pagination.Offset)
+	log.Println(result, err, pagination)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 
 	for key, _ := range result {
 		result[key].Prepare(db, adapter, webpAccept, audio)
+		result[key].UserObject.CleanPrivate()
 	}
 
 	return Render(result)
