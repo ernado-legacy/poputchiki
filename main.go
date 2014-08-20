@@ -142,8 +142,13 @@ func NewApp() *Application {
 
 	m.Map(updater)
 	m.Map(queryClient)
-	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
-	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
+	if *mobile {
+		m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "https://poputchiki.cydev.ru" + root + "/auth/vk/redirect", "offline,email"})
+		m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "https://poputchiki.cydev.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
+	} else {
+		m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
+		m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
+	}
 	m.Use(JsonEncoder)
 	m.Use(JsonEncoderWrapper)
 	m.Use(TokenWrapper)
@@ -194,6 +199,8 @@ func NewApp() *Application {
 
 		r.Get("/token", GetToken)
 		r.Post("/vip/:duration", EnableVip)
+
+		r.Get("/user", GetCurrentUser)
 
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
