@@ -17,6 +17,26 @@ type Message struct {
 	Invite      bool          `json:"invite"      bson:"invite"`
 }
 
+func NewMessagePair(origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
+	toOrigin = new(Message)
+	toDestination = new(Message)
+	toOrigin.Id = bson.NewObjectId()
+	toDestination.Id = bson.NewObjectId()
+	toOrigin.Time = time.Now()
+	toDestination.Time = toOrigin.Time
+	toOrigin.User = origin
+	toDestination.User = destination
+	toOrigin.Chat = destination
+	toDestination.Chat = origin
+	toOrigin.Origin = origin
+	toDestination.Origin = origin
+	toOrigin.Destination = destination
+	toDestination.Destination = destination
+	toOrigin.Text = text
+	toDestination.Text = text
+	return
+}
+
 type RealtimeEvent struct {
 	Type string      `json:"type"`
 	Body interface{} `json:"body"`

@@ -12,7 +12,6 @@ func TestCountries(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(countries, ShouldContain, "Россия")
 	})
-
 	Convey("Find Moscow", t, func() {
 		cities, err := db.GetCities("Моск", "Россия")
 		So(err, ShouldBeNil)
@@ -26,13 +25,23 @@ func TestCountries(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(countries, ShouldContain, "Россия")
 	})
-
+	Convey("CityPairs", t, func() {
+		pairs, err := db.GetCityPairs("моск")
+		So(err, ShouldBeNil)
+		found := false
+		for _, pair := range pairs {
+			if pair.Country == "Россия" && pair.Title == "Москва" {
+				found = true
+				break
+			}
+		}
+		So(found, ShouldBeTrue)
+	})
 	Convey("Places", t, func() {
 		places, err := db.GetPlaces("Росси")
 		So(err, ShouldBeNil)
 		So(places, ShouldContain, "Россия")
 	})
-
 	Convey("Existance", t, func() {
 		Convey("Country", func() {
 			Convey("Positive", func() {
@@ -45,7 +54,6 @@ func TestCountries(t *testing.T) {
 				So(db.CountryExists("россия"), ShouldBeFalse)
 			})
 		})
-
 		Convey("City", func() {
 			Convey("Positive", func() {
 				So(db.CityExists("Москва"), ShouldBeTrue)

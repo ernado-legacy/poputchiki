@@ -5,7 +5,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 	"testing"
-	"time"
 )
 
 func TestMessages(t *testing.T) {
@@ -14,23 +13,22 @@ func TestMessages(t *testing.T) {
 	destination := bson.NewObjectId()
 	text := "Привет"
 	pagination := models.Pagination{}
-
 	Convey("Add users", t, func() {
-		Reset(func() {
-			db.Drop()
-		})
-		uOrigin := &models.User{Id: origin}
-		uDestination := &models.User{Id: destination}
+		Reset(db.Drop)
+		uOrigin := &models.User{Id: origin, Name: "Alex"}
+		uDestination := &models.User{Id: destination, Name: "Petya"}
 		So(db.Add(uOrigin), ShouldBeNil)
 		So(db.Add(uDestination), ShouldBeNil)
+		Convey("Integrity", Integrity(db, uOrigin))
+		Convey("Integrity", Integrity(db, uDestination))
 		Convey("Add message", func() {
-			now := time.Now()
-			idOrigin := bson.NewObjectId()
-			idDestination := bson.NewObjectId()
-			mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text, false}
-			mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text, false}
+			mOrigin, mDestination := models.NewMessagePair(origin, destination, text)
+			idOrigin := mOrigin.Id
+			idDestination := mDestination.Id
 			So(db.AddMessage(mOrigin), ShouldBeNil)
 			So(db.AddMessage(mDestination), ShouldBeNil)
+			Convey("Integrity", Integrity(db, uOrigin))
+			Convey("Integrity", Integrity(db, uDestination))
 			Convey("Destination chats", func() {
 				chats, err := db.GetChats(destination)
 				So(err, ShouldBeNil)
@@ -44,13 +42,53 @@ func TestMessages(t *testing.T) {
 			})
 			Convey("Add new message", func() {
 				text2 := "hehehe"
-				now := time.Now()
-				idOrigin := bson.NewObjectId()
-				idDestination := bson.NewObjectId()
-				mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text2, false}
-				mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text2, false}
+				mOrigin, mDestination := models.NewMessagePair(origin, destination, text2)
 				So(db.AddMessage(mOrigin), ShouldBeNil)
 				So(db.AddMessage(mDestination), ShouldBeNil)
+				Convey("Integrity", Integrity(db, uOrigin))
+				Convey("Integrity", Integrity(db, uDestination))
+				Convey("Set read origin", func() {
+					So(db.SetReadMessagesFromUser(destination, origin), ShouldBeNil)
+					Convey("Integrity", Integrity(db, uOrigin))
+					Convey("Integrity", Integrity(db, uDestination))
+					Convey("Destination has no new messages", func() {
+						n, err := db.GetUnreadCount(destination)
+						So(n, ShouldEqual, 0)
+						So(err, ShouldBeNil)
+					})
+				})
+				Convey("Remove", func() {
+					So(db.RemoveMessage(idOrigin), ShouldBeNil)
+					Convey("Integrity", Integrity(db, uOrigin))
+					Convey("Integrity", Integrity(db, uDestination))
+					Convey("Destination chats", func() {
+						chats, err := db.GetChats(destination)
+						So(err, ShouldBeNil)
+						found := false
+						for k := range chats {
+							if chats[k].Id == origin {
+								found = true
+							}
+						}
+						So(found, ShouldBeTrue)
+						Convey("Destination has new message", func() {
+							n, err := db.GetUnreadCount(destination)
+							So(n, ShouldEqual, 2)
+							So(err, ShouldBeNil)
+							Convey("Fist message should be second", func() {
+								messages, err := db.GetMessagesFromUser(destination, origin, pagination)
+								So(err, ShouldBeNil)
+								So(len(messages), ShouldEqual, 2)
+								So(messages[1].Text, ShouldEqual, text2)
+							})
+						})
+						Convey("Origin has new message", func() {
+							n, err := db.GetUnreadCount(origin)
+							So(n, ShouldEqual, 1)
+							So(err, ShouldBeNil)
+						})
+					})
+				})
 				Convey("Destination chats", func() {
 					chats, err := db.GetChats(destination)
 					So(err, ShouldBeNil)
@@ -79,16 +117,13 @@ func TestMessages(t *testing.T) {
 					})
 
 				})
-
 				Convey("Add new message", func() {
 					text3 := "hehehe"
-					now := time.Now()
-					idOrigin := bson.NewObjectId()
-					idDestination := bson.NewObjectId()
-					mOrigin := &models.Message{idOrigin, destination, origin, origin, destination, false, now, text3, false}
-					mDestination := &models.Message{idDestination, origin, destination, origin, destination, false, now, text3, false}
+					mOrigin, mDestination := models.NewMessagePair(origin, destination, text3)
 					So(db.AddMessage(mOrigin), ShouldBeNil)
 					So(db.AddMessage(mDestination), ShouldBeNil)
+					Convey("Integrity", Integrity(db, uOrigin))
+					Convey("Integrity", Integrity(db, uDestination))
 					Convey("Destination chats", func() {
 						chats, err := db.GetChats(destination)
 						So(err, ShouldBeNil)
@@ -145,6 +180,8 @@ func TestMessages(t *testing.T) {
 				m, err := db.GetMessage(idOrigin)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)
+				Convey("Integrity", Integrity(db, uOrigin))
+				Convey("Integrity", Integrity(db, uDestination))
 				Convey("Origin has no new messages", func() {
 					n, err := db.GetUnreadCount(origin)
 					So(n, ShouldEqual, 0)
@@ -156,6 +193,8 @@ func TestMessages(t *testing.T) {
 				m, err := db.GetMessage(idDestination)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)
+				Convey("Integrity", Integrity(db, uOrigin))
+				Convey("Integrity", Integrity(db, uDestination))
 				Convey("Destination has no new messages", func() {
 					n, err := db.GetUnreadCount(destination)
 					So(n, ShouldEqual, 0)

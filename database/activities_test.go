@@ -1,23 +1,33 @@
 package database
 
 import (
+	"github.com/ernado/poputchiki/activities"
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 	"testing"
+	"time"
 )
 
 func TestActivities(t *testing.T) {
 	db := TestDatabase()
-
-	Convey("Confirmation", t, func() {
-		Reset(func() {
-			db.Drop()
-		})
+	Convey("Activities", t, func() {
+		Reset(db.Drop)
 		id := bson.NewObjectId()
-		u := &models.User{Id: id}
-		Convey("Add user", func() {
-			So(db.Add(u), ShouldBeNil)
+		u := &models.User{Id: id, Email: "dasdsadas@asdasd", Sex: models.SexFemale, Name: "Kakesh Malakesh"}
+		So(db.Add(u), ShouldBeNil)
+		Convey("Integrity", Integrity(db, u))
+		Convey("Add", func() {
+			addCount := 10
+			for i := 0; i < addCount; i++ {
+				So(db.AddActivity(id, activities.Invite), ShouldBeNil)
+			}
+			Convey("Integrity", Integrity(db, u))
+			Convey("Count", func() {
+				count, err := db.GetActivityCount(id, activities.Invite, time.Hour)
+				So(err, ShouldBeNil)
+				So(count, ShouldEqual, addCount)
+			})
 		})
 	})
 

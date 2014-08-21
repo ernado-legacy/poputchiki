@@ -3,7 +3,6 @@ package database
 import (
 	"fmt"
 	"github.com/ernado/poputchiki/models"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"sort"
 )
@@ -27,9 +26,7 @@ func (db *DB) GetMessage(id bson.ObjectId) (*models.Message, error) {
 	return message, err
 }
 func (db *DB) setRead(query bson.M) error {
-	messages := []models.Message{}
-	change := mgo.Change{Update: bson.M{"$set": bson.M{"read": true}}}
-	_, err := db.messages.Find(query).Apply(change, &messages)
+	_, err := db.messages.UpdateAll(query, bson.M{"$set": bson.M{"read": true}})
 	return err
 }
 
@@ -39,7 +36,7 @@ func (db *DB) SetRead(user, id bson.ObjectId) error {
 }
 
 func (db *DB) SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
-	query := bson.M{"user": userReciever, "chat": userOrigin}
+	query := bson.M{"destination": userReciever, "origin": userOrigin}
 	return db.setRead(query)
 }
 
