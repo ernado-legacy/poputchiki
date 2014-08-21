@@ -43,9 +43,10 @@ func (db *DB) GetUpdatesCount(destination bson.ObjectId) ([]*models.UpdateCounte
 	if err := iter.All(&result); err != nil {
 		return nil, err
 	}
-	all := models.UpdateCounter{Type: "all"}
+	all := &models.UpdateCounter{Type: "all"}
 	for _, v := range result {
 		all.Count += v.Count
 	}
+	result = append(result, all)
 	return result, nil
 }

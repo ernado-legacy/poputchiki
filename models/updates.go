@@ -43,7 +43,7 @@ func NewUpdate(destination, user bson.ObjectId, updateType string, media interfa
 	u.User = user
 	u.Type = updateType
 	u.Time = time.Now()
-	if u.Type == UpdateLikes {
+	if u.Type == UpdateLikes && media != nil {
 		u.Target = media
 		u.TargetType = strings.ToLower(reflect.TypeOf(media).Elem().Name())
 	}
