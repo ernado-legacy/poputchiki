@@ -17,6 +17,7 @@ func Integrity(db models.DataBase, u *models.User) func() {
 		So(dbu.Sex, ShouldEqual, u.Sex)
 		So(dbu.Phone, ShouldEqual, u.Phone)
 		So(dbu.Rating, ShouldAlmostEqual, u.Rating)
+		So(dbu.Vip, ShouldEqual, u.Vip)
 		So(dbu.LastAction.Unix(), ShouldEqual, u.LastAction.Unix())
 	}
 }

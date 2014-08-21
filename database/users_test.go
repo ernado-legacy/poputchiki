@@ -91,10 +91,22 @@ func TestUsers(t *testing.T) {
 				Convey("Enable", func() {
 					u.Vip = true
 					So(db.SetVip(id, true), ShouldBeNil)
-					So(db.SetVipTill(id, time.Now().Add(-time.Second)), ShouldBeNil)
 					Convey("Integrity", Integrity(db, u))
-					user := db.Get(id)
-					So(user.Vip, ShouldBeTrue)
+					Convey("False-positive", func() {
+						So(db.SetVipTill(id, time.Now().Add(time.Second)), ShouldBeNil)
+						info, err := db.UpdateAllVip()
+						So(err, ShouldBeNil)
+						So(info.Updated, ShouldEqual, 0)
+						Convey("Integrity", Integrity(db, u))
+					})
+					Convey("Auto-disable", func() {
+						So(db.SetVipTill(id, time.Now().Add(-time.Second)), ShouldBeNil)
+						u.Vip = false
+						info, err := db.UpdateAllVip()
+						So(err, ShouldBeNil)
+						So(info.Updated, ShouldEqual, 1)
+						Convey("Integrity", Integrity(db, u))
+					})
 				})
 			})
 			Convey("Favourites", func() {

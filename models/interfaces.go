@@ -43,7 +43,7 @@ type DataBase interface {
 	GetAllUsersWithFavorite(id bson.ObjectId) ([]*User, error)
 
 	AddGuest(id bson.ObjectId, guest bson.ObjectId) error
-	GetAllGuests(id bson.ObjectId) ([]*User, error)
+	// GetAllGuests(id bson.ObjectId) ([]*User, error)
 	GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error)
 
 	AddMessage(m *Message) error

@@ -145,25 +145,6 @@ func (db *DB) RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) e
 	return err
 }
 
-func (db *DB) GetAllGuests(id bson.ObjectId) ([]*User, error) {
-	g := []Guest{}
-	u := []*User{}
-
-	// first query - get all guests ids from guest-pair collection
-	err := db.guests.Find(bson.M{"user": id}).Distinct("guest", &g)
-	if err != nil {
-		return nil, err
-	}
-
-	// second query - get all users with that id's
-	err = db.users.Find(bson.M{"_id": bson.M{"$in": &g}}).All(&u)
-	if err != nil {
-		return nil, err
-	}
-
-	return u, nil
-}
-
 type guestByTime []*GuestUser
 
 func (a guestByTime) Len() int {
