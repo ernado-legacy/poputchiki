@@ -1,7 +1,6 @@
 package database
 
 import (
-	// "github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 	"testing"
@@ -9,21 +8,15 @@ import (
 
 func TestConfirmation(t *testing.T) {
 	db := TestDatabase()
-
-	Convey("Confirmation", t, func() {
-		Reset(func() {
-			db.Drop()
-		})
-		id := bson.NewObjectId()
+	Convey("Confirmation tokens", t, func() {
+		Reset(db.Drop)
 		Convey("Add", func() {
-			t := db.NewConfirmationToken(id)
+			t := db.NewConfirmationToken(bson.NewObjectId())
 			So(t, ShouldNotBeNil)
 			Convey("Get", func() {
-				t2 := db.GetConfirmationToken(t.Token)
-				So(t2.Id, ShouldEqual, t.Id)
+				So(db.GetConfirmationToken(t.Token).Id, ShouldEqual, t.Id)
 				Convey("Removed", func() {
-					t3 := db.GetConfirmationToken(t.Token)
-					So(t3, ShouldBeNil)
+					So(db.GetConfirmationToken(t.Token), ShouldBeNil)
 				})
 			})
 		})
