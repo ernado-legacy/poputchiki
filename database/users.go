@@ -250,7 +250,7 @@ func (db *DB) DecBalance(id bson.ObjectId, amount uint) error {
 
 func (db *DB) SetLastActionNow(id bson.ObjectId) error {
 	change := mgo.Change{Update: bson.M{"$set": bson.M{"lastaction": time.Now()}}}
-	_, err := db.users.FindId(id).Apply(change, nil)
+	_, err := db.users.FindId(id).Apply(change, new(User))
 	return err
 }
 

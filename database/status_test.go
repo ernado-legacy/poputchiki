@@ -14,16 +14,17 @@ func Integrity(db models.DataBase, u *models.User) func() {
 		So(dbu, ShouldNotBeNil)
 		So(dbu.Email, ShouldEqual, u.Email)
 		So(dbu.Name, ShouldEqual, u.Name)
+		So(dbu.Sex, ShouldEqual, u.Sex)
 		So(dbu.Phone, ShouldEqual, u.Phone)
+		So(dbu.Rating, ShouldAlmostEqual, u.Rating)
+		So(dbu.LastAction.Unix(), ShouldEqual, u.LastAction.Unix())
 	}
 }
 
 func TestStatus(t *testing.T) {
 	db := TestDatabase()
 	Convey("Status test", t, func() {
-		Reset(func() {
-			db.Drop()
-		})
+		Reset(db.Drop)
 		id := bson.NewObjectId()
 		email := "test"
 		u := &models.User{Id: id, Email: email}
