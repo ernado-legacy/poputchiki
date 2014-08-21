@@ -5,7 +5,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	// "log"
+	"log"
 	"sort"
 	"time"
 )
@@ -95,9 +95,11 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	query := q.ToBson()
 	u := []*models.User{}
 	query["statusupdate"] = bson.M{"$exists": true}
+	log.Println(query)
 	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
 		return statuses, err
 	}
+	log.Println(u)
 	userIds := make([]bson.ObjectId, len(u))
 	users := make(map[bson.ObjectId]*models.User)
 	for i, user := range u {
@@ -123,7 +125,7 @@ func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.Status, err 
 	users := []*models.User{}
 	userMap := make(map[bson.ObjectId]*models.User)
 
-	if err = db.statuses.Find(nil).Sort("-likes").Skip(offset).Limit(count).All(statuses); err != nil {
+	if err = db.statuses.Find(nil).Sort("-likes").Skip(offset).Limit(count).All(&statuses); err != nil {
 		return
 	}
 
