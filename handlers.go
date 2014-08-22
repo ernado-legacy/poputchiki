@@ -325,25 +325,21 @@ type LoginCredentials struct {
 }
 
 func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, parser Parser) (int, []byte) {
-	credentials := &LoginCredentials{}
+	credentials := new(LoginCredentials)
 	if err := parser.Parse(credentials); err != nil {
-		log.Println("error:", err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
-	log.Println(credentials)
 	username, password := credentials.Email, credentials.Password
 	user := db.GetUsername(username)
 	if user == nil {
 		return Render(ErrorUserNotFound)
 	}
-	log.Println(user.Password, password, getHash(password, db.Salt()))
 	if user.Password != getHash(password, db.Salt()) {
 		return Render(ErrorAuth)
 	}
 	t, err := tokens.Generate(user.Id)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	http.SetCookie(w, t.GetCookie())
 	return Render(t)
