@@ -348,7 +348,7 @@ func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Sto
 // Logout ends the current session and makes current token unusable
 func Logout(db DataBase, r *http.Request, tokens gotok.Storage, t *gotok.Token) (int, []byte) {
 	if err := tokens.Remove(t); err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	return Render("logged out")
 }
@@ -361,34 +361,30 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 	// check that email is unique
 	uDb := db.GetUsername(u.Email)
 	if uDb != nil {
-		log.Println(u.Email, "already registered")
-		return Render(ErrorUserAlreadyRegistered) // todo: change error name
+		return Render(ErrorUserAlreadyRegistered)
 	}
-	// log.Println("registered", u.Password)
 	// add to database
 	u.Rating = 100.0
+	u.Subscriptions = Subscriptions
 	if err := db.Add(u); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	// generate token
 	t, err := tokens.Generate(u.Id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	// generate confirmation token for email confirmation
 	confTok := db.NewConfirmationToken(u.Id)
 	if confTok == nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(errors.New("Unable to generate token")))
 	}
 	if !*development {
 		message := ConfirmationMail{}
 		message.Destination = u.Email
 		message.Origin = "noreply@" + mailDomain
 		message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
-		// log.Println("[email]", message.From(), message.To(), message.Text())
 		_, err = mail.Send(message)
-		// log.Println(message)
 		if err != nil {
 			log.Println("[email]", err)
 		}
