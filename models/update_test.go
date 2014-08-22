@@ -15,6 +15,11 @@ func TestUpdates(t *testing.T) {
 			u := NewUpdate(destination, user, UpdateLikes, p)
 			So(u.TargetType, ShouldEqual, "photo")
 		})
+		Convey("Message", func() {
+			p := new(Message)
+			u := NewUpdate(destination, user, UpdateMessages, p)
+			So(u.TargetType, ShouldEqual, "message")
+		})
 	})
 
 	Convey("Update types", t, func() {
@@ -28,6 +33,11 @@ func TestUpdates(t *testing.T) {
 		})
 		Convey("Guests", func() {
 			So(GetEventType(UpdateGuests, nil), ShouldEqual, SubscriptionGuests)
+		})
+
+		Convey("Messages", func() {
+			m := new(Message)
+			So(GetEventType(UpdateMessages, m), ShouldEqual, SubscriptionMessages)
 		})
 	})
 }

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	UpdateLikes  = "likes"
-	UpdateGuests = SubscriptionGuests
+	UpdateLikes    = "likes"
+	UpdateGuests   = SubscriptionGuests
+	UpdateMessages = SubscriptionMessages
 )
 
 type Update struct {
@@ -43,7 +44,7 @@ func NewUpdate(destination, user bson.ObjectId, updateType string, media interfa
 	u.User = user
 	u.Type = updateType
 	u.Time = time.Now()
-	if u.Type == UpdateLikes && media != nil {
+	if (u.Type == UpdateLikes || u.Type == UpdateMessages) && media != nil {
 		u.Target = media
 		u.TargetType = strings.ToLower(reflect.TypeOf(media).Elem().Name())
 	}
@@ -57,6 +58,9 @@ func GetEventType(updateType string, media interface{}) string {
 	if updateType == SubscriptionInvites || updateType == SubscriptionMessages {
 		return updateType
 	}
+	log.Println(reflect.TypeOf(media))
+	log.Println(reflect.TypeOf(media).Name())
+	log.Println(media)
 	return fmt.Sprintf("%s_%s", updateType, strings.ToLower(reflect.TypeOf(media).Elem().Name()))
 }
 

@@ -491,15 +491,12 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 
 	text := message.Text
 	origin := t.Id
-	now := time.Now()
 
 	if text == "" {
 		return Render(ValidationError(errors.New("Blank text")))
 	}
 
-	m1 := &Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, false}
-	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, false}
-
+	m1, m2 := NewMessagePair(origin, destination, text)
 	u := db.Get(destination)
 	if u == nil {
 		return Render(ErrorUserNotFound)
@@ -507,16 +504,15 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	// check blacklist of destination
 	for _, id := range u.Blacklist {
 		if id == origin {
-			Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
 			return Render(ErrorBlacklisted)
 		}
 	}
-	// if err := realtime.Push(origin, m1); err != nil {
-	// 	Render(BackendError(err))
-	// }
-	// if err := realtime.Push(destination, m2); err != nil {
-	// 	Render(BackendError(err))
-	// }
+	if err := realtime.Push(origin, m1); err != nil {
+		Render(BackendError(err))
+	}
+	if err := realtime.Push(destination, m2); err != nil {
+		Render(BackendError(err))
+	}
 	if err := db.AddMessage(m1); err != nil {
 		Render(BackendError(err))
 	}
@@ -531,27 +527,24 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 	origin := t.Id
 	now := time.Now()
 
-	m1 := Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
-	m2 := Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, true}
+	m1 := &Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
+	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, true}
 
-	go func() {
-		u := db.Get(destination)
-		if u == nil {
-			return
+	u := db.Get(destination)
+	if u == nil {
+		return Render(ErrorUserNotFound)
+	}
+	// check blacklist of destination
+	for _, id := range u.Blacklist {
+		if id == origin {
+			return Render(ErrorBlacklisted)
 		}
-		// check blacklist of destination
-		for _, id := range u.Blacklist {
-			if id == origin {
-				Must(realtime.Push(origin, MessageSendBlacklisted{m1.Id}))
-				return
-			}
-		}
-		Must(realtime.Push(origin, m1))
-		Must(realtime.Push(destination, m2))
-		Must(db.AddMessage(&m1))
-		Must(db.AddMessage(&m2))
-		engine.Handle(activities.Invite)
-	}()
+	}
+	Must(realtime.Push(origin, m1))
+	Must(realtime.Push(destination, m2))
+	Must(db.AddMessage(m1))
+	Must(db.AddMessage(m2))
+	engine.Handle(activities.Invite)
 
 	return Render("message sent")
 }

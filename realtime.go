@@ -225,6 +225,7 @@ func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.Object
 
 func (u *RealtimeUpdater) Push(update models.Update) error {
 	log.Println("handling", update.Type)
+	log.Printf("%+v", update)
 	target := u.db.Get(update.Destination)
 	_, err := u.db.AddUpdateDirect(&update)
 	if err != nil {
@@ -232,9 +233,12 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 		return err
 	}
 	if target.Online {
+		log.Println("sending realtime")
 		u.realtime.Push(update)
 	} else {
-		subscription := models.GetEventType(update.Type, update.TargetType)
+		log.Println(update.Type)
+		subscription := models.GetEventType(update.Type, update.Target)
+		log.Println("subscription", subscription)
 		subscribed, err := u.db.UserIsSubscribed(update.Destination, subscription)
 		if err != nil {
 			log.Println(err)
@@ -255,7 +259,10 @@ type autoUpdater struct {
 }
 
 func (a *autoUpdater) Push(destination bson.ObjectId, body interface{}) error {
-	t := strings.ToLower(reflect.TypeOf(body).Name())
+	t := strings.ToLower(reflect.TypeOf(body).Elem().Name())
+	if t == "message" {
+		t = "messages"
+	}
 	return a.updater.Push(models.NewUpdate(destination, a.token.Id, t, body))
 }
 

@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	. "github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -311,7 +312,7 @@ func (db *DB) UserIsSubscribed(id bson.ObjectId, subscription string) (bool, err
 		}
 	}
 	if !found {
-		return false, errors.New("bad subscription")
+		return false, errors.New(fmt.Sprintf("bad subscription <%s>", subscription))
 	}
 	query := bson.M{"_id": id, "subscriptions": subscription}
 	n, err := db.users.Find(query).Count()
