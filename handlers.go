@@ -394,15 +394,13 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 }
 
 // Update updates user information with provided key-value document
-func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (int, []byte) {
+func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	query := bson.M{}
 	// decoding json to map
 	e := parser.Parse(&query)
 	if e != nil {
 		return Render(ValidationError(e))
 	}
-
-	log.Printf("query: %+v", query)
 
 	// removes fields
 	isWriteable := func(key string) bool {
@@ -433,7 +431,6 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (
 	}
 
 	if user.Password != "" {
-		log.Println("hashing password", user.Password, "to", getHash(user.Password, db.Salt()))
 		user.Password = getHash(user.Password, db.Salt())
 	}
 
@@ -463,8 +460,8 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser) (
 		return Render(BackendError(err))
 	}
 	// returning updated user
-	log.Printf("result: %+v", newQuery)
 	updated := db.Get(id)
+	updated.Prepare(adapter, db, webp, audio)
 	return Render(updated)
 }
 
