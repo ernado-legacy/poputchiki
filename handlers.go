@@ -912,17 +912,13 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter 
 
 func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	var media interface{}
-	request := &StripeItemRequest{}
-	if parser.Parse(request) != nil {
-		return Render(ErrorBadRequest)
+	request := new(StripeItemRequest)
+	if err := parser.Parse(request); err != nil {
+		return Render(ValidationError(err))
 	}
-
-	i := &StripeItem{}
+	i := new(StripeItem)
 	i.Id = bson.NewObjectId()
 	i.User = t.Id
-
-	log.Printf("%+v", request)
-
 	if !*development {
 		err := db.DecBalance(t.Id, PromoCost)
 		if err != nil {
@@ -947,8 +943,7 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 
 		p, err := db.GetPhoto(request.Photo)
 		if err != nil && err != mgo.ErrNotFound {
-			log.Println(err)
-			return Render(ErrorBackend)
+			return Render(BackendError(err))
 		}
 		if p == nil {
 			u := db.Get(t.Id)
@@ -962,14 +957,13 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 	case "photo":
 		p, err := db.GetPhoto(request.Id)
 		if err != nil && err != mgo.ErrNotFound {
-			log.Println(err)
-			return Render(ErrorBackend)
+			return Render(BackendError(err))
 		}
 		if p == nil {
 			return Render(ErrorObjectNotFound)
 		}
-		i.ImageJpeg = p.ImageJpeg
-		i.ImageWebp = p.ImageWebp
+		i.ImageJpeg = p.ThumbnailJpeg
+		i.ImageWebp = p.ThumbnailWebp
 		media = p
 	default:
 		return Render(ValidationError(errors.New("Bad type")))
@@ -977,15 +971,12 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 	if media == nil {
 		return Render(ErrorObjectNotFound)
 	}
-
-	log.Printf("media: %+v", media)
 	s, err := db.AddStripeItem(i, media)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	engine.Handle(activities.Promo)
 	s.Prepare(db, adapter, webp, video, audio)
-
 	return Render(s)
 }
 
