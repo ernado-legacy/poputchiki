@@ -26,42 +26,41 @@ import (
 )
 
 var (
-	salt                      = "salt"
-	projectName               = "poputchiki"
-	premiumTime               = time.Hour * 24 * 30
-	vipWeek                   = 400
-	vipMonth                  = 1000
-	ratingDegradationDuration = time.Hour * 24 * 2
-	// ratingDegradationDuration      = time.Minute
-	ratingUpdateDelta         = time.Second * 3
-	statusUpdateTime          = time.Hour * 24
-	dbName                    = projectName
-	statusesPerDay            = 1
-	statusesPerDayVip         = 3
-	dbCity                    = "countries"
-	tokenCollection           = "tokens"
-	mongoHost                 = "localhost"
-	robokassaLogin            = "poputchiki.ru"
-	robokassaPassword1        = "pcZKT5Qm84MJAIudLAbR"
-	robokassaPassword2        = "8x3cVXUt08Uc9TV70mx3"
-	robokassaDescription      = "Пополнение счета Попутчики.ру"
-	production                = false
-	processes                 = runtime.NumCPU()
-	redisName                 = projectName
-	redisAddr                 = ":6379"
-	redisQueryKey             = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
-	mailKey                   = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
-	mailDomain                = "mg.cydev.ru"
-	smsKey                    = "nil"
-	weedHost                  = "127.0.0.1"
-	weedPort                  = 9333
-	weedUrl                   = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
-	OfflineTimeout            = 60 * 5 * time.Second
-	OfflineUpdateTick         = 5 * time.Second
-	PromoCost            uint = 50
-	mobile                    = flag.Bool("mobile", false, "is mobile api")
-	development               = flag.Bool("dev", false, "is in development")
-	sendEmail                 = flag.Bool("email", true, "send registration emails")
+	salt                           = "salt"
+	projectName                    = "poputchiki"
+	premiumTime                    = time.Hour * 24 * 30
+	vipWeek                        = 400
+	vipMonth                       = 1000
+	ratingDegradationDuration      = time.Hour * 24 * 2
+	ratingUpdateDelta              = time.Second * 3
+	statusUpdateTime               = time.Hour * 24
+	dbName                         = projectName
+	statusesPerDay                 = 1
+	statusesPerDayVip              = 3
+	dbCity                         = "countries"
+	tokenCollection                = "tokens"
+	mongoHost                      = "localhost"
+	robokassaLogin                 = "poputchiki.ru"
+	robokassaPassword1             = "pcZKT5Qm84MJAIudLAbR"
+	robokassaPassword2             = "8x3cVXUt08Uc9TV70mx3"
+	robokassaDescription           = "Пополнение счета Попутчики.ру"
+	production                     = false
+	processes                      = runtime.NumCPU()
+	redisName                      = projectName
+	redisAddr                      = ":6379"
+	redisQueryKey                  = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
+	mailKey                        = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
+	mailDomain                     = "mg.cydev.ru"
+	smsKey                         = "nil"
+	weedHost                       = "127.0.0.1"
+	weedPort                       = 9333
+	weedUrl                        = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
+	OfflineTimeout                 = 60 * 5 * time.Second
+	OfflineUpdateTick              = 5 * time.Second
+	PromoCost                 uint = 50
+	mobile                         = flag.Bool("mobile", false, "is mobile api")
+	development                    = flag.Bool("dev", false, "is in development")
+	sendEmail                      = flag.Bool("email", true, "send registration emails")
 )
 
 func getHash(password string, s string) string {
