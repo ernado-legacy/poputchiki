@@ -379,6 +379,7 @@ func (a *Application) ConvertResultListener() {
 		id := bson.ObjectIdHex(resp.Id)
 		fid := resp.File
 		if resp.Type == "audio" {
+			log.Println("updating audio")
 			if resp.Format == "ogg" {
 				err = db.UpdateAudioOGG(id, fid)
 			}
@@ -421,6 +422,7 @@ func (a *Application) ConvertResultListener() {
 		if err != nil {
 			log.Println(resp.Id, err)
 		}
+		log.Println("[dedicated server] processed")
 	}
 }
 
