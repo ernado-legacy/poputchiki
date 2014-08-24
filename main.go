@@ -76,6 +76,7 @@ type Application struct {
 	m       *martini.ClassicMartini
 	db      models.DataBase
 	adapter *weed.Adapter
+	updater models.Updater
 }
 
 func newPool() *redis.Pool {
@@ -138,7 +139,6 @@ func NewApp() *Application {
 
 	var updater models.Updater
 	updater = &RealtimeUpdater{db, &EmailUpdater{db, mailgunClient}, realtime}
-
 	m.Map(updater)
 	m.Map(queryClient)
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
@@ -273,7 +273,7 @@ func NewApp() *Application {
 		r.Delete("/photo/:id", IdWrapper, RemovePhoto)
 	}, NeedAuth, SetOnlineWrapper)
 
-	a := &Application{session, p, m, db, weedAdapter}
+	a := &Application{session, p, m, db, weedAdapter, updater}
 	a.InitDatabase()
 	return a
 }
@@ -388,6 +388,10 @@ func (a *Application) ConvertResultListener() {
 			audio := db.GetAudio(id)
 			if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
 				log.Println("Sending audio", audio)
+				u := models.NewUpdate(audio.User, audio.User, "audio", audio)
+				if err := a.updater.Push(u); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 		if resp.Type == "video" {
@@ -400,6 +404,10 @@ func (a *Application) ConvertResultListener() {
 			video := db.GetVideo(id)
 			if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
 				log.Println("Sending video", video)
+				u := models.NewUpdate(video.User, video.User, "video", video)
+				if err := a.updater.Push(u); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 		if resp.Type == "thumbnail" {
