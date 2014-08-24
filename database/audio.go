@@ -6,7 +6,7 @@ import (
 )
 
 func (db *DB) GetAudio(id bson.ObjectId) *models.Audio {
-	a := &models.Audio{}
+	a := new(models.Audio)
 	if db.audio.FindId(id).One(a) != nil {
 		return nil
 	}
@@ -17,7 +17,7 @@ func (db *DB) AddAudio(audio *models.Audio) (*models.Audio, error) {
 	if err := db.audio.Insert(audio); err != nil {
 		return nil, err
 	}
-	return audio, db.users.UpdateId(audio.User, bson.M{"audio": audio.Id})
+	return audio, db.users.UpdateId(audio.User, bson.M{"$set": bson.M{"audio": audio.Id}})
 }
 
 func (db *DB) UpdateAudioAAC(id bson.ObjectId, fid string) error {
@@ -34,7 +34,6 @@ func (db *DB) UpdateAudioOGG(id bson.ObjectId, fid string) error {
 	if err := db.audio.UpdateId(id, update); err != nil {
 		return err
 	}
-
 	_, err := db.users.UpdateAll(bson.M{"audio": id}, update)
 	return err
 }
