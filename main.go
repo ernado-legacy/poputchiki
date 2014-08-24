@@ -376,53 +376,59 @@ func (a *Application) ConvertResultListener() {
 			log.Println("convertation error", resp.Id, resp.Error)
 			continue
 		}
-		id := bson.ObjectIdHex(resp.Id)
-		fid := resp.File
-		if resp.Type == "audio" {
-			log.Println("updating audio")
-			if resp.Format == "ogg" {
-				err = db.UpdateAudioOGG(id, fid)
-			}
-			if resp.Format == "aac" {
-				err = db.UpdateAudioAAC(id, fid)
-			}
-			audio := db.GetAudio(id)
-			if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
-				log.Println("Sending audio", audio)
-				u := models.NewUpdate(audio.User, audio.User, "audio", audio)
-				if err := a.updater.Push(u); err != nil {
-					log.Println(err)
+		go func() {
+			defer func() {
+				recover()
+			}()
+
+			id := bson.ObjectIdHex(resp.Id)
+			fid := resp.File
+			if resp.Type == "audio" {
+				log.Println("updating audio")
+				if resp.Format == "ogg" {
+					err = db.UpdateAudioOGG(id, fid)
+				}
+				if resp.Format == "aac" {
+					err = db.UpdateAudioAAC(id, fid)
+				}
+				audio := db.GetAudio(id)
+				if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
+					log.Println("Sending audio", audio)
+					u := models.NewUpdate(audio.User, audio.User, "audio", audio)
+					if err := a.updater.Push(u); err != nil {
+						log.Println(err)
+					}
 				}
 			}
-		}
-		if resp.Type == "video" {
-			if resp.Format == "webm" {
-				err = db.UpdateVideoWebm(id, fid)
-			}
-			if resp.Format == "mp4" {
-				err = db.UpdateVideoMpeg(id, fid)
-			}
-			video := db.GetVideo(id)
-			if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
-				log.Println("Sending video", video)
-				u := models.NewUpdate(video.User, video.User, "video", video)
-				if err := a.updater.Push(u); err != nil {
-					log.Println(err)
+			if resp.Type == "video" {
+				if resp.Format == "webm" {
+					err = db.UpdateVideoWebm(id, fid)
+				}
+				if resp.Format == "mp4" {
+					err = db.UpdateVideoMpeg(id, fid)
+				}
+				video := db.GetVideo(id)
+				if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
+					log.Println("Sending video", video)
+					u := models.NewUpdate(video.User, video.User, "video", video)
+					if err := a.updater.Push(u); err != nil {
+						log.Println(err)
+					}
 				}
 			}
-		}
-		if resp.Type == "thumbnail" {
-			jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
+			if resp.Type == "thumbnail" {
+				jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
+				if err != nil {
+					log.Println(err)
+				} else {
+					err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
+				}
+			}
 			if err != nil {
-				log.Println(err)
-			} else {
-				err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
+				log.Println(resp.Id, err)
 			}
-		}
-		if err != nil {
-			log.Println(resp.Id, err)
-		}
-		log.Println("[dedicated server] processed")
+			log.Println("[dedicated server] processed")
+		}()
 	}
 }
 
