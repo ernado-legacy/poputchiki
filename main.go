@@ -393,7 +393,7 @@ func (a *Application) ConvertResultListener() {
 				}
 				audio := db.GetAudio(id)
 				if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
-					log.Println("Sending audio", audio)
+					log.Printf("Sending audio %+v", audio)
 					u := models.NewUpdate(audio.User, audio.User, "audio", audio)
 					if err := a.updater.Push(u); err != nil {
 						log.Println(err)
@@ -409,7 +409,7 @@ func (a *Application) ConvertResultListener() {
 				}
 				video := db.GetVideo(id)
 				if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
-					log.Println("Sending video", video)
+					log.Printf("Sending video %+v", video)
 					u := models.NewUpdate(video.User, video.User, "video", video)
 					if err := a.updater.Push(u); err != nil {
 						log.Println(err)
