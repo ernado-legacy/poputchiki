@@ -385,6 +385,10 @@ func (a *Application) ConvertResultListener() {
 			if resp.Format == "aac" {
 				err = db.UpdateAudioAAC(id, fid)
 			}
+			audio := db.GetAudio(id)
+			if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
+				log.Println("Sending audio", audio)
+			}
 		}
 		if resp.Type == "video" {
 			if resp.Format == "webm" {
@@ -392,6 +396,10 @@ func (a *Application) ConvertResultListener() {
 			}
 			if resp.Format == "mp4" {
 				err = db.UpdateVideoMpeg(id, fid)
+			}
+			video := db.GetVideo(id)
+			if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
+				log.Println("Sending video", video)
 			}
 		}
 		if resp.Type == "thumbnail" {

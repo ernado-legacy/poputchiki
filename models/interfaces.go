@@ -160,7 +160,7 @@ type DataBase interface {
 
 type RealtimeInterface interface {
 	Updater
-	RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte)
+	RealtimeHandler(w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte)
 }
 
 type Updater interface {

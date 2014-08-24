@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki/models"
+	. "github.com/ernado/poputchiki/models"
+	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"github.com/gorilla/websocket"
@@ -62,7 +64,7 @@ func chackOrigin(r *http.Request) bool {
 	return true
 }
 
-func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, t *gotok.Token) (int, []byte) {
+func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
 	_, ok := w.(http.Hijacker)
 	if !ok {
@@ -103,10 +105,14 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	}()
 
 	for event := range c.channel {
+		if err := event.Prepare(db, adapter, webp, video, audio); err != nil {
+			log.Println(err)
+		}
 		err := conn.WriteJSON(event)
 		if err != nil {
+			log.Println(err)
 			connClosed <- true
-			return Render(ErrorBackend)
+			return Render(BackendError(err))
 		}
 	}
 	return Render("ok")
