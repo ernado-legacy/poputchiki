@@ -1589,13 +1589,11 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	video := &Video{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
-		log.Println("unable to read from file", err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
-
 	_, err = db.AddVideo(video)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 
 	optsMpeg := new(conv.VideoOptions)
@@ -1617,61 +1615,47 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	optsWebm.Duration = 10
 	optsWebm.Video.Height = VIDEO_SIZE
 	optsWebm.Video.Width = VIDEO_SIZE
-
 	optsThmb := new(conv.ThumbnailOptions)
 	optsThmb.Format = "png"
-
 	fid, _, _, err := adapter.Upload(f, "video", "video")
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
-
 	if err := client.Push(id.Hex(), fid, conv.ThumbnailType, optsThmb); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if err := client.Push(id.Hex(), fid, conv.VideoType, optsWebm); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	if err := client.Push(id.Hex(), fid, conv.VideoType, optsMpeg); err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
-
 	return Render(video)
 }
 
 func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	v, err := db.GetUserVideo(id)
-
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-
 	for _, videoElem := range v {
 		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
 			log.Println(err)
 		}
 	}
-
 	return Render(v)
 }
 
 func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	v, err := db.GetUserVideo(id)
-
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-
 	for _, videoElem := range v {
 		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
 			log.Println(err)
 		}
 	}
-
 	p, err := db.GetPhoto(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
@@ -1679,7 +1663,6 @@ func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	if err := p.Prepare(adapter, webp, video, audio); err != nil {
 		return Render(BackendError(err))
 	}
-
 	return Render(map[string]interface{}{"video": v, "photo": p})
 }
 
@@ -1706,7 +1689,6 @@ func GetPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAcc
 	if err := p.Prepare(adapter, webp, video, audio); err != nil {
 		return Render(ErrorBackend)
 	}
-
 	return Render(p)
 }
 
