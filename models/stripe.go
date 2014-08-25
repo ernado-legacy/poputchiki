@@ -19,7 +19,7 @@ type StripeItem struct {
 	ImageUrl   string        `json:"image_url,omitempty"   bson:"-"`
 	Type       string        `json:"type"                  bson:"type"`
 	Url        string        `json:"url,omitemptry"        bson:"-"`
-	Media      interface{}   `json:"media"                 bson:"media"`
+	Media      interface{}   `json:"-"                     bson:"media"`
 	Countries  []string      `json:"countries,omitempty"   bson:"countries,omitempty"`
 	Time       time.Time     `json:"time"                  bson:"time"`
 }
