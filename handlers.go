@@ -145,6 +145,9 @@ func AddToFavorites(db DataBase, id bson.ObjectId, r *http.Request, parser Parse
 	if friend == nil {
 		return Render(ErrorUserNotFound)
 	}
+	if user.Id == friend.Id {
+		return Render(ValidationError(errors.New("Зачем вы таки пытаетесь добавить себя в подписчики?")))
+	}
 	// add to favorites
 	if err := db.AddToFavorites(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
@@ -168,6 +171,9 @@ func AddToBlacklist(db DataBase, id bson.ObjectId, r *http.Request, parser Parse
 	// check that target exists
 	if friend == nil {
 		return Render(ErrorUserNotFound)
+	}
+	if user.Id == friend.Id {
+		return Render(ValidationError(errors.New("Зачем вы таки пытаетесь добавить себя в блеклист?")))
 	}
 	if err := db.AddToBlacklist(user.Id, friend.Id); err != nil {
 		return Render(ErrorBadRequest)
