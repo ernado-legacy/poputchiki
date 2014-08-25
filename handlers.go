@@ -1168,12 +1168,9 @@ func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	return Render(db.GetVideo(id))
 }
 
-func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
-	likers := db.GetLikesVideo(id)
-	for k := range likers {
-		likers[k].Prepare(adapter, db, webp, audio)
-		likers[k].CleanPrivate()
-	}
+func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
+	likers := db.GetLikesPhoto(id)
+	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(likers)
 }
 
@@ -1219,14 +1216,10 @@ func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	return Render("ok")
 }
 
-func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
+func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
-	for k := range likers {
-		likers[k].Prepare(adapter, db, webp, audio)
-		likers[k].CleanPrivate()
-	}
-	p, _ := db.GetPhoto(id)
-	return Render(p)
+	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
+	return Render(likers)
 }
 
 func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, []byte) {
@@ -1248,12 +1241,9 @@ func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []by
 	return Render(s)
 }
 
-func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (int, []byte) {
+func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	likers := db.GetLikesStatus(id)
-	for k := range likers {
-		likers[k].Prepare(adapter, db, webp, audio)
-		likers[k].CleanPrivate()
-	}
+	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(likers)
 }
 
