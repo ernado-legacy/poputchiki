@@ -1164,6 +1164,10 @@ func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 
 func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
+	// check for existance
+	if likers == nil {
+		return Render([]interface{}{})
+	}
 	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(likers)
 }
@@ -1212,6 +1216,10 @@ func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 
 func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
+	// check for existance
+	if likers == nil {
+		return Render([]interface{}{})
+	}
 	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(likers)
 }
@@ -1237,6 +1245,10 @@ func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []by
 
 func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	likers := db.GetLikesStatus(id)
+	// check for existance
+	if likers == nil {
+		return Render([]interface{}{})
+	}
 	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(likers)
 }
