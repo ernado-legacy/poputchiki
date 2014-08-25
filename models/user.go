@@ -93,7 +93,7 @@ type User struct {
 	LikingsAgeMin       int             `json:"likings_age_min,omitempty"      bson:"likings_age_min,omitempty"`
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
-	IsFavorite          bool            `json:"is_favorite"            bson:"-"`
+	IsFavorite          bool            `json:"is_favourite"           bson:"-"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible"              bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
