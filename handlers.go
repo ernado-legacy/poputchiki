@@ -246,53 +246,47 @@ func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetFollowers(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetFollowers(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	favorites, err := db.GetAllUsersWithFavorite(id)
 	if err != nil && err != mgo.ErrNotFound {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
-
 	// check for existance
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
 	// clean private fields and prepare data
-	for key, _ := range favorites {
-		favorites[key].CleanPrivate()
-		favorites[key].Prepare(adapter, db, webp, audio)
-	}
+	Users(favorites).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(favorites)
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetBlacklisted(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetBlacklisted(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	blacklisted := db.GetBlacklisted(id)
 	// check for existance
 	if blacklisted == nil {
 		return Render([]interface{}{})
 	}
-	// clean private fields and prepare data
-	for key, _ := range blacklisted {
-		blacklisted[key].CleanPrivate()
-		blacklisted[key].Prepare(adapter, db, webp, audio)
-	}
+	Users(blacklisted).Prepare(adapter, db, webp, audio, db.Get(t.Id))
 	return Render(blacklisted)
 }
 
 // GetFavorites returns list of users in guests of target user
-func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
 	guests, err := db.GetAllGuestUsers(id)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	// check for existance
 	if guests == nil {
 		return Render([]interface{}{})
 	}
 	// clean private fields and prepare data
+	user := db.Get(t.Id)
 	for key, _ := range guests {
 		guests[key].CleanPrivate()
 		guests[key].Prepare(adapter, db, webp, audio)
+		guests[key].SetIsFavorite(user)
 	}
 	return Render(guests)
 }
