@@ -104,6 +104,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 	}
 	// preparing for rendering to json
 	user.Prepare(adapter, db, webp, audio)
+	user.SetIsFavorite(db.Get(t.Id))
 	return Render(user)
 }
 
@@ -819,18 +820,11 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	if !u.Vip {
 		query.Sponsor = ""
 	}
-	now := time.Now()
 	result, count, err := db.Search(query, pagination)
-	log.Println("query", time.Now().Sub(now))
 	if err != nil {
 		return Render(BackendError(err))
 	}
-
-	for key, _ := range result {
-		result[key].Prepare(adapter, db, webpAccept, audio)
-		result[key].CleanPrivate()
-	}
-
+	Users(result).Prepare(adapter, db, webpAccept, audio, u)
 	return Render(SearchResult{result, count})
 }
 
@@ -848,14 +842,14 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 		query.Sponsor = ""
 	}
 	result, err := db.SearchStatuses(query, pagination.Count, pagination.Offset)
-	log.Println(result, err, pagination)
 	if err != nil {
 		return Render(BackendError(err))
 	}
-
+	user := db.Get(t.Id)
 	for key, _ := range result {
 		result[key].Prepare(db, adapter, webpAccept, audio)
 		result[key].UserObject.CleanPrivate()
+		result[key].UserObject.SetIsFavorite(user)
 	}
 
 	return Render(result)

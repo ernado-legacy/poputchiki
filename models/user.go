@@ -93,6 +93,7 @@ type User struct {
 	LikingsAgeMin       int             `json:"likings_age_min,omitempty"      bson:"likings_age_min,omitempty"`
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
+	IsFavorite          bool            `json:"is_favorite"            bson:"-"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible"              bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
@@ -168,6 +169,30 @@ func diff(t1, t2 time.Time) (years int) {
 	}
 	years--
 	return years
+}
+
+func (u *User) SetIsFavorite(user *User) {
+	for _, v := range user.Favorites {
+		if v == u.Id {
+			u.IsFavorite = true
+		}
+	}
+}
+
+type Users []*User
+
+func (u Users) SetIsFavorite(user *User) {
+	for _, v := range u {
+		v.SetIsFavorite(user)
+	}
+}
+
+func (u Users) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept, user *User) {
+	u.SetIsFavorite(user)
+	for _, v := range u {
+		v.Prepare(adapter, db, webp, audio)
+		v.CleanPrivate()
+	}
 }
 
 func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept) {
