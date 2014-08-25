@@ -86,7 +86,7 @@ func (q *SearchQuery) ToBson() bson.M {
 	}
 
 	if len(q.Destinations) > 0 {
-		query = append(query, bson.M{"destination": bson.M{"$in": q.Destinations}})
+		query = append(query, bson.M{"destinations": bson.M{"$in": q.Destinations}})
 	}
 
 	if q.AgeMax == 0 {
