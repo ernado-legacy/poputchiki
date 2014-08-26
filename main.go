@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/ernado/cymedia/mediad/query"
@@ -19,8 +22,10 @@ import (
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"runtime"
 	"time"
 )
@@ -470,6 +475,47 @@ func (a *Application) InitDatabase() {
 
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	a.m.ServeHTTP(res, req)
+}
+
+func (a *Application) Serve(req *http.Request) http.ResponseWriter {
+	res := httptest.NewRecorder()
+	a.m.ServeHTTP(res, req)
+	return res
+}
+
+func (a *Application) ServeJSON(req *http.Request, value interface{}) error {
+	res := httptest.NewRecorder()
+	a.m.ServeHTTP(res, req)
+	if res.Code != http.StatusOK {
+		return errors.New(fmt.Sprintf("Bad code %d", res.Code))
+	}
+	decoder := json.NewDecoder(res.Body)
+	return decoder.Decode(value)
+}
+
+func (a *Application) SendJSON(method, url string, input, output interface{}) error {
+	res := httptest.NewRecorder()
+	var body io.Reader = nil
+	if input != nil {
+		j, err := json.Marshal(input)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewReader(j)
+	}
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return err
+	}
+	a.m.ServeHTTP(res, req)
+	if res.Code != http.StatusOK {
+		return errors.New(fmt.Sprintf("Bad code %d", res.Code))
+	}
+	decoder := json.NewDecoder(res.Body)
+	if output != nil {
+		return decoder.Decode(output)
+	}
+	return nil
 }
 
 func main() {
