@@ -27,7 +27,7 @@ func TestPasswordUpdate(t *testing.T) {
 	a := NewTestApp()
 	defer a.Close()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(a.DropDatabase)
+		Reset(a.Reset)
 		token := new(gotok.Token)
 		res := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
@@ -69,7 +69,7 @@ func TestStripeUpdate(t *testing.T) {
 	password := "secretsecret"
 	path := "test/image.jpg"
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(a.DropDatabase)
+		Reset(a.Reset)
 		token := new(gotok.Token)
 		So(a.Process(token, "POST", "/api/auth/register", LoginCredentials{username, password}, token), ShouldBeNil)
 		Convey("Request should completed", func() {
@@ -135,7 +135,7 @@ func TestStatus(t *testing.T) {
 	a := NewTestApp()
 	defer a.Close()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(a.DropDatabase)
+		Reset(a.Reset)
 		token := new(gotok.Token)
 		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Status set", func() {
@@ -173,7 +173,7 @@ func TestUpload(t *testing.T) {
 	a := NewTestApp()
 	defer a.Close()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(a.DropDatabase)
+		Reset(a.Reset)
 		token := new(gotok.Token)
 		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Request should completed", func() {
@@ -231,10 +231,7 @@ func TestRealtime(t *testing.T) {
 func TestGeoSearch(t *testing.T) {
 	a := NewTestApp()
 	Convey("Register", t, func() {
-		Reset(func() {
-			a.DropDatabase()
-			a.InitDatabase()
-		})
+		Reset(a.Reset)
 		token := new(gotok.Token)
 		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("User should be able to change information after registration", func() {

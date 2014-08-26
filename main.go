@@ -480,6 +480,11 @@ func (a *Application) InitDatabase() {
 	a.db.Init()
 }
 
+func (a *Application) Reset() {
+	a.DropDatabase()
+	a.InitDatabase()
+}
+
 func (a *Application) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	a.m.ServeHTTP(res, req)
 }
