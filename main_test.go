@@ -169,14 +169,9 @@ func TestStatus(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	*development = true
-	redisName = "poputchiki_test_upload"
-	dbName = "poputchiki_dev_upload"
 	path := "test/image.jpg"
-	a := NewApp()
+	a := NewTestApp()
 	defer a.Close()
-	a.DropDatabase()
-
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
@@ -234,9 +229,7 @@ func TestRealtime(t *testing.T) {
 }
 
 func TestGeoSearch(t *testing.T) {
-	dbName = "poputchiki_geo"
-	redisName = "poputchiki_geo"
-	a := NewApp()
+	a := NewTestApp()
 	Convey("Register", t, func() {
 		Reset(func() {
 			a.DropDatabase()
@@ -271,17 +264,10 @@ func TestMethods(t *testing.T) {
 
 	messageText := "hello world русский текст"
 
-	dbName = "poputchiki_dev"
 	*development = true
 	*sendEmail = false
-	redisName = "poputchiki_dev"
 
-	a := NewApp()
-	a.DropDatabase()
-	a.InitDatabase()
-	a.Close()
-
-	a = NewApp()
+	a := NewTestApp()
 
 	var tokenBody []byte
 	var token1 gotok.Token
