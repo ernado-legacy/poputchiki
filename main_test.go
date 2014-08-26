@@ -154,7 +154,6 @@ func TestStatus(t *testing.T) {
 	a := NewApp()
 	defer a.Close()
 	a.DropDatabase()
-
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
@@ -175,28 +174,12 @@ func TestStatus(t *testing.T) {
 			Convey("Second status set should fail", func() {
 				So(a.Process(token, "POST", "/api/status", Status{Text: "hello"}, nil).Error(), ShouldEqual, ErrorInsufficentFunds.Error())
 				Convey("So user should activate vip", func() {
-					res := httptest.NewRecorder()
-					url := fmt.Sprintf("/api/vip/week?token=%s", token.Token)
-					req, _ := http.NewRequest("POST", url, nil)
-					a.ServeHTTP(res, req)
-					So(res.Code, ShouldEqual, http.StatusOK)
-
+					So(a.Process(token, "POST", "/api/vip/week", nil, nil), ShouldBeNil)
 					Convey("And add 2 statuses", func() {
-						text := "hello211"
-						res := httptest.NewRecorder()
-						url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
-						req, _ := http.NewRequest("POST", url, nil)
-						a.ServeHTTP(res, req)
-						So(res.Code, ShouldEqual, http.StatusOK)
-
-						res = httptest.NewRecorder()
-						a.ServeHTTP(res, req)
-						So(res.Code, ShouldEqual, http.StatusOK)
-
+						So(a.Process(token, "POST", "/api/status", Status{Text: "allah"}, nil), ShouldBeNil)
+						So(a.Process(token, "POST", "/api/status", Status{Text: "babah"}, nil), ShouldBeNil)
 						Convey("Second status set should fail", func() {
-							res = httptest.NewRecorder()
-							a.ServeHTTP(res, req)
-							So(res.Code, ShouldEqual, http.StatusPaymentRequired)
+							So(a.Process(token, "POST", "/api/status", Status{Text: "hello"}, nil).Error(), ShouldEqual, ErrorInsufficentFunds.Error())
 						})
 					})
 				})
