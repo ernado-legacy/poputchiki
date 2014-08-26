@@ -502,16 +502,24 @@ func (a *Application) SendJSON(method, url string, input, output interface{}) er
 			return err
 		}
 		body = bytes.NewReader(j)
+		req.Header.Add("Content-type", JSON_HEADER)
+	}
+	if output != nil {
+		req.Header.Add("Accept", JSON_HEADER)
 	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
 	}
 	a.m.ServeHTTP(res, req)
-	if res.Code != http.StatusOK {
-		return errors.New(fmt.Sprintf("Bad code %d", res.Code))
-	}
 	decoder := json.NewDecoder(res.Body)
+	if res.Code != http.StatusOK {
+		result := new(Error)
+		result.Code = 500
+		result.Text = "panic"
+		decoder.Decode(result)
+		return result
+	}
 	if output != nil {
 		return decoder.Decode(output)
 	}
