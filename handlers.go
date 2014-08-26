@@ -727,7 +727,7 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 }
 
 func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engine activities.Handler) (int, []byte) {
-	status := &Status{}
+	status := new(Status)
 	if err := parser.Parse(status); err != nil {
 		return Render(ValidationError(err))
 	}

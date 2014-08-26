@@ -502,14 +502,54 @@ func (a *Application) SendJSON(method, url string, input, output interface{}) er
 			return err
 		}
 		body = bytes.NewReader(j)
-		req.Header.Add("Content-type", JSON_HEADER)
 	}
+	req, err := http.NewRequest(method, url, body)
 	if output != nil {
 		req.Header.Add("Accept", JSON_HEADER)
+	}
+	if input != nil {
+		req.Header.Add("Content-type", JSON_HEADER)
+	}
+	if err != nil {
+		return err
+	}
+	a.m.ServeHTTP(res, req)
+	decoder := json.NewDecoder(res.Body)
+	if res.Code != http.StatusOK {
+		result := new(Error)
+		result.Code = 500
+		result.Text = "panic"
+		decoder.Decode(result)
+		return result
+	}
+	if output != nil {
+		return decoder.Decode(output)
+	}
+	return nil
+}
+
+func (a *Application) Process(token *gotok.Token, method, url string, input, output interface{}) error {
+	res := httptest.NewRecorder()
+	var body io.Reader
+	if input != nil {
+		j, err := json.Marshal(input)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewReader(j)
 	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
+	}
+	if output != nil {
+		req.Header.Add("Accept", JSON_HEADER)
+	}
+	if input != nil {
+		req.Header.Add("Content-type", JSON_HEADER)
+	}
+	if token != nil {
+		req.AddCookie(token.GetCookie())
 	}
 	a.m.ServeHTTP(res, req)
 	decoder := json.NewDecoder(res.Body)

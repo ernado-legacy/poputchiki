@@ -148,8 +148,6 @@ func TestStripeUpdate(t *testing.T) {
 	})
 }
 func TestStatus(t *testing.T) {
-	username := "test@" + mailDomain
-	password := "secretsecret"
 	*development = true
 	redisName = "poputchiki_test_status"
 	dbName = "poputchiki_test_status"
@@ -158,61 +156,24 @@ func TestStatus(t *testing.T) {
 	a.DropDatabase()
 
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(func() {
-			a.DropDatabase()
-		})
-
-		res := httptest.NewRecorder()
-		// sending registration request
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		a.ServeHTTP(res, req)
-
-		// reading response
-		So(res.Code, ShouldEqual, http.StatusOK)
-		tokenBody, _ := ioutil.ReadAll(res.Body)
-		token := &gotok.Token{}
-		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
-
+		Reset(a.DropDatabase)
+		token := new(gotok.Token)
+		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Status set", func() {
-			text := "hello"
-			res := httptest.NewRecorder()
-			url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
-			req, _ := http.NewRequest("POST", url, nil)
-			a.ServeHTTP(res, req)
-			So(res.Code, ShouldEqual, http.StatusOK)
+			text := "kljdlывлдофд"
+			So(a.Process(token, "POST", "/api/status", Status{Text: text}, nil), ShouldBeNil)
 			Convey("Status get", func() {
-				res := httptest.NewRecorder()
 				s := new(Status)
-				url := fmt.Sprintf("/api/user/%s/status?token=%s", token.Id.Hex(), token.Token)
-				req, _ := http.NewRequest("GET", url, nil)
-				a.ServeHTTP(res, req)
-				decoder := json.NewDecoder(res.Body)
-				So(res.Code, ShouldEqual, http.StatusOK)
-				So(decoder.Decode(s), ShouldBeNil)
+				So(a.Process(token, "GET", fmt.Sprintf("/api/user/%s/status", token.Id.Hex()), nil, s), ShouldBeNil)
 				So(s.Text, ShouldEqual, text)
 			})
-
 			Convey("User get", func() {
-				res := httptest.NewRecorder()
 				s := new(User)
-				url := fmt.Sprintf("/api/user/%s?token=%s", token.Id.Hex(), token.Token)
-				req, _ := http.NewRequest("GET", url, nil)
-				a.ServeHTTP(res, req)
-				decoder := json.NewDecoder(res.Body)
-				So(res.Code, ShouldEqual, http.StatusOK)
-				So(decoder.Decode(s), ShouldBeNil)
+				So(a.Process(token, "GET", "/api/user", nil, s), ShouldBeNil)
 				So(s.Status, ShouldEqual, text)
 			})
-
 			Convey("Second status set should fail", func() {
-				text := "hello"
-				res := httptest.NewRecorder()
-				url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
-				req, _ := http.NewRequest("POST", url, nil)
-				a.ServeHTTP(res, req)
-				So(res.Code, ShouldEqual, http.StatusPaymentRequired)
-
+				So(a.Process(token, "POST", "/api/status", Status{Text: "hello"}, nil).Error(), ShouldEqual, ErrorInsufficentFunds.Error())
 				Convey("So user should activate vip", func() {
 					res := httptest.NewRecorder()
 					url := fmt.Sprintf("/api/vip/week?token=%s", token.Token)
@@ -221,7 +182,7 @@ func TestStatus(t *testing.T) {
 					So(res.Code, ShouldEqual, http.StatusOK)
 
 					Convey("And add 2 statuses", func() {
-						text := "hello"
+						text := "hello211"
 						res := httptest.NewRecorder()
 						url := fmt.Sprintf("/api/status?text=%s&token=%s", text, token.Token)
 						req, _ := http.NewRequest("POST", url, nil)
@@ -245,8 +206,6 @@ func TestStatus(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	username := "test@" + mailDomain
-	password := "secretsecret"
 	*development = true
 	redisName = "poputchiki_test_upload"
 	dbName = "poputchiki_dev_upload"
@@ -256,22 +215,9 @@ func TestUpload(t *testing.T) {
 	a.DropDatabase()
 
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(func() {
-			a.DropDatabase()
-		})
-
-		res := httptest.NewRecorder()
-		// sending registration request
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		a.ServeHTTP(res, req)
-
-		// reading response
-		So(res.Code, ShouldEqual, http.StatusOK)
-		tokenBody, _ := ioutil.ReadAll(res.Body)
-		token := &gotok.Token{}
-		So(json.Unmarshal(tokenBody, token), ShouldBeNil)
-
+		Reset(a.DropDatabase)
+		token := new(gotok.Token)
+		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Request should completed", func() {
 			file, err := os.Open(path)
 			So(err, ShouldBeNil)
@@ -292,7 +238,6 @@ func TestUpload(t *testing.T) {
 			image := &Photo{}
 			log.Println(string(imageBody))
 			So(json.Unmarshal(imageBody, image), ShouldBeNil)
-
 			Convey("File must be able to download", func() {
 				req, _ = http.NewRequest("GET", image.ImageUrl, nil)
 				client := &http.Client{}
@@ -300,21 +245,10 @@ func TestUpload(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(res.StatusCode, ShouldEqual, http.StatusOK)
 			})
-
 			Convey("Stipe", func() {
-				sreq := &StripeItemRequest{image.Id, image.Id, "photo"}
-				j, err := json.Marshal(sreq)
-				So(err, ShouldBeNil)
-				res := httptest.NewRecorder()
-				body := bytes.NewBuffer(j)
-				req, err := http.NewRequest("POST", "/api/stripe/?token="+token.Token, body)
-				So(err, ShouldBeNil)
-				req.Header.Add("Content-type", "application/json")
-
-				a.ServeHTTP(res, req)
-				So(res.Code, ShouldEqual, http.StatusOK)
+				sreq := StripeItemRequest{image.Id, image.Id, "photo"}
+				So(a.SendJSON("POST", "/api/stripe/?token="+token.Token, sreq, nil), ShouldBeNil)
 			})
-
 		})
 	})
 }
@@ -341,50 +275,24 @@ func TestGeoSearch(t *testing.T) {
 	dbName = "poputchiki_geo"
 	redisName = "poputchiki_geo"
 	a := NewApp()
-	username := "m@cydev.ru"
-	password := "secretsecret"
-	firstname := "kek"
-	var tokenBody []byte
-	var token1 gotok.Token
-
 	Convey("Register", t, func() {
 		Reset(func() {
 			a.DropDatabase()
 			a.InitDatabase()
 		})
-
-		res := httptest.NewRecorder()
-		// sending registration request
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
-		a.ServeHTTP(res, req)
-
-		// reading response
-		tokenBody, _ = ioutil.ReadAll(res.Body)
-		So(res.Code, ShouldEqual, http.StatusOK)
+		token := new(gotok.Token)
+		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("User should be able to change information after registration", func() {
-			err := json.Unmarshal(tokenBody, &token1)
-			So(err, ShouldEqual, nil)
-
-			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token1.Id.Hex(), token1.Token)
+			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token.Id.Hex(), token.Token)
 			changes := User{}
-			changes.Name = firstname
+			changes.Name = "kek"
 			changes.Sex = "male"
 			changes.Location = []float64{155.0, 155.0}
-			uJson, err := json.Marshal(changes)
-			uReader := bytes.NewReader(uJson)
-			So(err, ShouldBeNil)
-			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
-			req.Header.Add(ContentTypeHeader, "application/json")
-			a.ServeHTTP(res, req)
-			So(res.Code, ShouldEqual, http.StatusOK)
+			So(a.SendJSON("PATCH", reqUrl, changes, nil), ShouldBeNil)
 			Convey("Search", func() {
-				So(json.Unmarshal(tokenBody, &token1), ShouldBeNil)
-				reqUrl := fmt.Sprintf("/api/search/?geo=true&token=%s", token1.Token)
-				req, _ := http.NewRequest("GET", reqUrl, nil)
+				reqUrl := fmt.Sprintf("/api/search/?geo=true&token=%s", token.Token)
 				result := new(SearchResult)
-				So(a.ServeJSON(req, result), ShouldBeNil)
+				So(a.SendJSON("GET", reqUrl, nil, result), ShouldBeNil)
 				So(result.Count, ShouldEqual, 1)
 			})
 		})

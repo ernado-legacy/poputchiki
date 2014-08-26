@@ -69,7 +69,7 @@ func Parse(r *http.Request, v interface{}) error {
 	if strings.Index(contentType, "form") != -1 {
 		err := r.ParseForm()
 		if err != nil {
-			log.Println("parse frm", err)
+			log.Println("[parser]", "parsing error", err)
 		}
 		if len(r.Form) > 0 {
 			return mapToStruct(r.Form, v)
@@ -78,7 +78,6 @@ func Parse(r *http.Request, v interface{}) error {
 			return mapToStruct(r.PostForm, v)
 		}
 	}
-
 	return mapToStruct(r.URL.Query(), v)
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -29,4 +30,8 @@ func ValidationError(err error) Error {
 
 func BackendError(err error) Error {
 	return Error{http.StatusInternalServerError, err.Error()}
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("Error %d: %s", e.Code, e.Text)
 }
