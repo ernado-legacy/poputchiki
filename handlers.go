@@ -906,6 +906,7 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter 
 
 func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	var media interface{}
+	user := db.Get(t.Id)
 	request := new(StripeItemRequest)
 	if err := parser.Parse(request); err != nil {
 		return Render(ValidationError(err))
@@ -932,9 +933,11 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 	case "audio":
 		audio := db.GetAudio(request.Id)
 		if audio == nil {
+			audio = db.GetAudio(user.Audio)
+		}
+		if audio == nil {
 			return Render(ErrorObjectNotFound)
 		}
-
 		p, err := db.GetPhoto(request.Photo)
 		if err != nil && err != mgo.ErrNotFound {
 			return Render(BackendError(err))
@@ -1644,11 +1647,7 @@ func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	for _, videoElem := range v {
-		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
-			log.Println(err)
-		}
-	}
+	VideoSlice(v).Prepare(adapter, webp, video, audio)
 	return Render(v)
 }
 
@@ -1657,18 +1656,12 @@ func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	for _, videoElem := range v {
-		if err := videoElem.Prepare(adapter, webp, video, audio); err != nil {
-			log.Println(err)
-		}
-	}
-	p, err := db.GetPhoto(id)
+	VideoSlice(v).Prepare(adapter, webp, video, audio)
+	p, err := db.GetUserPhoto(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	if err := p.Prepare(adapter, webp, video, audio); err != nil {
-		return Render(BackendError(err))
-	}
+	PhotoSlice(p).Prepare(adapter, webp, video, audio)
 	return Render(map[string]interface{}{"video": v, "photo": p})
 }
 

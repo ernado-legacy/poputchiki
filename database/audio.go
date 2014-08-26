@@ -37,3 +37,11 @@ func (db *DB) UpdateAudioOGG(id bson.ObjectId, fid string) error {
 	_, err := db.users.UpdateAll(bson.M{"audio": id}, update)
 	return err
 }
+
+func (db *DB) RemoveAudio(id bson.ObjectId) error {
+	_, err := db.users.UpdateAll(bson.M{"audio": id}, bson.M{"$set": bson.M{"audio": ""}})
+	if err != nil {
+		return err
+	}
+	return db.audio.RemoveId(id)
+}

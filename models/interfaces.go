@@ -5,6 +5,7 @@ import (
 	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"net/http"
 	"time"
 )
@@ -114,6 +115,7 @@ type DataBase interface {
 	GetAudio(id bson.ObjectId) *Audio
 	UpdateAudioAAC(id bson.ObjectId, fid string) error
 	UpdateAudioOGG(id bson.ObjectId, fid string) error
+	RemoveAudio(id bson.ObjectId) error
 
 	AddStripeItem(i *StripeItem, media interface{}) (*StripeItem, error)
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
@@ -174,6 +176,31 @@ type AutoUpdater interface {
 type PrepareInterface interface {
 	Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error
 	Url() string
+}
+
+type PhotoSlice []*Photo
+type VideoSlice []*Video
+
+func (m PhotoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+	var e error
+	for _, elem := range m {
+		if err := elem.Prepare(adapter, webp, video, audio); err != nil {
+			log.Println(err)
+			e = err
+		}
+	}
+	return e
+}
+
+func (m VideoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+	var e error
+	for _, elem := range m {
+		if err := elem.Prepare(adapter, webp, video, audio); err != nil {
+			log.Println(err)
+			e = err
+		}
+	}
+	return e
 }
 
 type MailSender interface {

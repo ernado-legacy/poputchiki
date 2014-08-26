@@ -377,21 +377,27 @@ func (a *Application) ConvertResultListener() {
 			continue
 		}
 		go func() {
-			defer func() {
-				recover()
-			}()
-
+			defer recover()
 			id := bson.ObjectIdHex(resp.Id)
 			fid := resp.File
+			defer func() {
+				log.Println("[dedicated server] processed")
+			}()
+			log.Println("updating", resp.Type)
 			if resp.Type == "audio" {
-				log.Println("updating audio")
+				audio := db.GetAudio(id)
+				if audio == nil {
+					log.Println("audio not found")
+					return
+				}
 				if resp.Format == "ogg" {
 					err = db.UpdateAudioOGG(id, fid)
+					audio.AudioOgg = fid
 				}
 				if resp.Format == "aac" {
 					err = db.UpdateAudioAAC(id, fid)
+					audio.AudioAac = fid
 				}
-				audio := db.GetAudio(id)
 				if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
 					log.Printf("Sending audio %+v", audio)
 					u := models.NewUpdate(audio.User, audio.User, "audio", audio)
@@ -399,21 +405,34 @@ func (a *Application) ConvertResultListener() {
 						log.Println(err)
 					}
 				}
+				if !resp.Success {
+					db.RemoveAudio(id)
+				}
 			}
 			if resp.Type == "video" {
+				video := db.GetVideo(id)
+				if video == nil {
+					log.Println("video not found")
+					return
+				}
 				if resp.Format == "webm" {
 					err = db.UpdateVideoWebm(id, fid)
+					video.VideoWebm = fid
 				}
 				if resp.Format == "mp4" {
 					err = db.UpdateVideoMpeg(id, fid)
+					video.VideoMpeg = fid
 				}
-				video := db.GetVideo(id)
 				if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
 					log.Printf("Sending video %+v", video)
 					u := models.NewUpdate(video.User, video.User, "video", video)
 					if err := a.updater.Push(u); err != nil {
 						log.Println(err)
 					}
+				}
+				if !resp.Success {
+					db.RemoveVideo(id, video.User)
+					return
 				}
 			}
 			if resp.Type == "thumbnail" {
@@ -427,7 +446,6 @@ func (a *Application) ConvertResultListener() {
 			if err != nil {
 				log.Println(resp.Id, err)
 			}
-			log.Println("[dedicated server] processed")
 		}()
 	}
 }
