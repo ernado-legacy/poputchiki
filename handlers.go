@@ -942,14 +942,8 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 		if err != nil && err != mgo.ErrNotFound {
 			return Render(BackendError(err))
 		}
-		if p == nil {
-			u := db.Get(t.Id)
-			i.ImageJpeg = u.AvatarJpeg
-			i.ImageWebp = u.AvatarWebp
-		} else {
-			i.ImageJpeg = p.ThumbnailJpeg
-			i.ImageWebp = p.ThumbnailWebp
-		}
+		i.ImageJpeg = u.AvatarJpeg
+		i.ImageWebp = u.AvatarWebp
 		media = audio
 	case "photo":
 		p, err := db.GetPhoto(request.Id)
