@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"github.com/ernado/gotok"
 	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2"
@@ -205,4 +207,10 @@ func (m VideoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoA
 
 type MailSender interface {
 	Send()
+}
+
+func Random(length int) string {
+	b := make([]byte, length)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }

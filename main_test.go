@@ -24,13 +24,8 @@ import (
 func TestPasswordUpdate(t *testing.T) {
 	username := "test@" + mailDomain
 	password := "secretsecret"
-	*development = true
-	redisName = "poputchiki_test_upload"
-	dbName = "poputchiki_dev_upload"
-	a := NewApp()
+	a := NewTestApp()
 	defer a.Close()
-	a.DropDatabase()
-
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
@@ -68,26 +63,15 @@ func TestPasswordUpdate(t *testing.T) {
 }
 
 func TestStripeUpdate(t *testing.T) {
+	a := NewTestApp()
+	defer a.Close()
 	username := "test@" + mailDomain
 	password := "secretsecret"
-	*development = true
-	redisName = "poputchiki_test_upload"
-	dbName = "poputchiki_dev_upload"
 	path := "test/image.jpg"
-	a := NewApp()
-	defer a.Close()
-	a.DropDatabase()
-
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
-		res := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		a.ServeHTTP(res, req)
-		So(res.Code, ShouldEqual, http.StatusOK)
-		decoder := json.NewDecoder(res.Body)
-		So(decoder.Decode(token), ShouldBeNil)
+		So(a.Process(token, "POST", "/api/auth/register", LoginCredentials{username, password}, token), ShouldBeNil)
 		Convey("Request should completed", func() {
 			file, err := os.Open(path)
 			So(err, ShouldBeNil)
@@ -148,16 +132,12 @@ func TestStripeUpdate(t *testing.T) {
 	})
 }
 func TestStatus(t *testing.T) {
-	*development = true
-	redisName = "poputchiki_test_status"
-	dbName = "poputchiki_test_status"
-	a := NewApp()
+	a := NewTestApp()
 	defer a.Close()
-	a.DropDatabase()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
-		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Status set", func() {
 			text := "kljdlывлдофд"
 			So(a.Process(token, "POST", "/api/status", Status{Text: text}, nil), ShouldBeNil)
@@ -200,7 +180,7 @@ func TestUpload(t *testing.T) {
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.DropDatabase)
 		token := new(gotok.Token)
-		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("Request should completed", func() {
 			file, err := os.Open(path)
 			So(err, ShouldBeNil)
@@ -229,8 +209,7 @@ func TestUpload(t *testing.T) {
 				So(res.StatusCode, ShouldEqual, http.StatusOK)
 			})
 			Convey("Stipe", func() {
-				sreq := StripeItemRequest{image.Id, image.Id, "photo"}
-				So(a.SendJSON("POST", "/api/stripe/?token="+token.Token, sreq, nil), ShouldBeNil)
+				So(a.Process(token, "POST", "/api/stripe", StripeItemRequest{image.Id, image.Id, "photo"}, nil), ShouldBeNil)
 			})
 		})
 	})

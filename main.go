@@ -106,6 +106,13 @@ func NewDatabase(session *mgo.Session) models.DataBase {
 	return database.New(dbName, salt, OfflineTimeout, session)
 }
 
+func NewTestApp() *Application {
+	*development = true
+	redisName = fmt.Sprintf("test-%s", models.Random(10))
+	dbName = fmt.Sprintf("poputchiki-%s", models.Random(10))
+	return NewApp()
+}
+
 func NewApp() *Application {
 	session, err := mgo.Dial(mongoHost)
 	if err != nil {
