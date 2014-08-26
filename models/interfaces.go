@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -213,4 +214,35 @@ func Random(length int) string {
 	b := make([]byte, length)
 	rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+type Media struct {
+	Media interface{} `json:"media"`
+	Time  time.Time   `json:"time"`
+	Type  string      `json:"type"`
+}
+
+type MediaSlice []Media
+
+func (a MediaSlice) Len() int {
+	return len(a)
+}
+
+func (a MediaSlice) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a MediaSlice) Less(i, j int) bool {
+	return a[j].Time.Before(a[i].Time)
+}
+
+func MakeMediaSlice(photo []*Photo, video []*Video) (media MediaSlice) {
+	for _, p := range photo {
+		media = append(media, Media{p, p.Time, "photo"})
+	}
+	for _, v := range video {
+		media = append(media, Media{v, v.Time, "video"})
+	}
+	sort.Sort(media)
+	return
 }

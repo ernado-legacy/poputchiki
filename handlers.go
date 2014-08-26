@@ -1652,7 +1652,7 @@ func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp Web
 		return Render(ErrorObjectNotFound)
 	}
 	PhotoSlice(p).Prepare(adapter, webp, video, audio)
-	return Render(map[string]interface{}{"video": v, "photo": p})
+	return Render(MakeMediaSlice(p, v))
 }
 
 func GetVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
