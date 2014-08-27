@@ -23,40 +23,17 @@ import (
 
 func TestPasswordUpdate(t *testing.T) {
 	username := "test@" + mailDomain
-	password := "secretsecret"
 	a := NewTestApp()
 	defer a.Close()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.Reset)
 		token := new(gotok.Token)
-		res := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/auth/register/", nil)
-		req.PostForm = url.Values{FORM_PASSWORD: {password}, FORM_EMAIL: {username}}
-		req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
-		a.ServeHTTP(res, req)
-		So(res.Code, ShouldEqual, http.StatusOK)
-		So(json.NewDecoder(res.Body).Decode(token), ShouldBeNil)
+		So(a.Process(token, "POST", "/api/auth/register", LoginCredentials{username, "test"}, token), ShouldBeNil)
 		Convey("Change", func() {
-			newpassword := "tedsafsf"
-			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token.Id.Hex(), token.Token)
-			changes := map[string]string{"password": newpassword}
-			uJson, err := json.Marshal(changes)
-			uReader := bytes.NewReader(uJson)
-			So(err, ShouldBeNil)
-			req, _ := http.NewRequest("PATCH", reqUrl, uReader)
-			req.Header.Add(ContentTypeHeader, "application/json")
-			a.ServeHTTP(res, req)
-			So(res.Code, ShouldEqual, http.StatusOK)
-
+			password := "secretsecret"
+			So(a.Process(token, "PATCH", "/api/user/"+token.Id.Hex(), map[string]string{"password": password}, nil), ShouldBeNil)
 			Convey("Login", func() {
-				token := new(gotok.Token)
-				res := httptest.NewRecorder()
-				req, _ := http.NewRequest("POST", "/api/auth/login/", nil)
-				req.Header.Add(ContentTypeHeader, "x-www-form-urlencoded")
-				req.PostForm = url.Values{FORM_PASSWORD: {newpassword}, FORM_EMAIL: {username}}
-				a.ServeHTTP(res, req)
-				So(res.Code, ShouldEqual, http.StatusOK)
-				So(json.NewDecoder(res.Body).Decode(token), ShouldBeNil)
+				So(a.Process(nil, "POST", "/api/auth/login", LoginCredentials{username, password}, nil), ShouldBeNil)
 			})
 		})
 	})
@@ -235,16 +212,14 @@ func TestGeoSearch(t *testing.T) {
 		token := new(gotok.Token)
 		So(a.SendJSON("POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
 		Convey("User should be able to change information after registration", func() {
-			reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", token.Id.Hex(), token.Token)
 			changes := User{}
 			changes.Name = "kek"
 			changes.Sex = "male"
 			changes.Location = []float64{155.0, 155.0}
-			So(a.SendJSON("PATCH", reqUrl, changes, nil), ShouldBeNil)
+			So(a.Process(token, "PATCH", "/api/user/"+token.Id.Hex(), changes, nil), ShouldBeNil)
 			Convey("Search", func() {
-				reqUrl := fmt.Sprintf("/api/search/?geo=true&token=%s", token.Token)
 				result := new(SearchResult)
-				So(a.SendJSON("GET", reqUrl, nil, result), ShouldBeNil)
+				So(a.Process(token, "GET", "/api/search/?geo=true", nil, result), ShouldBeNil)
 				So(result.Count, ShouldEqual, 1)
 			})
 		})
