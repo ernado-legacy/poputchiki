@@ -25,6 +25,13 @@ type ConfirmationMail struct {
 	Origin      string
 }
 
+type Mail struct {
+	Destination string
+	Mail        string
+	Title       string
+	Origin      string
+}
+
 func (mail ConfirmationMail) From() string {
 	return mail.Origin
 }
@@ -55,5 +62,38 @@ func (mail ConfirmationMail) Options() map[string]string {
 	return map[string]string{}
 }
 func (mail ConfirmationMail) Variables() map[string]string {
+	return map[string]string{}
+}
+
+func (mail Mail) From() string {
+	return mail.Origin
+}
+
+func (mail Mail) To() []string {
+	return []string{mail.Destination}
+}
+func (mail Mail) Cc() []string {
+	return []string{}
+}
+
+func (mail Mail) Bcc() []string {
+	return []string{}
+}
+func (mail Mail) Subject() string {
+	return mail.Title
+}
+func (mail Mail) Html() string {
+	return mail.Mail
+}
+func (mail Mail) Text() string {
+	return ""
+}
+func (mail Mail) Headers() map[string]string {
+	return map[string]string{}
+}
+func (mail Mail) Options() map[string]string {
+	return map[string]string{}
+}
+func (mail Mail) Variables() map[string]string {
 	return map[string]string{}
 }
