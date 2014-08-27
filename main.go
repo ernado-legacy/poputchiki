@@ -171,6 +171,7 @@ func NewApp() *Application {
 	m.Map(updater)
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)
+	m.Map(models.GetMailDispatcher(templates, "noreply@"+mailDomain, mailgunClient, db))
 	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))
 
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}

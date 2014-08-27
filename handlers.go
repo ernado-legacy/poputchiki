@@ -356,7 +356,7 @@ func Logout(db DataBase, r *http.Request, tokens gotok.Storage, t *gotok.Token) 
 
 // Register checks the provided credentials, add new user with that credentials to
 // database and returns new authorisation token, setting the appropriate cookies
-func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, mail *mailgun.Client) (int, []byte) {
+func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Storage, mail MailHtmlSender) (int, []byte) {
 	// load user data from form
 	u := UserFromForm(r, db.Salt())
 	// check that email is unique
@@ -381,12 +381,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 		return Render(BackendError(errors.New("Unable to generate token")))
 	}
 	if !*development {
-		message := ConfirmationMail{}
-		message.Destination = u.Email
-		message.Origin = "noreply@" + mailDomain
-		message.Mail = "http://poputchiki.ru/api/confirm/email/" + confTok.Token
-		_, err = mail.Send(message)
-		if err != nil {
+		if err := mail.Send("registration.html", u.Id, "Подтверждение", "http://poputchiki.ru/api/confirm/email/"+confTok.Token); err != nil {
 			log.Println("[email]", err)
 		}
 	}

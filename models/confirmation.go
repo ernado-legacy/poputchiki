@@ -2,6 +2,8 @@ package models
 
 import (
 	"bytes"
+	"github.com/GeertJohan/go.rice"
+	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2/bson"
 	"html/template"
 	"time"
@@ -114,4 +116,33 @@ func NewMail(src, origin, destination, subject string, data interface{}) (m Mail
 	}
 	m.Mail = buff.String()
 	return
+}
+
+type MailDispatcher struct {
+	box    *rice.Box
+	origin string
+	client *mailgun.Client
+	db     DataBase
+}
+
+type MailHtmlSender interface {
+	Send(template string, destination bson.ObjectId, subject string, data interface{}) error
+}
+
+func GetMailDispatcher(box *rice.Box, email string, client *mailgun.Client, db DataBase) MailHtmlSender {
+	return MailDispatcher{box, email, client, db}
+}
+
+func (dispatcher MailDispatcher) Send(template string, destination bson.ObjectId, subject string, data interface{}) error {
+	src, err := dispatcher.box.String(template)
+	if err != nil {
+		return err
+	}
+	u := dispatcher.db.Get(destination)
+	m, err := NewMail(src, dispatcher.origin, u.Email, subject, data)
+	if err != nil {
+		return err
+	}
+	_, err = dispatcher.client.Send(m)
+	return err
 }
