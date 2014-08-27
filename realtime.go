@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GeertJohan/go.rice"
 	"github.com/ernado/gotok"
 	"github.com/ernado/poputchiki/models"
 	. "github.com/ernado/poputchiki/models"
@@ -204,17 +205,24 @@ type RealtimeUpdater struct {
 }
 
 type EmailUpdater struct {
-	db     models.DataBase
-	client *mailgun.Client
+	db        models.DataBase
+	client    *mailgun.Client
+	templates *rice.Box
+	adapter   *weed.Adapter
 }
 
 func (e *EmailUpdater) Push(update models.Update) error {
 	u := e.db.Get(update.Destination)
-	message := models.ConfirmationMail{}
-	message.Destination = u.Email
-	message.Origin = "noreply@" + mailDomain
-	message.Mail = fmt.Sprintf("%+v", update)
-	_, err := e.client.Send(message)
+	u.Prepare(e.adapter, e.db, false, AaOgg)
+	template, err := e.templates.String(fmt.Sprintf("%s.html", update.Type))
+	if err != nil {
+		return err
+	}
+	message, err := models.NewMail(template, "noreply@"+mailDomain, u.Email, update.Type, update)
+	if err != nil {
+		return err
+	}
+	_, err = e.client.Send(message)
 	return err
 }
 

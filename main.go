@@ -8,6 +8,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/GeertJohan/go.rice"
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/gofbauth"
 	"github.com/ernado/gosmsru"
@@ -127,7 +128,6 @@ func NewApp() *Application {
 	p := newPool()
 	tokenStorage = gotok.New(session.DB(dbName).C(tokenCollection))
 	realtime = &RealtimeRedis{p, make(map[bson.ObjectId]ReltChannel)}
-
 	m := martini.Classic()
 
 	if production {
@@ -149,9 +149,9 @@ func NewApp() *Application {
 	mailgunClient := mailgun.New(mailKey)
 	m.Map(mailgunClient)
 
+	templates := rice.MustFindBox("static/html/letters")
+
 	var updater models.Updater
-	updater = &RealtimeUpdater{db, &EmailUpdater{db, mailgunClient}, realtime}
-	m.Map(updater)
 	m.Map(queryClient)
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
@@ -167,6 +167,8 @@ func NewApp() *Application {
 	m.Map(tokenStorage)
 	weedAdapter := weed.NewAdapter(weedUrl)
 	m.Map(weedAdapter)
+	updater = &RealtimeUpdater{db, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, realtime}
+	m.Map(updater)
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)
 	m.Map(NewTransactionHandler(p, session.DB(dbName), robokassaLogin, robokassaPassword1, robokassaPassword2))

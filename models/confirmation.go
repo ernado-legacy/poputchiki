@@ -1,7 +1,9 @@
 package models
 
 import (
+	"bytes"
 	"gopkg.in/mgo.v2/bson"
+	"html/template"
 	"time"
 )
 
@@ -96,4 +98,20 @@ func (mail Mail) Options() map[string]string {
 }
 func (mail Mail) Variables() map[string]string {
 	return map[string]string{}
+}
+
+func NewMail(src, origin, destination, subject string, data interface{}) (m Mail, err error) {
+	m.Origin = origin
+	m.Title = subject
+	m.Destination = destination
+	t, err := template.New("template").Parse(src)
+	if err != nil {
+		return
+	}
+	buff := new(bytes.Buffer)
+	if err = t.Execute(buff, data); err != nil {
+		return
+	}
+	m.Mail = buff.String()
+	return
 }
