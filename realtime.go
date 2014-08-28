@@ -49,7 +49,7 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 }
 
 func (r *RealtimeRedis) Push(update models.Update) error {
-	log.Println("[realtime] pushing update for", update.Destination.Hex()
+	log.Println("[realtime] pushing update for", update.Destination.Hex())
 	conn := r.Conn()
 	defer conn.Close()
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, update.Destination.Hex()}
