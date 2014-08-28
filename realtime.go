@@ -59,6 +59,9 @@ func (r *RealtimeRedis) Push(update models.Update) error {
 		return err
 	}
 	_, err = conn.Do("PUBLISH", key, eJson)
+	if err == nil {
+		log.Println("[realtime] pushed for", update.Destination.Hex())
+	}
 	return err
 }
 
@@ -107,6 +110,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 	}()
 
 	for event := range c.channel {
+		log.Println("[realtime] recieved event for", event.Destination.Hex())
 		if err := event.Prepare(db, adapter, webp, video, audio); err != nil {
 			log.Println(err)
 		}
@@ -136,6 +140,7 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.Update {
 		for {
 			switch v := psc.Receive().(type) {
 			case redis.Message:
+				log.Println("[realtime] recieved message")
 				e := new(models.Update)
 				err := json.Unmarshal(v.Data, e)
 				if err != nil {
