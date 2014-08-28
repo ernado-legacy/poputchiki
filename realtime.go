@@ -108,6 +108,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 
 	for event := range c.channel {
 		log.Println("[realtime] recieved event for", event.Destination.Hex())
+		log.Printf("%+v", event)
 		if err := event.Prepare(db, adapter, webp, video, audio); err != nil {
 			log.Println(err)
 		}
