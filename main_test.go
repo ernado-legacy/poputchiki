@@ -194,7 +194,7 @@ func TestRealtime(t *testing.T) {
 	id := bson.NewObjectId()
 	event := "test"
 	c := realtime.GetWSChannel(id)
-	e := NewUpdate(id, bson.NewObjectId(), "string", event)
+	e := NewUpdate(id, bson.NewObjectId(), "string", &event)
 	err := realtime.Push(e)
 	eventRec := <-c.channel
 	Convey("Push ok", t, func() {

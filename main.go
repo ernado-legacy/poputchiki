@@ -109,8 +109,8 @@ func NewDatabase(session *mgo.Session) models.DataBase {
 
 func NewTestApp() *Application {
 	*development = true
-	redisName = fmt.Sprintf("test-%s", models.Random(10))
-	dbName = fmt.Sprintf("poputchiki-%s", models.Random(10))
+	redisName = "poputchiki-test"
+	dbName = "poputchiki-test"
 	return NewApp()
 }
 
@@ -167,7 +167,7 @@ func NewApp() *Application {
 	m.Map(tokenStorage)
 	weedAdapter := weed.NewAdapter(weedUrl)
 	m.Map(weedAdapter)
-	updater = &RealtimeUpdater{db, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, realtime}
+	updater = &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}}
 	m.Map(updater)
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)

@@ -1219,8 +1219,11 @@ func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp W
 
 func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, []byte) {
 	err := db.AddLikeStatus(t.Id, id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	s, _ := db.GetStatus(id)
 	log.Println(u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s)))
