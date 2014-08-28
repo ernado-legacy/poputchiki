@@ -34,6 +34,7 @@ func NewMessagePair(origin, destination bson.ObjectId, text string) (toOrigin, t
 	toDestination.Destination = destination
 	toOrigin.Text = text
 	toDestination.Text = text
+	toOrigin.Read = true
 	return
 }
 
