@@ -244,36 +244,33 @@ func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.Object
 }
 
 func (u *RealtimeUpdater) Push(update models.Update) error {
-	log.Println("handling", update.Type)
-	log.Printf("%+v", update)
+	log.Println("[updates]", "handling", update.Type, update.Id.Hex())
 	target := u.db.Get(update.Destination)
 	_, err := u.db.AddUpdateDirect(&update)
 	if err != nil {
+		log.Printf("%+v", update)
 		log.Println(err)
 		return err
 	}
-	if target.Online {
-		log.Println("sending realtime")
-		err = u.realtime.Push(update)
-		if err != nil {
-			log.Println("realtime error", err)
-			return err
-		}
-	} else {
-		log.Println(update.Type)
+	err = u.realtime.Push(update)
+	if err != nil {
+		log.Println("[updates]", "realtime error", err)
+		return err
+	}
+	if !target.Online {
+		log.Println("[updates]", "user offline")
 		subscription := models.GetEventType(update.Type, update.Target)
-		log.Println("subscription", subscription)
 		subscribed, err := u.db.UserIsSubscribed(update.Destination, subscription)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 		if subscribed && u.email != nil {
-			log.Println("sending email")
+			log.Println("[updates]", "sending email")
 			return u.email.Push(update)
 		}
 	}
-	log.Println("handled")
+	llog.Println("[updates]", "handled", update.Id.Hex())
 	return nil
 }
 
