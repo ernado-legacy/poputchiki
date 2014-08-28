@@ -254,9 +254,9 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 	}
 	if target.Online {
 		log.Println("sending realtime")
-		return u.realtime.Push(update)
+		err = u.realtime.Push(update)
 		if err != nil {
-			log.Println(err)
+			log.Println("realtime error", err)
 			return err
 		}
 	} else {
