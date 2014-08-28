@@ -381,7 +381,12 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 		return Render(BackendError(errors.New("Unable to generate token")))
 	}
 	if !*development {
-		if err := mail.Send("registration.html", u.Id, "Подтверждение", "http://poputchiki.ru/api/confirm/email/"+confTok.Token); err != nil {
+		type Data struct {
+			Url   string
+			Email string
+		}
+		data := Data{"http://poputchiki.ru/api/confirm/email/" + confTok.Token, u.Email}
+		if err := mail.Send("registration.html", u.Id, "Подтверждение регистрации", data); err != nil {
 			log.Println("[email]", err)
 		}
 	}
