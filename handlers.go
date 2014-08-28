@@ -10,7 +10,7 @@ import (
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/cymedia/photo"
 	"github.com/ernado/gofbauth"
-	"github.com/ernado/gorobokassa"
+	// "github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
