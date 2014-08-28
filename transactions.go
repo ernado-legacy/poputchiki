@@ -85,3 +85,12 @@ func (t *TransactionHandler) Close(r *http.Request) (*models.Transaction, error)
 	err = t.transactions.Update(selector, bson.M{"$set": bson.M{"closed": true}})
 	return transaction, err
 }
+
+func (t *TransactionHandler) End(transaction *models.Transaction) error {
+	selector := bson.M{"_id": transaction.Id, "closed": false}
+	err := t.transactions.Find(selector).One(transaction)
+	if err != nil {
+		return err
+	}
+	return t.transactions.Update(selector, bson.M{"$set": bson.M{"closed": true}})
+}

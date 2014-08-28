@@ -206,6 +206,9 @@ func NewApp() *Application {
 		r.Post("/pay/:value", GetTransactionUrl)
 		r.Get("/pay/:value", GetTransactionUrl)
 
+		r.Get("/topup", TopUp)
+		r.Post("/topup", TopUp)
+
 		r.Get("/token", GetToken)
 		r.Post("/vip/:duration", EnableVip)
 

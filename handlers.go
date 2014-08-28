@@ -1124,12 +1124,33 @@ func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler
 func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionHandler) (int, []byte) {
 	transaction, err := handler.Close(r)
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(err))
 	}
-
 	err = db.IncBalance(transaction.User, uint(transaction.Value))
 	if err != nil {
+		log.Println("[CRITICAL ERROR]", "transaction", transaction)
+		return Render(ErrorBadRequest)
+	}
+	return Render(transaction)
+}
+
+func TopUp(db DataBase, parser Parser, handler *TransactionHandler, t *gotok.Token) (int, []byte) {
+	type invoice struct {
+		amount  int    `json:"amount"`
+		receipt string `json:"receipt"`
+	}
+	data := new(invoice)
+	if err := parser.Parse(data); err != nil {
+		return Render(ValidationError(err))
+	}
+	_, transaction, err := handler.Start(t.Id, data.amount, robokassaDescription)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	if err := handler.End(transaction); err != nil {
+		return Render(BackendError(err))
+	}
+	if err := db.IncBalance(transaction.User, uint(transaction.Value)); err != nil {
 		log.Println("[CRITICAL ERROR]", "transaction", transaction)
 		return Render(ErrorBadRequest)
 	}

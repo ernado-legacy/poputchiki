@@ -270,7 +270,7 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 			return u.email.Push(update)
 		}
 	}
-	llog.Println("[updates]", "handled", update.Id.Hex())
+	log.Println("[updates]", "handled", update.Id.Hex())
 	return nil
 }
 
