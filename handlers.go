@@ -1107,9 +1107,9 @@ func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler
 	}
 
 	url, transaction, err := handler.Start(t.Id, value, robokassaDescription)
-	log.Println(value, transaction, gorobokassa.CRC(value, transaction.Id, robokassaPassword1))
 	if err != nil {
-		code, data := Render(ErrorBackend)
+		log.Println(url, transaction, err)
+		code, data := Render(BackendError(err))
 		http.Error(w, string(data), code)
 		return
 	}
