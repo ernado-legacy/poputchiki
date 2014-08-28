@@ -1136,22 +1136,23 @@ func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionH
 
 func TopUp(db DataBase, parser Parser, handler *TransactionHandler, t *gotok.Token) (int, []byte) {
 	type invoice struct {
-		amount  int    `json:"amount"`
-		receipt string `json:"receipt"`
+		Amount  int    `json:"amount"`
+		Recepit string `json:"receipt"`
 	}
 	data := new(invoice)
 	if err := parser.Parse(data); err != nil {
 		return Render(ValidationError(err))
 	}
-	_, transaction, err := handler.Start(t.Id, data.amount, robokassaDescription)
+	_, transaction, err := handler.Start(t.Id, data.Amount, robokassaDescription)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	if err := handler.End(transaction); err != nil {
 		return Render(BackendError(err))
 	}
-	if err := db.IncBalance(transaction.User, uint(transaction.Value)); err != nil {
+	if err := db.IncBalance(t.Id, uint(transaction.Value)); err != nil {
 		log.Println("[CRITICAL ERROR]", "transaction", transaction)
+		log.Println(err)
 		return Render(ErrorBadRequest)
 	}
 	return Render(transaction)
