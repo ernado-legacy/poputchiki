@@ -18,11 +18,11 @@ const (
 
 type Update struct {
 	Id          bson.ObjectId `json:"id"                    bson:"_id"`
-	Destination bson.ObjectId `json:"-"                     bson:"destination"`
+	Destination bson.ObjectId `json:"destination,omitempty" bson:"destination"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`
 	UserObject  *User         `json:"user_object,omitempty" bson:"-"`
-	ImageWebp   string        `json:"-"                     bson:"image_webp"`
-	ImageJpeg   string        `json:"-"                     bson:"image_jpeg"`
+	ImageWebp   string        `json:"image_webp,omitempty"  bson:"image_webp"`
+	ImageJpeg   string        `json:"image_jpeg,omitempty"  bson:"image_jpeg"`
 	ImageUrl    string        `json:"image_url,omitempty"   bson:"-"`
 	Read        bool          `json:"read"                  bson:"read"`
 	Type        string        `json:"type,omitempty"        bson:"type,omitempty"`
