@@ -49,6 +49,7 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 }
 
 func (r *RealtimeRedis) Push(update models.Update) error {
+	log.Println("[realtime] pushing update for", update.Destination.Hex()
 	conn := r.Conn()
 	defer conn.Close()
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, update.Destination.Hex()}
@@ -248,7 +249,11 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 	}
 	if target.Online {
 		log.Println("sending realtime")
-		u.realtime.Push(update)
+		return u.realtime.Push(update)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
 	} else {
 		log.Println(update.Type)
 		subscription := models.GetEventType(update.Type, update.Target)
