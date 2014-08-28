@@ -76,14 +76,11 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 		log.Println("not ok")
 	}
 	conn, err := u.Upgrade(w, r, nil)
-
 	if err != nil {
-		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 
 	c := realtime.GetWSChannel(t.Id)
-
 	connClosed := make(chan bool, 10)
 
 	go func() {
@@ -91,8 +88,8 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 		realtime.CloseWs(c)
 		log.Println("connection closed")
 	}()
-	conn.WriteJSON(t)
 
+	conn.WriteJSON(models.NewUpdate(t.Id, t.Id, "token", t))
 	conn.SetPongHandler(func(s string) error {
 		log.Println("pong")
 		return nil
@@ -218,10 +215,12 @@ type EmailUpdater struct {
 }
 
 func (e *EmailUpdater) Push(update models.Update) error {
+	log.Println("[email]", "pushing")
 	u := e.db.Get(update.Destination)
 	u.Prepare(e.adapter, e.db, false, AaOgg)
 	template, err := e.templates.String(fmt.Sprintf("%s.html", update.Type))
 	if err != nil {
+		log.Println("[email] template error", err)
 		return err
 	}
 	message, err := models.NewMail(template, "noreply@"+mailDomain, u.Email, update.Type, update)
