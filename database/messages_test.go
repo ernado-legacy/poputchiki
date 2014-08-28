@@ -82,11 +82,6 @@ func TestMessages(t *testing.T) {
 								So(messages[1].Text, ShouldEqual, text2)
 							})
 						})
-						Convey("Origin has new message", func() {
-							n, err := db.GetUnreadCount(origin)
-							So(n, ShouldEqual, 1)
-							So(err, ShouldBeNil)
-						})
 					})
 				})
 				Convey("Destination chats", func() {
@@ -109,11 +104,6 @@ func TestMessages(t *testing.T) {
 							So(len(messages), ShouldEqual, 2)
 							So(messages[1].Text, ShouldEqual, text2)
 						})
-					})
-					Convey("Origin has new message", func() {
-						n, err := db.GetUnreadCount(origin)
-						So(n, ShouldEqual, 2)
-						So(err, ShouldBeNil)
 					})
 
 				})
@@ -145,12 +135,6 @@ func TestMessages(t *testing.T) {
 								So(messages[2].Text, ShouldEqual, text3)
 							})
 						})
-						Convey("Origin has new message", func() {
-							n, err := db.GetUnreadCount(origin)
-							So(n, ShouldEqual, 3)
-							So(err, ShouldBeNil)
-						})
-
 					})
 				})
 			})
@@ -169,24 +153,6 @@ func TestMessages(t *testing.T) {
 				n, err := db.GetUnreadCount(destination)
 				So(n, ShouldEqual, 1)
 				So(err, ShouldBeNil)
-			})
-			Convey("Origin has new message", func() {
-				n, err := db.GetUnreadCount(origin)
-				So(n, ShouldEqual, 1)
-				So(err, ShouldBeNil)
-			})
-			Convey("Read origin", func() {
-				So(db.SetRead(origin, idOrigin), ShouldBeNil)
-				m, err := db.GetMessage(idOrigin)
-				So(err, ShouldBeNil)
-				So(m.Read, ShouldBeTrue)
-				Convey("Integrity", Integrity(db, uOrigin))
-				Convey("Integrity", Integrity(db, uDestination))
-				Convey("Origin has no new messages", func() {
-					n, err := db.GetUnreadCount(origin)
-					So(n, ShouldEqual, 0)
-					So(err, ShouldBeNil)
-				})
 			})
 			Convey("Read destination", func() {
 				So(db.SetRead(destination, idDestination), ShouldBeNil)
