@@ -19,7 +19,6 @@ import (
 	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
-	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"html/template"
@@ -1317,31 +1316,25 @@ func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
 	return Render(cities)
 }
 
-func ForgotPassword(db DataBase, args martini.Params, mail *mailgun.Client) (int, []byte) {
-	var err error
+func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender) (int, []byte) {
 	email := args["email"]
 	u := db.GetUsername(email)
 	if u == nil {
 		return Render(ErrorUserNotFound)
 	}
-
 	confTok := db.NewConfirmationToken(u.Id)
 	if confTok == nil {
 		return Render(BackendError(errors.New("Unable to generate token")))
 	}
-	// anyncronously send email to user
 	if !*development {
-		message := ConfirmationMail{}
-		message.Destination = u.Email
-		message.Origin = "noreply@" + mailDomain
-		message.Mail = "http://poputchiki.ru/api/forgot/" + confTok.Token
-		log.Println("[email]", message.From(), message.To(), message.Text())
-		_, err = mail.Send(message)
-		if err != nil {
+		type Data struct {
+			Url string
+		}
+		data := Data{"http://poputchiki.ru/api/forgot/" + confTok.Token}
+		if err := mail.Send("password.html", u.Id, "Восстановление пароля", data); err != nil {
 			log.Println("[email]", err)
 		}
 	}
-
 	return Render("ok")
 }
 
