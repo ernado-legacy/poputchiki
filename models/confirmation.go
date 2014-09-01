@@ -6,6 +6,7 @@ import (
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2/bson"
 	"html/template"
+	"log"
 	"time"
 )
 
@@ -111,6 +112,7 @@ func NewMail(src, origin, destination, subject string, data interface{}) (m Mail
 		return
 	}
 	buff := new(bytes.Buffer)
+	log.Printf("[email] %+v", data)
 	if err = t.Execute(buff, data); err != nil {
 		return
 	}

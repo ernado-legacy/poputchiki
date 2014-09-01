@@ -65,6 +65,7 @@ func GetEventType(updateType string, media interface{}) string {
 }
 
 func (stripe *Update) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+	log.Println("[prepare]", "preparing update")
 	var media PrepareInterface
 	var hasMedia bool = false
 
@@ -96,5 +97,6 @@ func (stripe *Update) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccep
 		}
 		stripe.Url = media.Url()
 	}
+	log.Println("[prepare]", "prepared")
 	return nil
 }

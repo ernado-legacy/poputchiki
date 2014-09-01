@@ -215,11 +215,20 @@ type EmailUpdater struct {
 	adapter   *weed.Adapter
 }
 
+func (e *EmailUpdater) GetTemplate(update models.Update) (template string, err error) {
+	filename := fmt.Sprintf("%s.html", update.Type)
+	log.Println("[email]", "template", filename)
+	return e.templates.String(filename)
+}
+
 func (e *EmailUpdater) Push(update models.Update) error {
 	log.Println("[email]", "pushing")
 	u := e.db.Get(update.Destination)
 	u.Prepare(e.adapter, e.db, false, AaOgg)
-	template, err := e.templates.String(fmt.Sprintf("%s.html", update.Type))
+	if err := update.Prepare(e.db, e.adapter, false, VaWebm, AaOgg); err != nil {
+		log.Println("[email]", err)
+	}
+	template, err := e.GetTemplate(update)
 	if err != nil {
 		log.Println("[email] template error", err)
 		return err
@@ -265,9 +274,12 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 			log.Println(err)
 			return err
 		}
+		subscribed = true
 		if subscribed && u.email != nil {
 			log.Println("[updates]", "sending email")
 			return u.email.Push(update)
+		} else {
+			log.Println("[updates]", "not subscribed")
 		}
 	}
 	log.Println("[updates]", "handled", update.Id.Hex())
