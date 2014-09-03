@@ -1565,18 +1565,20 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 
 func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Request, tokens gotok.Storage) {
 	cookie, err := r.Cookie("admin")
-	if err != nil {
-		code, data := Render(BackendError(err))
-		http.Error(w, string(data), code)
-		return
+	user := db.Get(t.Id)
+	cookieExists := false
+	if err == nil {
+		cookieExists = true
 	}
-	token, err := tokens.Get(cookie.Value)
-	if err != nil {
-		code, data := Render(BackendError(err))
-		http.Error(w, string(data), code)
-		return
+	if cookieExists {
+		token, err := tokens.Get(cookie.Value)
+		if err != nil {
+			code, data := Render(BackendError(err))
+			http.Error(w, string(data), code)
+			return
+		}
+		user = db.Get(token.Id)
 	}
-	user := db.Get(token.Id)
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
 		http.Error(w, string(data), code)
@@ -1589,6 +1591,7 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
+	http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
 	view.Execute(w, nil)
 }
 
@@ -1609,7 +1612,6 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id.Hex(), Path: "/"})
-	http.SetCookie(w, &http.Cookie{Name: "admin", Value: userToken.Token, Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
