@@ -840,7 +840,7 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 	if !u.Vip {
 		query.Sponsor = ""
 	}
-	result, err := db.SearchStatuses(query, pagination.Count, pagination.Offset)
+	result, err := db.SearchStatuses(query, pagination)
 	if err != nil {
 		return Render(BackendError(err))
 	}

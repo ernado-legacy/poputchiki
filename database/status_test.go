@@ -53,7 +53,7 @@ func TestStatus(t *testing.T) {
 						So(status.LikedUsers[0], ShouldEqual, newUser.Id)
 						Convey("Integrity", Integrity(db, u))
 						Convey("Search", func() {
-							statuses, err := db.SearchStatuses(new(models.SearchQuery), 0, 0)
+							statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 							So(err, ShouldBeNil)
 							So(len(statuses), ShouldEqual, 1)
 							So(statuses[0].Likes, ShouldEqual, 1)
@@ -84,7 +84,7 @@ func TestStatus(t *testing.T) {
 							So(len(status.LikedUsers), ShouldEqual, 0)
 							Convey("Integrity", Integrity(db, u))
 							Convey("Search", func() {
-								statuses, err := db.SearchStatuses(new(models.SearchQuery), 1, 0)
+								statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 								So(err, ShouldBeNil)
 								So(len(statuses), ShouldEqual, 1)
 								So(statuses[0].Likes, ShouldEqual, 0)
@@ -119,7 +119,7 @@ func TestStatus(t *testing.T) {
 				})
 				Convey("Search", func() {
 					Convey("All", func() {
-						statuses, err := db.SearchStatuses(new(models.SearchQuery), 1, 0)
+						statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 						So(err, ShouldBeNil)
 						So(len(statuses), ShouldEqual, 1)
 						So(statuses[0].Text, ShouldEqual, text)
@@ -147,7 +147,7 @@ func TestStatus(t *testing.T) {
 						So(s.Text, ShouldEqual, newtext)
 					})
 					Convey("Search", func() {
-						statuses, err := db.SearchStatuses(new(models.SearchQuery), 1, 0)
+						statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 						So(err, ShouldBeNil)
 						So(len(statuses), ShouldEqual, 1)
 						So(statuses[0].Text, ShouldEqual, newtext)
@@ -181,9 +181,9 @@ func TestStatus(t *testing.T) {
 						So(user.StatusUpdate.Truncate(time.Second).Unix(), ShouldEqual, s.Time.Truncate(time.Second).Unix())
 					})
 					Convey("Search", func() {
-						statuses, err := db.SearchStatuses(new(models.SearchQuery), 1, 0)
+						statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 						So(err, ShouldBeNil)
-						So(len(statuses), ShouldEqual, 2)
+						So(len(statuses), ShouldEqual, 1)
 						So(statuses[0].Text, ShouldEqual, text)
 					})
 					Convey("Change status", func() {
@@ -207,9 +207,9 @@ func TestStatus(t *testing.T) {
 							So(s.Text, ShouldEqual, newtext)
 						})
 						Convey("Search", func() {
-							statuses, err := db.SearchStatuses(new(models.SearchQuery), 1, 0)
+							statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 							So(err, ShouldBeNil)
-							So(len(statuses), ShouldEqual, 2)
+							So(len(statuses), ShouldEqual, 1)
 							So(statuses[0].Text, ShouldEqual, newtext)
 						})
 					})

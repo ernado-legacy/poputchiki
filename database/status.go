@@ -86,16 +86,16 @@ func (a StatusByTime) Less(i, j int) bool {
 	return a[j].Time.Before(a[i].Time)
 }
 
-func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*models.Status, error) {
-	if count == 0 {
-		count = searchCount
+func (db *DB) SearchStatuses(q *models.SearchQuery, p models.Pagination) ([]*models.Status, error) {
+	if p.Count == 0 {
+		p.Count = searchCount
 	}
 
 	statuses := []*models.Status{}
 	query := q.ToBson()
 	u := []*models.User{}
 	query["statusupdate"] = bson.M{"$exists": true}
-	if err := db.users.Find(query).Sort("-statusupdate").Skip(offset).Limit(count).All(&u); err != nil {
+	if err := db.users.Find(query).Sort("-statusupdate").Skip(p.Offset).Limit(p.Count).All(&u); err != nil {
 		return statuses, err
 	}
 	userIds := make([]bson.ObjectId, len(u))
@@ -105,8 +105,21 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 		userIds[i] = user.Id
 	}
 
+	// search :=
+
 	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": userIds}}).All(&statuses); err != nil {
 		return statuses, err
+	}
+
+	var found []bson.ObjectId
+
+	inFound := func(id bson.ObjectId) bool {
+		for i := range found {
+			if id == found[i] {
+				return true
+			}
+		}
+		return false
 	}
 
 	for i, status := range statuses {
@@ -114,7 +127,17 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, count, offset int) ([]*model
 	}
 
 	sort.Sort(StatusByTime(statuses))
-	return statuses, nil
+
+	uniqueStatuses := []*models.Status{}
+	for _, status := range statuses {
+		if inFound(status.User) {
+			continue
+		}
+		uniqueStatuses = append(uniqueStatuses, status)
+		found = append(found, status.User)
+	}
+
+	return uniqueStatuses, nil
 }
 
 func (db *DB) GetTopStatuses(count, offset int) (statuses []*models.Status, err error) {

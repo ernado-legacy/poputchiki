@@ -247,7 +247,7 @@ func TestDBMethods(t *testing.T) {
 				Convey("Searchable", func() {
 					query := &SearchQuery{}
 					query.Sex = "male"
-					statuses, err := db.SearchStatuses(query, 1, 0)
+					statuses, err := db.SearchStatuses(query, Pagination{})
 					So(err, ShouldBeNil)
 					So(len(statuses), ShouldEqual, 1)
 					So(statuses[0].Id, ShouldEqual, s.Id)
