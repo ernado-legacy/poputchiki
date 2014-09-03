@@ -1591,7 +1591,9 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
-	http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
+	if !cookieExists {
+		http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
+	}
 	view.Execute(w, nil)
 }
 
