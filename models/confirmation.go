@@ -5,8 +5,8 @@ import (
 	"github.com/GeertJohan/go.rice"
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2/bson"
-	"html/template"
 	"log"
+	"text/template"
 	"time"
 )
 
