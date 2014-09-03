@@ -1712,7 +1712,9 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 		return Render(BackendError(err))
 	}
 	optsAac := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "aac"}
+	optsAac.Duration = 10
 	optsVorbis := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "libvorbis"}
+	optsVorbis.Duration = 10
 	fid, _, _, err := adapter.Upload(f, "audio", "audio")
 	if err != nil {
 		return Render(BackendError(err))
