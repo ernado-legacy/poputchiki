@@ -1598,7 +1598,21 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 }
 
 func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWriter, r *http.Request, tokens gotok.Storage) {
+	cookie, err := r.Cookie("admin")
 	user := db.Get(t.Id)
+	cookieExists := false
+	if err == nil {
+		cookieExists = true
+	}
+	if cookieExists {
+		token, err := tokens.Get(cookie.Value)
+		if err != nil {
+			code, data := Render(BackendError(err))
+			http.Error(w, string(data), code)
+			return
+		}
+		user = db.Get(token.Id)
+	}
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
 		http.Error(w, string(data), code)
