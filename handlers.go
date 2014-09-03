@@ -521,7 +521,7 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 	now := time.Now()
 
 	m1 := &Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
-	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, false, now, text, true}
+	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, true, now, text, true}
 
 	u := db.Get(destination)
 	if u == nil {
