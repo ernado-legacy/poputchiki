@@ -605,6 +605,7 @@ func main() {
 	weedHost = *weedHostF
 	weedUrl = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 	salt = *saltF
+	log.Println("[project]", "starting", projectName)
 	a := NewApp()
 	defer a.Close()
 	a.Run()
