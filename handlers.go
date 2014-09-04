@@ -365,6 +365,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 	// add to database
 	u.Rating = 100.0
 	u.Subscriptions = Subscriptions
+	u.Balance = 20000 // TODO: Disable on production
 	if err := db.Add(u); err != nil {
 		return Render(BackendError(err))
 	}
