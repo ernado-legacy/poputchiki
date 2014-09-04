@@ -10,7 +10,6 @@ import (
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/cymedia/photo"
 	"github.com/ernado/gofbauth"
-	// "github.com/ernado/gorobokassa"
 	"github.com/ernado/gosmsru"
 	"github.com/ernado/gotok"
 	"github.com/ernado/govkauth"
@@ -1470,6 +1469,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 		newUser.Birthday = user.Birthday
 		newUser.Rating = 100.0
 		newUser.Sex = user.Sex
+		newUser.Subscriptions = Subscriptions
 		log.Println(newUser.Name, err)
 		err = db.Add(newUser)
 		if err != nil {
@@ -1513,7 +1513,6 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 		return
 	}
 	fbUser, err := client.GetUser(token.AccessToken)
-	log.Println(err)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
 		http.Error(w, "Ошибка авторизации", code)
@@ -1528,7 +1527,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 		newUser.Name = fbUser.Name
 		newUser.Birthday = fbUser.Birthday
 		newUser.Rating = 100.0
-		log.Println(newUser.Name, err)
+		newUser.Subscriptions = Subscriptions
 		err = db.Add(newUser)
 		if err != nil {
 			code, _ := Render(ErrorBackend)
@@ -1536,7 +1535,6 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 			return
 		}
 		u = db.GetUsername(fbUser.Email)
-		log.Println(fbUser.Photo)
 		if fbUser.Photo != "" {
 			p := ExportPhoto(db, u.Id, adapter, fbUser.Photo)
 			if p != nil {
@@ -1794,6 +1792,43 @@ func SetUpdateRead(db DataBase, token *gotok.Token, id bson.ObjectId) (int, []by
 		return Render(BackendError(err))
 	}
 	return Render("ok")
+}
+
+func Feedback(parser Parser, db DataBase, mail MailHtmlSender, token *gotok.Token) (int, []byte) {
+	type Data struct {
+		User  *User  `json:"-"`
+		Title string `json:"title"`
+		Text  string `json:"text"`
+	}
+	v := new(Data)
+	if err := parser.Parse(v); err != nil {
+		return Render(ValidationError(err))
+	}
+	v.User = db.Get(token.Id)
+	if err := mail.SendTo("feedback.html", feedbackEmail, fmt.Sprintf("Отзыв: %s", v.Title), v); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(v)
+}
+
+func WantToTravel(parser Parser, db DataBase, mail MailHtmlSender, token *gotok.Token) (int, []byte) {
+	type Data struct {
+		User    *User  `json:"-"`
+		Phone   string `json:"phone"`
+		Country string `json:"country"`
+	}
+	v := new(Data)
+	if err := parser.Parse(v); err != nil {
+		return Render(ValidationError(err))
+	}
+	if !db.CountryExists(v.Country) {
+		return Render(ValidationError(errors.New(fmt.Sprintf("Страна %s не существует", v.Country))))
+	}
+	v.User = db.Get(token.Id)
+	if err := mail.SendTo("travel.html", feedbackEmail, fmt.Sprintf("%s - %s", v.User.Name, v.Country), v); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(v)
 }
 
 // init for random

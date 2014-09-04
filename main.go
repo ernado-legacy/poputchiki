@@ -67,6 +67,7 @@ var (
 	mobile                         = flag.Bool("mobile", false, "is mobile api")
 	development                    = flag.Bool("dev", false, "is in development")
 	sendEmail                      = flag.Bool("email", true, "send registration emails")
+	feedbackEmail                  = "info@poputchiki.ru"
 )
 
 func getHash(password string, s string) string {
@@ -202,7 +203,8 @@ func NewApp() *Application {
 		r.Get("/confirm/email/:token", ConfirmEmail)
 		r.Get("/confirm/phone/start", ConfirmPhoneStart)
 		r.Get("/confirm/phone/:token", ConfirmPhone)
-
+		r.Post("/feedback", Feedback)
+		r.Post("/travel", WantToTravel)
 		r.Post("/pay/:value", GetTransactionUrl)
 		r.Get("/pay/:value", GetTransactionUrl)
 
@@ -373,7 +375,7 @@ func (a *Application) RatingDegradatingCycle() {
 	}
 }
 
-var redisQueryRespKey = "poputchiki:conventer:resp"
+var redisQueryRespKey = fmt.Sprintf("%s:conventer:resp", projectName)
 
 func (a *Application) ConvertResultListener() {
 	db := a.db

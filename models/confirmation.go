@@ -131,6 +131,7 @@ type MailDispatcher struct {
 
 type MailHtmlSender interface {
 	Send(template string, destination bson.ObjectId, subject string, data interface{}) error
+	SendTo(template, destination, subject string, data interface{}) error
 }
 
 func GetMailDispatcher(box *rice.Box, email string, client *mailgun.Client, db DataBase) MailHtmlSender {
@@ -138,12 +139,16 @@ func GetMailDispatcher(box *rice.Box, email string, client *mailgun.Client, db D
 }
 
 func (dispatcher MailDispatcher) Send(template string, destination bson.ObjectId, subject string, data interface{}) error {
+	destinationEmail := dispatcher.db.Get(destination).Email
+	return dispatcher.SendTo(template, destinationEmail, subject, data)
+}
+
+func (dispatcher MailDispatcher) SendTo(template, destination, subject string, data interface{}) error {
 	src, err := dispatcher.box.String(template)
 	if err != nil {
 		return err
 	}
-	u := dispatcher.db.Get(destination)
-	m, err := NewMail(src, dispatcher.origin, u.Email, subject, data)
+	m, err := NewMail(src, dispatcher.origin, destination, subject, data)
 	if err != nil {
 		return err
 	}
