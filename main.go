@@ -607,6 +607,7 @@ func main() {
 	salt = *saltF
 	log.Println("[project]", "starting", projectName)
 	redisQueryRespKey = fmt.Sprintf("%s:conventer:resp", projectName)
+	log.Println("[project] key", redisQueryRespKey)
 	a := NewApp()
 	defer a.Close()
 	a.Run()
