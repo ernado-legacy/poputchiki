@@ -606,6 +606,7 @@ func main() {
 	weedUrl = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
 	salt = *saltF
 	log.Println("[project]", "starting", projectName)
+	redisQueryRespKey = fmt.Sprintf("%s:conventer:resp", projectName)
 	a := NewApp()
 	defer a.Close()
 	a.Run()
