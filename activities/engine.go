@@ -110,11 +110,11 @@ func New(db models.DataBase, duration time.Duration) *Engine {
 	engine.duration = duration
 	engine.database = db
 	engine.activities = make(map[string]models.Activity)
+	engine.add(Promo, 100, 1)
 	engine.add(Status, 100, 3)
 	engine.add(Message, 50, 5)
-	engine.add(Like, 30, 10)
-	engine.add(Promo, 100, 1)
-	engine.add(Photo, 40, 3)
 	engine.add(Invite, 50, 2)
+	engine.add(Photo, 40, 3)
+	engine.add(Like, 30, 10)
 	return engine
 }
