@@ -414,7 +414,7 @@ func (a *Application) ConvertResultListener() {
 					err = db.UpdateAudioOGG(id, fid)
 					audio.AudioOgg = fid
 				}
-				if resp.Format == "aac" {
+				if resp.Format == "m4a" {
 					err = db.UpdateAudioAAC(id, fid)
 					audio.AudioAac = fid
 				}
@@ -596,8 +596,8 @@ func main() {
 	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
 	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")
 	flag.StringVar(&smsKey, "sms-key", "80df3a7d-4c8c-ffb4-b197-4dc850443bba", "sms key")
-	flag.Parse()
-	projectName = *projectNameF
+	flag.Parse(
+)	projectName = *projectNameF
 	dbName = projectName
 	redisName = projectName
 	redisAddr = *redisAddrF
