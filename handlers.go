@@ -1349,7 +1349,7 @@ func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender, adapt
 			User *User
 		}
 		u.Prepare(adapter, db, false, AaAac)
-		data := Data{"http://poputchiki.ru/api/forgot/" + confTok.Token, u}
+		data := Data{"http://poputchiki.ru/api/auth/reset/" + confTok.Token, u}
 		if err := mail.Send("password.html", u.Id, "Восстановление пароля", data); err != nil {
 			log.Println("[email]", err)
 		}
