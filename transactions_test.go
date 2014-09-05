@@ -27,8 +27,8 @@ func TestTransactions(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(id, ShouldEqual, 2)
 		Convey("New", func() {
-			// expected := "https://auth.robokassa.ru/Merchant/Index.aspx?Desc=test&InvId=3&MrchLogin=login&OutSum=100&SignatureValue=265254922965146050cd69499acf1e25"
-			expected := "http://test.robokassa.ru/Index.aspx?Desc=test&InvId=3&MrchLogin=login&OutSum=100&SignatureValue=265254922965146050cd69499acf1e25"
+			expected := "https://auth.robokassa.ru/Merchant/Index.aspx?Desc=test&InvId=3&MrchLogin=login&OutSum=100&SignatureValue=265254922965146050cd69499acf1e25"
+			// expected := "http://test.robokassa.ru/Index.aspx?Desc=test&InvId=3&MrchLogin=login&OutSum=100&SignatureValue=265254922965146050cd69499acf1e25"
 			url, _, err := handler.Start(bson.NewObjectId(), 100, "test")
 			So(err, ShouldBeNil)
 			So(expected, ShouldEqual, url)
