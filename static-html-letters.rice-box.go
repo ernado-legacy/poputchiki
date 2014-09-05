@@ -72,7 +72,7 @@ func init() {
 	// register embeddedBox
 	embedded.RegisterEmbeddedBox(`static/html/letters`, &embedded.EmbeddedBox{
 		Name: `static/html/letters`,
-		Time: time.Unix(1409918265, 0),
+		Time: time.Unix(1409922204, 0),
 		Dirs: map[string]*embedded.EmbeddedDir{
 			"": dir_1,
 		},
