@@ -43,6 +43,7 @@ var (
 	dbName                         = projectName
 	statusesPerDay                 = 1
 	statusesPerDayVip              = 3
+	startCapital                   = 50
 	dbCity                         = "countries"
 	tokenCollection                = "tokens"
 	mongoHost                      = "localhost"

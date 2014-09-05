@@ -100,6 +100,7 @@ type User struct {
 	VipTill             time.Time       `json:"vip_till"               bson:"vip_till"`
 	Rating              float64         `json:"rating"                 bson:"rating"`
 	Subscriptions       []string        `json:"subscriptions"          bson:"subscriptions"`
+	Registered          time.Time       `json:"registered"             bson:"registered"`
 }
 
 type GuestUser struct {
