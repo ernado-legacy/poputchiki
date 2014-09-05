@@ -78,7 +78,6 @@ var (
 )
 
 func getHash(password string, s string) string {
-	// log.Printf("sha256(%s,%s)", password, s)
 	hasher := sha256.New()
 	hasher.Write([]byte(password + s))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
