@@ -1576,7 +1576,10 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 			http.Error(w, string(data), code)
 			return
 		}
-		user = db.Get(token.Id)
+		newUser := db.Get(token.Id)
+		if newUser.IsAdmin {
+			user = newUser
+		}
 	}
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
@@ -1590,7 +1593,7 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
-	if !cookieExists {
+	if !cookieExists && user.IsAdmin {
 		http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
 	}
 	view.Execute(w, nil)
@@ -1610,21 +1613,22 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 			http.Error(w, string(data), code)
 			return
 		}
-		user = db.Get(token.Id)
+		newUser := db.Get(token.Id)
+		if newUser.IsAdmin {
+			user = newUser
+		}
 	}
 	if user == nil || !user.IsAdmin {
 		code, data := Render(ErrorAuth)
 		http.Error(w, string(data), code)
 		return
 	}
-
 	userToken, err := tokens.Generate(id)
 	if err != nil {
 		code, data := Render(BackendError(err))
 		http.Error(w, string(data), code)
 		return
 	}
-
 	http.SetCookie(w, userToken.GetCookie())
 	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
