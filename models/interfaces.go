@@ -161,6 +161,7 @@ type DataBase interface {
 	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
 	GetUpdates(destination bson.ObjectId, t string, pagination Pagination) ([]*Update, error)
 	SetUpdateRead(destination, id bson.ObjectId) error
+	GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error)
 }
 
 type RealtimeInterface interface {

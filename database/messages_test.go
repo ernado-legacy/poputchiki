@@ -4,6 +4,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func TestMessages(t *testing.T) {
 		Convey("Integrity", Integrity(db, uOrigin))
 		Convey("Integrity", Integrity(db, uDestination))
 		Convey("Add message", func() {
-			mOrigin, mDestination := models.NewMessagePair(origin, destination, text)
+			mOrigin, mDestination := models.NewMessagePair(db, origin, destination, text)
 			idOrigin := mOrigin.Id
 			idDestination := mDestination.Id
 			So(db.AddMessage(mOrigin), ShouldBeNil)
@@ -35,14 +36,21 @@ func TestMessages(t *testing.T) {
 				found := false
 				for k := range chats {
 					if chats[k].Id == origin {
+						So(chats[k].Unread, ShouldEqual, 1)
 						found = true
 					}
 				}
 				So(found, ShouldBeTrue)
 			})
+			Convey("Last message id", func() {
+				id, err := db.GetLastMessageIdFromUser(destination, origin)
+				So(err, ShouldBeNil)
+				log.Println(id, idDestination)
+				So(id, ShouldEqual, idDestination)
+			})
 			Convey("Add new message", func() {
 				text2 := "hehehe"
-				mOrigin, mDestination := models.NewMessagePair(origin, destination, text2)
+				mOrigin, mDestination := models.NewMessagePair(db, origin, destination, text2)
 				So(db.AddMessage(mOrigin), ShouldBeNil)
 				So(db.AddMessage(mDestination), ShouldBeNil)
 				Convey("Integrity", Integrity(db, uOrigin))
@@ -109,7 +117,7 @@ func TestMessages(t *testing.T) {
 				})
 				Convey("Add new message", func() {
 					text3 := "hehehe"
-					mOrigin, mDestination := models.NewMessagePair(origin, destination, text3)
+					mOrigin, mDestination := models.NewMessagePair(db, origin, destination, text3)
 					So(db.AddMessage(mOrigin), ShouldBeNil)
 					So(db.AddMessage(mDestination), ShouldBeNil)
 					Convey("Integrity", Integrity(db, uOrigin))

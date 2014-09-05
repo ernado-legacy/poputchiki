@@ -2,22 +2,32 @@ package models
 
 import (
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"time"
 )
 
 type Message struct {
-	Id          bson.ObjectId `json:"id"          bson:"_id"`
-	Chat        bson.ObjectId `json:"chat"        bson:"chat"`
-	User        bson.ObjectId `json:"-"           bson:"user"`
-	Origin      bson.ObjectId `json:"origin"      bson:"origin"`
-	Destination bson.ObjectId `json:"destination" bson:"destination"`
-	Read        bool          `json:"read"        bson:"read"`
-	Time        time.Time     `json:"time"        bson:"time"`
-	Text        string        `json:"text"        bson:"text"`
-	Invite      bool          `json:"invite"      bson:"invite"`
+	Id          bson.ObjectId `json:"id"           bson:"_id"`
+	Chat        bson.ObjectId `json:"chat"         bson:"chat"`
+	User        bson.ObjectId `json:"-"            bson:"user"`
+	Origin      bson.ObjectId `json:"origin"       bson:"origin"`
+	Destination bson.ObjectId `json:"destination"  bson:"destination"`
+	Read        bool          `json:"read"         bson:"read"`
+	Time        time.Time     `json:"time"         bson:"time"`
+	Text        string        `json:"text"         bson:"text"`
+	Invite      bool          `json:"invite"       bson:"invite"`
+	LastMessage bson.ObjectId `json:"last_message,omitempty" bson:"-"`
 }
 
-func NewMessagePair(origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
+func NewInvites(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
+	return newMessagePair(db, origin, destination, text, true)
+}
+
+func NewMessagePair(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
+	return newMessagePair(db, origin, destination, text, false)
+}
+
+func newMessagePair(db DataBase, origin, destination bson.ObjectId, text string, invite bool) (toOrigin, toDestination *Message) {
 	toOrigin = new(Message)
 	toDestination = new(Message)
 	toOrigin.Id = bson.NewObjectId()
@@ -35,6 +45,21 @@ func NewMessagePair(origin, destination bson.ObjectId, text string) (toOrigin, t
 	toOrigin.Text = text
 	toDestination.Text = text
 	toOrigin.Read = true
+
+	lastOrigin, err := db.GetLastMessageIdFromUser(origin, destination)
+	if err != nil {
+		log.Println(err)
+	}
+	lastDestination, err := db.GetLastMessageIdFromUser(destination, origin)
+	if err != nil {
+		log.Println(err)
+	}
+	toOrigin.LastMessage = lastOrigin
+	toDestination.LastMessage = lastDestination
+
+	toOrigin.Invite = invite
+	toDestination.Invite = invite
+
 	return
 }
 
@@ -51,6 +76,7 @@ type Dialog struct {
 	Origin     bson.ObjectId `json:"-"      bson:"origin,omitempty"`
 	User       *User         `json:"user"`
 	OriginUser *User         `json:"origin"`
+	Unread     int           `json:"unread" bson:"unread"`
 }
 
 type UnreadCount struct {

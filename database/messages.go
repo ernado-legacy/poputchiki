@@ -12,6 +12,15 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 	return messages, err
 }
 
+func (db *DB) GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error) {
+	message := new(models.Message)
+	if err = db.messages.Find(bson.M{"user": userReciever, "chat": userOrigin}).Sort("time").One(message); err != nil {
+		return
+	}
+	id = message.Id
+	return
+}
+
 func (db *DB) AddMessage(m *models.Message) error {
 	return db.messages.Insert(m)
 }
@@ -93,6 +102,11 @@ func (db *DB) GetChats(id bson.ObjectId) ([]*models.Dialog, error) {
 	for i := range result {
 		result[i].User = usersMap[result[i].Id]
 		result[i].OriginUser = usersMap[result[i].Origin]
+		count, err := db.messages.Find(bson.M{"read": false, "user": id, "destination": id, "chat": result[i].Id}).Count()
+		if err != nil {
+			return nil, err
+		}
+		result[i].Unread = count
 	}
 
 	sort.Sort(Dialogs(result))

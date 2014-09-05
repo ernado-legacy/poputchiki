@@ -489,7 +489,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		return Render(ValidationError(errors.New("Blank text")))
 	}
 
-	m1, m2 := NewMessagePair(origin, destination, text)
+	m1, m2 := NewMessagePair(db, origin, destination, text)
 	u := db.Get(destination)
 	if u == nil {
 		return Render(ErrorUserNotFound)
@@ -518,11 +518,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
 	text := "Вас пригласили в путешествие"
 	origin := t.Id
-	now := time.Now()
-
-	m1 := &Message{bson.NewObjectId(), destination, origin, origin, destination, false, now, text, true}
-	m2 := &Message{bson.NewObjectId(), origin, destination, origin, destination, true, now, text, true}
-
+	toOrigin, toDestination := NewInvites(db, origin, destination, text)
 	u := db.Get(destination)
 	if u == nil {
 		return Render(ErrorUserNotFound)
@@ -533,10 +529,10 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 			return Render(ErrorBlacklisted)
 		}
 	}
-	Must(realtime.Push(origin, m1))
-	Must(realtime.Push(destination, m2))
-	Must(db.AddMessage(m1))
-	Must(db.AddMessage(m2))
+	Must(realtime.Push(origin, toOrigin))
+	Must(realtime.Push(destination, toDestination))
+	Must(db.AddMessage(toOrigin))
+	Must(db.AddMessage(toDestination))
 	engine.Handle(activities.Invite)
 
 	return Render("message sent")
