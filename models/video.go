@@ -18,7 +18,7 @@ type Video struct {
 	Description   string          `json:"description,omitempty" bson:"description,omitempty"`
 	Time          time.Time       `json:"time"                  bson:"time"`
 	Likes         int             `json:"likes"                 bson:"likes"`
-	LikedUsers    []bson.ObjectId `json:"liked_users"           bson:"liked_users"`
+	LikedUsers    []bson.ObjectId `json:"liked_users"           bson:"liked_users,omitempty"`
 	Duration      int64           `json:"duration"              bson:"duration"`
 }
 

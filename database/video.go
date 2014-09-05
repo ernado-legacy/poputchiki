@@ -19,7 +19,7 @@ func (db *DB) AddLikeVideo(user bson.ObjectId, target bson.ObjectId) error {
 
 func (db *DB) GetVideo(id bson.ObjectId) *models.Video {
 	v := &models.Video{}
-	if db.video.FindId(id).Select(bson.M{"liked_users": 0}).One(v) != nil {
+	if db.video.FindId(id).One(v) != nil {
 		return nil
 	}
 	return v

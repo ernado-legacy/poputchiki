@@ -4,6 +4,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"testing"
 )
 
@@ -17,8 +18,10 @@ func TestVideo(t *testing.T) {
 		Convey("Add", func() {
 			a := &models.Video{}
 			a.Id = bson.NewObjectId()
-			a.User = bson.NewObjectId()
+			u := &models.User{Id: bson.NewObjectId()}
+			a.User = u.Id
 			_, err := db.AddVideo(a)
+			So(db.Add(u), ShouldBeNil)
 			So(err, ShouldBeNil)
 			Convey("Get", func() {
 				b := db.GetVideo(a.Id)
@@ -35,6 +38,18 @@ func TestVideo(t *testing.T) {
 				Convey("Liked", func() {
 					c := db.GetVideo(a.Id)
 					So(c.Likes, ShouldEqual, 1)
+					log.Println(c.LikedUsers)
+					So(c.LikedUsers, ShouldContain, a.User)
+				})
+				Convey("Likers", func() {
+					likers := db.GetLikesVideo(a.Id)
+					found := false
+					for _, user := range likers {
+						if user.Id == a.User {
+							found = true
+						}
+					}
+					So(found, ShouldBeTrue)
 				})
 			})
 			Convey("Remove", func() {

@@ -24,7 +24,7 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 // GetPhoto returs photo by id
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 	p := &Photo{}
-	return p, db.photo.FindId(photo).Select(bson.M{"liked_users": 0}).One(p)
+	return p, db.photo.FindId(photo).One(p)
 }
 
 // GetUserPhoto returns avatar photo of user with provided user id
