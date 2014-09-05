@@ -68,15 +68,14 @@ var (
 	development                    = flag.Bool("dev", false, "is in development")
 	sendEmail                      = flag.Bool("email", true, "send registration emails")
 	feedbackEmail                  = "info@poputchiki.ru"
-	popiki = map[int]int {
-		100: 30,
-		300: 90,
-		500: 140,
+	popiki                         = map[int]int{
+		100:  30,
+		300:  90,
+		500:  140,
 		1000: 280,
-		3000: 800
+		3000: 800,
 	}
 )
-
 
 func getHash(password string, s string) string {
 	// log.Printf("sha256(%s,%s)", password, s)

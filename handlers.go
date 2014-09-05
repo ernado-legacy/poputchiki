@@ -1100,7 +1100,7 @@ func ConfirmPhoneStart(db DataBase, t *gotok.Token) (int, []byte) {
 
 func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler *TransactionHandler, r *http.Request, w http.ResponseWriter) {
 	valuePopiki, err := strconv.Atoi(args["value"])
-	if err != nil || value <= 0 {
+	if err != nil || valuePopiki <= 0 {
 		code, data := Render(ErrorBadRequest)
 		http.Error(w, string(data), code)
 		return
@@ -1108,7 +1108,7 @@ func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler
 
 	value, ok := popiki[valuePopiki]
 	if !ok {
-		err := errors.New("Неверное количество попиков: %s", valuePopiki)
+		err := errors.New(fmt.Sprintf("Неверное количество попиков: %s", valuePopiki))
 		code, data := Render(ValidationError(err))
 		http.Error(w, string(data), code)
 		return
@@ -1137,8 +1137,8 @@ func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionH
 		}
 	}
 
-	if !ok {
-		err := errors.New("Неверное количество попиков: %s", valuePopiki)
+	if valuePopiki == 0 {
+		err := errors.New(fmt.Sprintf("Неверное количество попиков: %s", valuePopiki))
 		return Render(ValidationError(err))
 	}
 
