@@ -1333,7 +1333,7 @@ func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
 	return Render(cities)
 }
 
-func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender) (int, []byte) {
+func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender, adapter *weed.Adapter) (int, []byte) {
 	email := args["email"]
 	u := db.GetUsername(email)
 	if u == nil {
@@ -1345,9 +1345,11 @@ func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender) (int,
 	}
 	if !*development {
 		type Data struct {
-			Url string
+			Url  string
+			User *User
 		}
-		data := Data{"http://poputchiki.ru/api/forgot/" + confTok.Token}
+		u.Prepare(adapter, db, false, AaAac)
+		data := Data{"http://poputchiki.ru/api/forgot/" + confTok.Token, u}
 		if err := mail.Send("password.html", u.Id, "Восстановление пароля", data); err != nil {
 			log.Println("[email]", err)
 		}
