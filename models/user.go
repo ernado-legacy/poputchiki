@@ -57,8 +57,8 @@ type User struct {
 	EmailConfirmed      bool            `json:"email_confirmed"        bson:"email_confirmed"`
 	Phone               string          `json:"phone,omitempty"        bson:"phone,omitempty"`
 	PhoneConfirmed      bool            `json:"phone_confirmed"        bson:"phone_confirmed"`
-	IsSponsor           bool            `json:"is_sponsor"             bson:"is_sponsor"`
-	IsHost              bool            `json:"is_host"                bson:"is_host"`
+	IsSponsor           bool            `json:"is_sponsor,omitempty"   bson:"is_sponsor"`
+	IsHost              bool            `json:"is_host,omitempty"      bson:"is_host"`
 	Password            string          `json:"password,omitempty"     bson:"password"`
 	Online              bool            `json:"online"                 bson:"online"`
 	AvatarUrl           string          `json:"avatar_url,omitempty"   bson:"-"`
@@ -80,10 +80,10 @@ type User struct {
 	Destinations        []string        `json:"destinations,omitempty" bson:"destinations,omitempty"`
 	Seasons             []string        `json:"seasons,omitempty"      bson:"seasons,omitempty"`
 	LastAction          time.Time       `json:"last_action,omitempty"  bson:"lastaction,omitempty"`
-	Status              string          `json:"status"                 bson:"status"`
+	Status              string          `json:"status,omitempty"       bson:"status"`
 	StatusUpdate        time.Time       `json:"status_time,omitempty"  bson:"statusupdate,omitempty"`
-	Favorites           []bson.ObjectId `json:"favorites"              bson:"favorites,omitempty"`
-	Blacklist           []bson.ObjectId `json:"blacklist"              bson:"blacklist,omitempty"`
+	Favorites           []bson.ObjectId `json:"favorites,omitempty"    bson:"favorites,omitempty"`
+	Blacklist           []bson.ObjectId `json:"blacklist,omitempty"    bson:"blacklist,omitempty"`
 	Countries           []string        `json:"countries,omitempty"    bson:"countries,omitempty"`
 	LikingsSex          string          `json:"likings_sex,omitempty"          bson:"likings_sex,omitempty"`
 	LikingsDestinations []string        `json:"likings_destinations,omitempty" bson:"likings_destinations,omitempty"`
@@ -95,12 +95,12 @@ type User struct {
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 	IsFavorite          bool            `json:"is_favourite"           bson:"-"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
-	Invisible           bool            `json:"invisible"              bson:"invisible"`
+	Invisible           bool            `json:"invisible,omitempty"    bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
 	VipTill             time.Time       `json:"vip_till"               bson:"vip_till"`
 	Rating              float64         `json:"rating"                 bson:"rating"`
-	Subscriptions       []string        `json:"subscriptions"          bson:"subscriptions"`
-	Registered          time.Time       `json:"registered"             bson:"registered"`
+	Subscriptions       []string        `json:"subscriptions,omitempty"bson:"subscriptions"`
+	Registered          time.Time       `json:"registered,omitempty"   bson:"registered"`
 }
 
 type GuestUser struct {
