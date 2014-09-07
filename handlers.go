@@ -591,11 +591,18 @@ func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adap
 		return Render(BackendError(err))
 	}
 	for k := range dialogs {
-		dialogs[k].User.Prepare(adapter, db, webp, audio)
-		dialogs[k].User.CleanPrivate()
-
-		dialogs[k].OriginUser.Prepare(adapter, db, webp, audio)
-		dialogs[k].OriginUser.CleanPrivate()
+		if dialogs[k].User != nil {
+			dialogs[k].User.Prepare(adapter, db, webp, audio)
+			dialogs[k].User.CleanPrivate()
+		} else {
+			log.Println(dialogs[k], "User nil")
+		}
+		if dialogs[k].OriginUser != nil {
+			dialogs[k].OriginUser.Prepare(adapter, db, webp, audio)
+			dialogs[k].OriginUser.CleanPrivate()
+		} else {
+			log.Println(dialogs[k], "OriginUser nil")
+		}
 	}
 	return Render(dialogs)
 }
