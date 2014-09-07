@@ -1605,9 +1605,11 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 			http.Error(w, string(data), code)
 			return
 		}
-		newUser := db.Get(token.Id)
-		if newUser.IsAdmin {
-			user = newUser
+		if token != nil {
+			newUser := db.Get(token.Id)
+			if newUser.IsAdmin {
+				user = newUser
+			}
 		}
 	}
 	if user == nil || !user.IsAdmin {
