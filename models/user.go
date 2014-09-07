@@ -50,7 +50,7 @@ type Guest struct {
 }
 
 type User struct {
-	Id                  bson.ObjectId   `json:"id"                     bson:"_id,omitempty"`
+	Id                  bson.ObjectId   `json:"id,omitempty"           bson:"_id,omitempty"`
 	Name                string          `json:"name,omitempty"         bson:"name,omitempty"`
 	Sex                 string          `json:"sex,omitempty"          bson:"sex,omitempty"`
 	Email               string          `json:"email,omitempty"        bson:"email,omitempty"`

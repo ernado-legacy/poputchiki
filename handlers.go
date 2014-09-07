@@ -396,14 +396,15 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 
 // Update updates user information with provided key-value document
 func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+	user := new(User)
+	if err := parser.Parse(user); err != nil {
+		return Render(ValidationError(err))
+	}
 	query := bson.M{}
-	// decoding json to map
-	e := parser.Parse(&query)
-	if e != nil {
-		return Render(ValidationError(e))
+	if err := convert(user, &query); err != nil {
+		return Render(ValidationError(err))
 	}
 
-	// removes fields
 	isWriteable := func(key string) bool {
 		for _, v := range UserWritableFields {
 			if key == v {
@@ -425,7 +426,7 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	}
 
 	// encoding to user - checking type & field existance
-	user := &User{}
+	user = new(User)
 	err := convert(query, user)
 	if err != nil {
 		return Render(ValidationError(err))

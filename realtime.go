@@ -233,7 +233,8 @@ func (e *EmailUpdater) Push(update models.Update) error {
 		log.Println("[email] template error", err)
 		return err
 	}
-	message, err := models.NewMail(template, "noreply@"+mailDomain, u.Email, update.Type, update)
+	email := fmt.Sprintf("Попутчики <%s>", "noreply@"+mailDomain)
+	message, err := models.NewMail(template, email, u.Email, update.Type, update)
 	if err != nil {
 		return err
 	}
@@ -247,7 +248,6 @@ func (u *RealtimeUpdater) AutoHandle(user, destination bson.ObjectId, body inter
 }
 
 func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.ObjectId, body interface{}) error {
-
 	update := models.NewUpdate(destination, user, eventType, body)
 	return u.Push(update)
 }
