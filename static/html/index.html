@@ -55,7 +55,8 @@
   <li class="previous"><a href="#">&larr; Назад</a></li>
   <li class="next"><a href="#">Вперед &rarr;</a></li>
 </ul>
-    <ul class="list-group" id="users"></ul>
+  <ul>Найдено: <span id="found">0</span></ul>
+  <ul class="list-group" id="users"></ul>
   <ul class="pager">
   <li class="previous pager-older"><a href="#">&larr; Назад</a></li>
   <li class="next"><a href="#">Вперед &rarr;</a></li>
@@ -76,22 +77,26 @@
     return elem
   }
 
-  var count = 10;
+  var count = 2;
   var offset = 0;
   var page = 0;
+  var previous = $('.previous');
+  var next = $('.next');
+  var users = $('#users');
+  var found = $('#found');
 
   function getOffset() {
     return count * page;
-  }
+  };
 
-  $('.next').click(function(e){
+  next.click(function(e){
     e.preventDefault();
-    if ($(this).hasClass("disabled")) return;
+    if (next.hasClass("disabled")) return;
     page++;
     update();
   });
 
-  $('.previous').click(function(e){
+  previous.click(function(e){
     e.preventDefault();
     if (offset == 0) return;
     page--;
@@ -125,23 +130,18 @@
   }
 
   var mainForm = $('#mainForm');
-
   mainForm.change(function(){
     page = 0;
     offset = 0;
     update();
   });
 
-  $('#inputName').keyup(function(){
-    mainForm.change();
-  })
+  $('#inputName').keyup(mainForm.change);
 
   function update() {
+    offset = getOffset();
     var params = getParams();
     var urlparams = $.param(params);
-    var previous = $('.previous');
-    var next = $('.next');
-    offset = getOffset();
     if (offset == 0) {
       previous.addClass('disabled');
     } else {
@@ -149,14 +149,13 @@
     }
 
     $.getJSON( "/api/search?" + urlparams, function(data) {
-      var users = $('#users');
       users.html('');
-      var length = data.result.length;
-      if (length < count) {
+      if (data.result.length < count) {
         next.addClass('disabled');
       } else {
         next.removeClass('disabled');
       }
+      found.text(data.count);
       $.each(data.result, function(key, val) {
         users.append(getTemplate(val));
       });
