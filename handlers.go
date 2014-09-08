@@ -1134,6 +1134,7 @@ func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler
 }
 
 func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionHandler) (int, []byte) {
+	log.Println("processing robokassa", r.URL.String())
 	transaction, err := handler.Close(r)
 	if err != nil {
 		log.Println("[CRITICAL ERROR]", "transaction", transaction)
