@@ -157,7 +157,7 @@ func (a guestByTime) Swap(i, j int) {
 }
 
 func (a guestByTime) Less(i, j int) bool {
-	return a[i].Time.Before(a[j].Time)
+	return a[j].Time.Before(a[i].Time)
 }
 
 func (db *DB) GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error) {
