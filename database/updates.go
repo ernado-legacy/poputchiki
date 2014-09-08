@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 func (db *DB) AddUpdate(destination, user bson.ObjectId, updateType string, media interface{}) (*models.Update, error) {
@@ -26,6 +27,16 @@ func (db *DB) GetUpdates(destination bson.ObjectId, t string, pagination models.
 		pagination.Count = searchCount
 	}
 	return s, db.updates.Find(bson.M{"destination": destination, "type": t}).Sort("-time").Skip(pagination.Offset).Limit(pagination.Count).All(&s)
+}
+
+func (db *DB) IsUpdateDublicate(origin, destination bson.ObjectId, t string, duration time.Duration) (bool, error) {
+	fromTime := time.Now().Add(-duration)
+	query := bson.M{"time": bson.M{"$gte": fromTime}, "type": t, "user": origin, "destination": destination}
+	count, err := db.updates.Find(query).Count()
+	if err != nil {
+		return false, err
+	}
+	return count > 1, nil
 }
 
 func (db *DB) GetUpdatesTypeCount(destination bson.ObjectId, t string) (int, error) {

@@ -268,6 +268,14 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 	}
 	if !target.Online {
 		log.Println("[updates]", "user offline")
+		dublicate, err := u.db.IsUpdateDublicate(update.User, update.Destination, update.Type, DublicateUpdatesTimeout)
+		if err != nil {
+			return err
+		}
+		if dublicate {
+			log.Println("[updates]", "dublicate")
+			return nil
+		}
 		subscription := models.GetEventType(update.Type, update.Target)
 		subscribed, err := u.db.UserIsSubscribed(update.Destination, subscription)
 		if err != nil {

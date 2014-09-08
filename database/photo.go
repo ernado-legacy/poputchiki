@@ -51,6 +51,16 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 	return p, err
 }
 
+func (db *DB) SearchAllPhoto(pagination Pagination) ([]*Photo, error) {
+	if pagination.Count == 0 {
+		pagination.Count = searchCount
+	}
+	sorting := "-time"
+	photos := []*Photo{}
+	err := db.photo.Find(nil).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&photos)
+	return photos, err
+}
+
 // SearchPhoto returns photo filtered by query and adjusted by count and offset
 func (db *DB) SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, error) {
 	if pagination.Count == 0 {

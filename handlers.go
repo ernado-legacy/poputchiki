@@ -891,6 +891,15 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 	return Render(result)
 }
 
+func AllPhoto(db DataBase, webp WebpAccept, adapter *weed.Adapter, paginaton Pagination) (int, []byte) {
+	photo, err := db.SearchAllPhoto(paginaton)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	PhotoSlice(photo).Prepare(adapter, webp, VaMp4, AaAac)
+	return Render(photo)
+}
+
 func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := db.GetUserPhoto(id)
 	if err != nil {

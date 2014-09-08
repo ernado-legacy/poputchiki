@@ -96,6 +96,7 @@ type DataBase interface {
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 	SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, error)
+	SearchAllPhoto(pagination Pagination) ([]*Photo, error)
 	AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesPhoto(id bson.ObjectId) []*User
@@ -161,6 +162,7 @@ type DataBase interface {
 	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
 	GetUpdates(destination bson.ObjectId, t string, pagination Pagination) ([]*Update, error)
 	SetUpdateRead(destination, id bson.ObjectId) error
+	IsUpdateDublicate(origin, destination bson.ObjectId, t string, duration time.Duration) (bool, error)
 	GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error)
 }
 
