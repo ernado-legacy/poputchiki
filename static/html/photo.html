@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Попутчики: панель управления</title>
+    <style type="text/css">
+      body {
+        padding-top: 40px;
+      }
+
+      .template {
+        display: none;
+      }
+
+      .photo-user {
+        position: absolute;
+        top: 0;
+        background-color: black;
+        color: white;
+      }
+
+      .photo-is-avatar {
+        position: absolute;
+        top: 1.5em;
+        background-color: black;
+        display: none;
+        color: red;
+      }
+    </style>
+    <!-- Bootstrap -->
+    <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+  <div class="container">
+    <div class="jumbotron">
+    <h1>Администрирование<h1>
+    <h2>Фоточки пользователей</h2>
+    <p><a href="/api/admin/photo">Главная страница админки</a>
+<ul class="pager">
+  <li class="previous"><a href="#">&larr; Назад</a></li>
+  <li class="next"><a href="#">Вперед &rarr;</a></li>
+</ul>
+  <ul id="photo" class="row"></ul>
+  <ul class="pager">
+  <li class="previous pager-older"><a href="#">&larr; Назад</a></li>
+  <li class="next"><a href="#">Вперед &rarr;</a></li>
+</ul>
+    </div>
+  </div>
+
+  <div id="template">
+    <div class="col-xs-6 col-md-3">
+      <a href="#" class="thumbnail" data-id="">
+        <div class="photo-user">user</div>
+        <div class="photo-is-avatar">на аве</div>
+        <img/>
+      </a>
+    </div>
+  </div>
+
+  <script src="/api/static/js/jquery.min.js"></script>
+  <script src="/api/static/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+  var template = $("#template").html();
+
+  function getTemplate(p) {
+    var elem = $(template);
+    elem.find('img').attr('src', p.thumbnail_url);
+    elem.find('.photo-user').text(p.user_object.name);
+    if (p.id === p.user_object.avatar) {
+      elem.find('.photo-is-avatar').show();
+    } 
+    elem.find('a').data('id', p.id);
+    elem.attr('id', p.id);
+    return elem
+  }
+
+  function handlers() {
+    $('.thumbnail').click(function(e){
+      e.preventDefault();
+      console.log();
+      var id = $(this).data('id');
+      var url = '/api/photo/' + id;
+      $.ajax({
+        url: url,
+        type: 'DELETE',
+        success: function(result) {
+          $('#'+id).fadeTo(300, 0.3);
+        }
+      });
+    })
+  }
+
+  var count = 40;
+  var offset = 0;
+  var page = 0;
+  var previous = $('.previous');
+  var next = $('.next');
+  var photo = $('#photo');
+  var found = $('#found');
+  var mainForm = $('#mainForm');
+
+  function getOffset() {
+    return count * page;
+  };
+
+  next.click(function(e){
+    e.preventDefault();
+    if (next.hasClass("disabled")) return;
+    page++;
+    update();
+  });
+
+  previous.click(function(e){
+    e.preventDefault();
+    if (offset == 0) return;
+    page--;
+    update();
+  });
+
+  function getParams() {
+    var params = {};
+    params.count = count;
+    params.offset = offset;
+    return params;
+  }
+
+  function update() {
+    offset = getOffset();
+    var params = getParams();
+    var urlparams = $.param(params);
+    if (offset == 0) {
+      previous.addClass('disabled');
+    } else {
+      previous.removeClass('disabled');
+    }
+
+    $.getJSON( "/api/photo-all?" + urlparams, function(data) {
+      photo.html('');
+      if (data.result.length < count) {
+        next.addClass('disabled');
+      } else {
+        next.removeClass('disabled');
+      }
+      found.text(data.count);
+      $.each(data.result, function(key, val) {
+        photo.append(getTemplate(val));
+      });
+      handlers();
+    });
+  }
+
+  update();
+  </script>
+  </body>
+</html>

@@ -16,6 +16,8 @@ import (
 // webp accept flag
 type WebpAccept bool
 
+type IsAdmin bool
+
 // video format accept
 type VideoAccept string
 
@@ -96,7 +98,7 @@ type DataBase interface {
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
 	RemovePhoto(user bson.ObjectId, id bson.ObjectId) error
 	SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, error)
-	SearchAllPhoto(pagination Pagination) ([]*Photo, error)
+	SearchAllPhoto(pagination Pagination) ([]*Photo, int, error)
 	AddLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	RemoveLikePhoto(user bson.ObjectId, target bson.ObjectId) error
 	GetLikesPhoto(id bson.ObjectId) []*User
@@ -153,11 +155,9 @@ type DataBase interface {
 	UpdateAllVip() (*mgo.ChangeInfo, error)
 	DegradeRating(amount float64) (*mgo.ChangeInfo, error)
 	NormalizeRating() (*mgo.ChangeInfo, error)
-
 	GetActivityCount(user bson.ObjectId, key string, duration time.Duration) (count int, err error)
 	AddActivity(user bson.ObjectId, key string) error
 	UserIsSubscribed(id bson.ObjectId, subscription string) (bool, error)
-
 	AddUpdateDirect(u *Update) (*Update, error)
 	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
 	GetUpdates(destination bson.ObjectId, t string, pagination Pagination) ([]*Update, error)

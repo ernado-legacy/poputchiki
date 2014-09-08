@@ -210,3 +210,44 @@ func NeedAuth(res http.ResponseWriter, t *gotok.Token) {
 		res.Write(resp)
 	}
 }
+
+func NeedAdmin(w http.ResponseWriter, isAdmin models.IsAdmin) {
+	if !isAdmin {
+		code, data := Render(ErrorAuth)
+		http.Error(w, string(data), code)
+		return
+	}
+}
+
+func AdminWrapper(c martini.Context, w http.ResponseWriter, t *gotok.Token, db models.DataBase, r *http.Request, tokens gotok.Storage) {
+	admin := false
+	defer func() {
+		c.Map(models.IsAdmin(admin))
+	}()
+	cookie, err := r.Cookie("admin")
+	user := db.Get(t.Id)
+	cookieExists := false
+	if err == nil {
+		cookieExists = true
+	}
+	if cookieExists {
+		token, err := tokens.Get(cookie.Value)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if token != nil {
+			newUser := db.Get(token.Id)
+			if newUser.IsAdmin {
+				user = newUser
+			}
+		}
+	}
+	if user == nil || !user.IsAdmin {
+		return
+	}
+	admin = true
+	if !cookieExists {
+		http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
+	}
+}

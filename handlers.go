@@ -892,12 +892,12 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 }
 
 func AllPhoto(db DataBase, webp WebpAccept, adapter *weed.Adapter, paginaton Pagination) (int, []byte) {
-	photo, err := db.SearchAllPhoto(paginaton)
+	photo, count, err := db.SearchAllPhoto(paginaton)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	PhotoSlice(photo).Prepare(adapter, webp, VaMp4, AaAac)
-	return Render(photo)
+	return Render(SearchResult{photo, count})
 }
 
 func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
@@ -1243,8 +1243,16 @@ func RestoreLikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	return Render(p)
 }
 
-func RemovePhoto(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
-	err := db.RemovePhoto(t.Id, id)
+func RemovePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, admin IsAdmin) (int, []byte) {
+	userId := t.Id
+	if admin {
+		p, err := db.GetPhoto(id)
+		if err != nil {
+			return Render(BackendError(err))
+		}
+		userId = p.User
+	}
+	err := db.RemovePhoto(userId, id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
@@ -1603,31 +1611,6 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 }
 
 func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Request, tokens gotok.Storage) {
-	cookie, err := r.Cookie("admin")
-	user := db.Get(t.Id)
-	cookieExists := false
-	if err == nil {
-		cookieExists = true
-	}
-	if cookieExists {
-		token, err := tokens.Get(cookie.Value)
-		if err != nil {
-			code, data := Render(BackendError(err))
-			http.Error(w, string(data), code)
-			return
-		}
-		if token != nil {
-			newUser := db.Get(token.Id)
-			if newUser.IsAdmin {
-				user = newUser
-			}
-		}
-	}
-	if user == nil || !user.IsAdmin {
-		code, data := Render(ErrorAuth)
-		http.Error(w, string(data), code)
-		return
-	}
 	view, err := template.ParseFiles("static/html/index.html")
 	if err != nil {
 		code, data := Render(BackendError(err))
@@ -1635,36 +1618,21 @@ func AdminView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
-	if !cookieExists && user.IsAdmin {
-		http.SetCookie(w, &http.Cookie{Name: "admin", Value: t.Token, Path: "/"})
+	view.Execute(w, nil)
+}
+
+func PhotoView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Request, tokens gotok.Storage) {
+	view, err := template.ParseFiles("static/html/photo.html")
+	if err != nil {
+		code, data := Render(BackendError(err))
+		http.Error(w, string(data), code)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html")
 	view.Execute(w, nil)
 }
 
 func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWriter, r *http.Request, tokens gotok.Storage) {
-	cookie, err := r.Cookie("admin")
-	user := db.Get(t.Id)
-	cookieExists := false
-	if err == nil {
-		cookieExists = true
-	}
-	if cookieExists {
-		token, err := tokens.Get(cookie.Value)
-		if err != nil {
-			code, data := Render(BackendError(err))
-			http.Error(w, string(data), code)
-			return
-		}
-		newUser := db.Get(token.Id)
-		if newUser.IsAdmin {
-			user = newUser
-		}
-	}
-	if user == nil || !user.IsAdmin {
-		code, data := Render(ErrorAuth)
-		http.Error(w, string(data), code)
-		return
-	}
 	userToken, err := tokens.Generate(id)
 	if err != nil {
 		code, data := Render(BackendError(err))
@@ -1672,7 +1640,6 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 		return
 	}
 	http.SetCookie(w, userToken.GetCookie())
-	http.SetCookie(w, &http.Cookie{Name: "userId", Value: id.Hex(), Path: "/"})
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 

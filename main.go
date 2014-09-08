@@ -185,6 +185,7 @@ func NewApp() *Application {
 
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}
 	m.Use(martini.Static("static", staticOptions))
+	m.Use(AdminWrapper)
 
 	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)
@@ -207,7 +208,8 @@ func NewApp() *Application {
 	})
 	m.Get(root+"/pay/success", RobokassaSuccessHandler)
 	m.Group(root, func(r martini.Router) {
-		r.Get("/admin", AdminView)
+		r.Get("/admin", NeedAdmin, AdminView)
+		r.Get("/admin/photo", NeedAdmin, PhotoView)
 		r.Get("/confirm/email/:token", ConfirmEmail)
 		r.Get("/confirm/phone/start", ConfirmPhoneStart)
 		r.Get("/confirm/phone/:token", ConfirmPhone)
@@ -227,7 +229,7 @@ func NewApp() *Application {
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)
-			r.Get("/login", AdminLogin)
+			r.Get("/login", NeedAdmin, AdminLogin)
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
 			r.Post("/invite", SendInvite)
@@ -295,6 +297,7 @@ func NewApp() *Application {
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)
 		r.Get("/photo", SearchPhoto)
+		r.Get("/photo-all", AllPhoto)
 		r.Post("/photo/:id/like", IdWrapper, LikePhoto)
 		r.Get("/photo/:id/like", IdWrapper, GetLikersPhoto)
 		r.Delete("/photo/:id/like", IdWrapper, RestoreLikePhoto)

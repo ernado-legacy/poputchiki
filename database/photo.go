@@ -51,14 +51,35 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 	return p, err
 }
 
-func (db *DB) SearchAllPhoto(pagination Pagination) ([]*Photo, error) {
+func (db *DB) SearchAllPhoto(pagination Pagination) ([]*Photo, int, error) {
 	if pagination.Count == 0 {
 		pagination.Count = searchCount
 	}
+	users := []bson.ObjectId{}
+	u := []*User{}
+	count, _ := db.photo.Count()
 	sorting := "-time"
 	photos := []*Photo{}
 	err := db.photo.Find(nil).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&photos)
-	return photos, err
+	if err != nil {
+		return photos, count, err
+	}
+	for _, p := range photos {
+		users = append(users, p.User)
+	}
+	query := bson.M{"_id": bson.M{"$in": users}}
+	if err := db.users.Find(query).All(&u); err != nil {
+		return photos, count, err
+	}
+	idToUser := make(map[bson.ObjectId]*User)
+	for _, user := range u {
+		idToUser[user.Id] = user
+	}
+
+	for _, p := range photos {
+		p.UserObject = idToUser[p.User]
+	}
+	return photos, count, err
 }
 
 // SearchPhoto returns photo filtered by query and adjusted by count and offset
