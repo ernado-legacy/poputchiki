@@ -250,11 +250,15 @@ func (db *DB) Search(q *SearchQuery, pagination Pagination) ([]*User, int, error
 	query := q.ToBson()
 	u := []*User{}
 
+	sorting := "-rating"
+	if len(q.Registered) > 0 {
+		sorting = "-registered"
+	}
 	count, err := db.users.Find(query).Count()
 	if err != nil {
 		return u, 0, err
 	}
-	return u, count, db.users.Find(query).Sort("-rating").Skip(pagination.Offset).Limit(pagination.Count).All(&u)
+	return u, count, db.users.Find(query).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&u)
 }
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {

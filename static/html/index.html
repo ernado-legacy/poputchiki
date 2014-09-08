@@ -42,15 +42,15 @@
 </label>
 </div>
   </div>
-  <!-- <div class="form-group">
+  <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <div class="checkbox">
         <label>
-          <input type="checkbox" id="avaCheckbox"> С аватаркой
+          <input type="checkbox" id="sortByRegistered"> По дате регистрации
         </label>
       </div>
     </div>
-  </div> -->
+  </div> 
 </form>
 <ul class="pager">
   <li class="previous"><a href="#">&larr; Назад</a></li>
@@ -85,6 +85,7 @@
   var next = $('.next');
   var users = $('#users');
   var found = $('#found');
+  var mainForm = $('#mainForm');
 
   function getOffset() {
     return count * page;
@@ -108,8 +109,8 @@
     var params = {};
     params.count = count;
     params.offset = offset;
-    if ($('#avaCheckbox').prop('checked')) {
-      params.avatar = "true";
+    if ($('#sortByRegistered').prop('checked')) {
+      params.registered = "true";
     }
 
     var male = $('#sexCheckboxMale').prop('checked');
@@ -130,7 +131,6 @@
     return params;
   }
 
-  var mainForm = $('#mainForm');
   mainForm.change(function(){
     page = 0;
     offset = 0;
@@ -166,7 +166,6 @@
   }
 
   update();
-  getParams();
   </script>
   </body>
 </html>

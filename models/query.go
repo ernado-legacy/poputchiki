@@ -45,6 +45,7 @@ type SearchQuery struct {
 	Sort         string
 	Sponsor      string
 	Host         string
+	Registered   string
 }
 
 // NewQuery returns query object with parsed fields from url params
