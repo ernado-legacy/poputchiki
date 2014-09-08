@@ -1136,6 +1136,7 @@ func GetTransactionUrl(db DataBase, args martini.Params, t *gotok.Token, handler
 func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionHandler) (int, []byte) {
 	transaction, err := handler.Close(r)
 	if err != nil {
+		log.Println("[CRITICAL ERROR]", "transaction", transaction)
 		return Render(ValidationError(err))
 	}
 
@@ -1149,6 +1150,7 @@ func RobokassaSuccessHandler(db DataBase, r *http.Request, handler *TransactionH
 
 	if valuePopiki == 0 {
 		err := errors.New(fmt.Sprintf("Неверное количество попиков: %d", valuePopiki))
+		log.Println("[CRITICAL ERROR]", "transaction", transaction, err)
 		return Render(ValidationError(err))
 	}
 
