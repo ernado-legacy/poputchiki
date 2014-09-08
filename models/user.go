@@ -7,6 +7,7 @@ import (
 	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -116,16 +117,16 @@ func getHash(password, salt string) string {
 }
 
 func UserFromForm(r *http.Request, salt string) *User {
-	u := User{}
-	tUser := &User{}
+	u := new(User)
+	tUser := new(User)
 	parser := NewParser(r)
 	parser.Parse(tUser)
 	u.Id = bson.NewObjectId()
-	u.Email = tUser.Email
+	u.Email = strings.ToLower(tUser.Email)
 	u.Password = getHash(tUser.Password, salt)
 	u.Phone = tUser.Phone
 	u.Name = tUser.Name
-	return &u
+	return u
 }
 
 func UpdateUserFromForm(r *http.Request, u *User) {

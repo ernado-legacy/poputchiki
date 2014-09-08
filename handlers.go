@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -328,7 +329,7 @@ func Login(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.Sto
 	if err := parser.Parse(credentials); err != nil {
 		return Render(ValidationError(err))
 	}
-	username, password := credentials.Email, credentials.Password
+	username, password := strings.ToLower(credentials.Email), credentials.Password
 	user := db.GetUsername(username)
 	if user == nil {
 		return Render(ErrorUserNotFound)
