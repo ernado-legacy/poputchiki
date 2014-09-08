@@ -585,6 +585,7 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 	return Render(messages)
 }
 
+// GetChats returns all user chats
 func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	dialogs, err := db.GetChats(id)
 	if err != nil {
