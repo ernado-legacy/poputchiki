@@ -62,7 +62,7 @@ var (
 	weedHost                       = "127.0.0.1"
 	weedPort                       = 9333
 	weedUrl                        = fmt.Sprintf("http://%s:%d", weedHost, weedPort)
-	OfflineTimeout                 = 60 * 5 * time.Second
+	OfflineTimeout                 = 60 * 20 * time.Second
 	OfflineUpdateTick              = 5 * time.Second
 	PromoCost                 uint = 50
 	mobile                         = flag.Bool("mobile", false, "is mobile api")

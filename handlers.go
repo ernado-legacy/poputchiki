@@ -1032,25 +1032,26 @@ func GetToken(t *gotok.Token) (int, []byte) {
 }
 
 // ConfirmEmail verifies and deletes confirmation token, sets confirmation flag to user
-func ConfirmEmail(db DataBase, args martini.Params, w http.ResponseWriter, tokens gotok.Storage) (int, []byte) {
+func ConfirmEmail(db DataBase, args martini.Params, w http.ResponseWriter, tokens gotok.Storage, r *http.Request) (int, []byte) {
 	token := args["token"]
 	if token == "" {
 		return Render(ErrorBadRequest)
 	}
 	tok := db.GetConfirmationToken(token)
 	if tok == nil {
-		return Render(ErrorBadRequest)
+		return Render(ValidationError(errors.New("Ссылка устарела или недействительна")))
 	}
 	userToken, err := tokens.Generate(tok.User)
 	if err != nil {
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	err = db.ConfirmEmail(userToken.Id)
 	if err != nil {
 		log.Println(err)
-		return Render(ErrorBackend)
+		return Render(BackendError(err))
 	}
 	http.SetCookie(w, userToken.GetCookie())
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	return Render("email подтвержден")
 }
 

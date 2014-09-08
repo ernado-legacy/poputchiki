@@ -2,19 +2,21 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
+	// "database/sql"
 	"flag"
 	"fmt"
 	"github.com/GeertJohan/go.rice"
-	// "github.com/ernado/poputchiki/database"
+	"github.com/ernado/gotok"
+	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"log"
+	// "strings"
 	"text/template"
-	// "time"
+	"time"
 )
 
 var (
@@ -22,10 +24,11 @@ var (
 	dbHost  = "localhost"
 	dbSalt  = "salt"
 	weedUrl = "http://localhost:9333"
-	db      *mgo.Database
-	// db        models.DataBase
+	// db      *mgo.Database
+	db        *database.DB
 	adapter   *weed.Adapter
 	templates *rice.Box
+	tokens    gotok.Storage
 	mail      *mailgun.Client
 )
 
@@ -73,24 +76,45 @@ func NewMail(src, origin, destination, subject string, data interface{}) (m mode
 // }
 
 func Process() {
-	var entries []EmailEntry
-	log.Println("getting entry")
-	if err := db.C("email_entry").Find(nil).All(&entries); err != nil {
-		log.Fatal(err)
+	log.Println("getting users")
+	user := db.GetUsername("ernado@yandex.ru")
+	if user == nil {
+		log.Println("nil")
 	}
-	for _, entry := range entries {
-		// log.Println(entry.Email)
-		send(entry.Email)
-	}
+	send(user)
+
+	// users, count, err := db.Search(&models.SearchQuery{}, models.Pagination{Count: 5000})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// log.Printf("found %d users", count)
+	// for _, user := range users {
+	// 	if len(user.Email) < 0 {
+	// 		continue
+	// 	}
+	// 	if strings.Index(user.Email, "test") != -1 {
+	// 		continue
+	// 	}
+	// 	if err := send(entry.Email); err != nil {
+	// 		log.Println(err)
+	// 	}
+	// }
 }
 
-func send(email string) error {
+func send(u *models.User) error {
+	email := u.Email
 	origin := fmt.Sprintf("Попутчики <%s>", "noreply@mail.poputchiki.ru")
-	t, err := templates.String("invite.html")
+	type Data struct {
+		Url   string
+		Email string
+	}
+	token := db.NewConfirmationToken(u.Id)
+	data := Data{"http://poputchiki.ru/api/confirm/email/" + token.Token, u.Email}
+	t, err := templates.String("registration.html")
 	if err != nil {
 		log.Fatal(err)
 	}
-	message, err := NewMail(t, origin, email, "Наконец-то запустился наш новый сайт!", nil)
+	message, err := NewMail(t, origin, email, "Наконец-то запустился наш новый сайт!", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,8 +137,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db = session.DB(dbName)
-	// db = database.New(dbName, dbSalt, time.Second, session)
+	// db = session.DB(dbName)
+	db = database.New(dbName, dbSalt, time.Second, session)
+	tokenCollection := session.DB(dbName).C("tokens")
+	tokens = gotok.New(tokenCollection)
 	adapter = weed.NewAdapter(weedUrl)
 	templates = rice.MustFindBox("templates")
 	fmt.Println("poputchiki mailing system")
@@ -122,8 +148,8 @@ func main() {
 	log.Printf("weedfs url %s", weedUrl)
 	log.Println("connecting to mysql")
 	mail = mailgun.New("key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6")
-	mysqlDb, err := sql.Open("mysql", "root:root@/poputchiki")
-	defer mysqlDb.Close()
+	// mysqlDb, err := sql.Open("mysql", "root:root@/poputchiki")
+	// defer mysqlDb.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

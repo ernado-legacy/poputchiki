@@ -105,8 +105,6 @@ func (db *DB) SearchStatuses(q *models.SearchQuery, p models.Pagination) ([]*mod
 		userIds[i] = user.Id
 	}
 
-	// search :=
-
 	if err := db.statuses.Find(bson.M{"user": bson.M{"$in": userIds}}).All(&statuses); err != nil {
 		return statuses, err
 	}
