@@ -224,6 +224,11 @@ func AdminWrapper(c martini.Context, w http.ResponseWriter, t *gotok.Token, db m
 	defer func() {
 		c.Map(models.IsAdmin(admin))
 	}()
+
+	if t == nil {
+		return
+	}
+
 	cookie, err := r.Cookie("admin")
 	user := db.Get(t.Id)
 	cookieExists := false
