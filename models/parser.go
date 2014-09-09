@@ -101,12 +101,14 @@ func GetQuery(r *http.Request, v interface{}) (query bson.M, err error) {
 	if strings.Index(content, "form") == -1 {
 		return query, errors.New("Blank input or incorrect ContentType header")
 	}
-
+	err = r.ParseForm()
+	if err != nil {
+		return
+	}
 	form := r.Form
 	if len(r.PostForm) > 0 {
 		form = r.PostForm
 	}
-
 	return mapToStruct(form, v)
 }
 
