@@ -1665,6 +1665,14 @@ func PhotoView(w http.ResponseWriter, t *gotok.Token, db DataBase, r *http.Reque
 	view.Execute(w, nil)
 }
 
+func AdminMessages(w http.ResponseWriter) (int, []byte) {
+	data, err := AllTemplates.Bytes("messages.html")
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	return http.StatusOK, data
+}
+
 func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWriter, r *http.Request, tokens gotok.Storage) {
 	userToken, err := tokens.Generate(id)
 	if err != nil {

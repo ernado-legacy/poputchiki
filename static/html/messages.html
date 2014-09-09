@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" ng-app="store">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Попутчики: панель управления</title>
+    <style type="text/css">
+      body {
+        padding-top: 40px;
+      }
+
+    </style>
+    <!-- Bootstrap -->
+    <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+  <div class="container">
+    <div class="jumbotron">
+    <h1>Администрирование<h1>
+    <h2>Сообщения</h2>
+    <p><a href="/api/admin">Главная страница админки</a>
+    <ul class="pager">
+      <li class="previous"><a href="#">&larr; Назад</a></li>
+      <li class="next"><a href="#">Вперед &rarr;</a></li>
+    </ul>    
+    <div>
+      <label>Name:</label>
+      <input type="text" ng-model="yourName" placeholder="Enter a name here">
+      <hr>
+      <h1>Hello {{yourName + "-кун"}}!</h1>
+
+      <div ng-controller="StoreController as store">
+      <h1> {{store.product.name}} </h1>
+      <h2> {{store.product.price}} </h2>
+      <h3> {{store.product.description}} </h3>
+      </div>
+    </div>
+      <div class="messages"></div>
+      <ul class="pager">
+      <li class="previous pager-older"><a href="#">&larr; Назад</a></li>
+      <li class="next"><a href="#">Вперед &rarr;</a></li>
+    </ul>
+    </div>
+  </div>
+
+  <script src="/api/static/js/jquery.min.js"></script>
+  <script src="/api/static/js/bootstrap.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-rc.0/angular.min.js"></script>
+  <script type="text/javascript">
+
+var WS_RECONNECT = 1000;
+
+function ws() {
+    try {
+        var host = window.location.hostname;
+        connection = new WebSocket('ws://' + host + '/api/realtime');
+    } catch(e) {
+        console.log("ws error", e)
+        return setTimeout( ws, WS_RECONNECT );
+    }
+    connection.onopen = function () {
+        console.log('ws connected')
+    };
+
+    connection.onmessage = function (event) {
+        data = JSON.parse(event.data);
+        console.log("got message", data);
+    };
+
+    connection.onclose = function () {
+        console.log('ws closed; reconnecting')
+        return setTimeout( ws, WS_RECONNECT );
+    }
+}
+
+(function(){
+  var app = angular.module("store", []);
+
+  app.controller('StoreController', function() {
+    this.product = gem;
+  })
+
+  gem 
+
+  </script>
+  </body>
+</html>

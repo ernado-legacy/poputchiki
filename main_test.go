@@ -98,7 +98,7 @@ func TestStripeUpdate(t *testing.T) {
 					stripe := []StripeItem{}
 					decoder := json.NewDecoder(res.Body)
 					So(decoder.Decode(&stripe), ShouldBeNil)
-					So(len(stripe), ShouldEqual, 1)
+					So(len(stripe), ShouldEqual, 2)
 					s := stripe[0]
 					So(s.Type, ShouldEqual, "photo")
 					So(s.ImageUrl, ShouldNotEqual, "")

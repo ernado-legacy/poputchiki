@@ -44,6 +44,7 @@ var (
 	statusesPerDay                 = 1
 	statusesPerDayVip              = 3
 	startCapital              uint = 50
+	AllTemplates              *rice.Box
 	dbCity                         = "countries"
 	tokenCollection                = "tokens"
 	mongoHost                      = "localhost"
@@ -159,6 +160,7 @@ func NewApp() *Application {
 	m.Map(mailgunClient)
 
 	templates := rice.MustFindBox("static/html/letters")
+	AllTemplates = rice.MustFindBox("static/html")
 
 	var updater models.Updater
 	m.Map(queryClient)
@@ -210,6 +212,7 @@ func NewApp() *Application {
 	m.Group(root, func(r martini.Router) {
 		r.Get("/admin", NeedAdmin, AdminView)
 		r.Get("/admin/photo", NeedAdmin, PhotoView)
+		r.Get("/admin/messages", NeedAdmin, AdminMessages)
 		r.Get("/confirm/email/:token", ConfirmEmail)
 		r.Get("/confirm/phone/start", ConfirmPhoneStart)
 		r.Get("/confirm/phone/:token", ConfirmPhone)
