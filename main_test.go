@@ -384,6 +384,7 @@ func TestMethods(t *testing.T) {
 			changes.Name = firstname
 			changes.Phone = phone
 			changes.Sex = "female"
+			changes.IsHost = false
 			changes.Location = []float64{155.0, 155.0}
 			changes.Password = newpassword
 			uJson, err := json.Marshal(changes)
@@ -415,6 +416,7 @@ func TestMethods(t *testing.T) {
 				So(len(u.Location), ShouldEqual, 2)
 				So(u.Location[0], ShouldAlmostEqual, changes.Location[0])
 				So(u.Location[1], ShouldAlmostEqual, changes.Location[1])
+				So(u.IsHost, ShouldEqual, false)
 			})
 			Convey("Search", func() {
 				res := httptest.NewRecorder()

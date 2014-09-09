@@ -51,7 +51,7 @@ type SearchQuery struct {
 // NewQuery returns query object with parsed fields from url params
 func NewQuery(q url.Values) (*SearchQuery, error) {
 	query := &SearchQuery{}
-	return query, mapToStruct(q, query)
+	return query, mapToStructValue(q, query)
 }
 
 func (s *SearchQuery) Validate(db DataBase) error {

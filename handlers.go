@@ -398,11 +398,9 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 // Update updates user information with provided key-value document
 func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	user := new(User)
-	if err := parser.Parse(user); err != nil {
-		return Render(ValidationError(err))
-	}
-	query := bson.M{}
-	if err := convert(user, &query); err != nil {
+	query, err := parser.Query(user)
+
+	if err != nil {
 		return Render(ValidationError(err))
 	}
 
@@ -428,7 +426,7 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 
 	// encoding to user - checking type & field existance
 	user = new(User)
-	err := convert(query, user)
+	err = convert(query, user)
 	if err != nil {
 		return Render(ValidationError(err))
 	}
