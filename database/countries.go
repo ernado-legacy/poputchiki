@@ -20,7 +20,7 @@ func (db *DB) GetCountries(start string) (titles []string, err error) {
 	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", capitalize(start))}
 	query := bson.M{"title": pattern}
 	countries := new(models.Countries)
-	err = db.countries.Find(query).Sort("title").Sort("-priority").Limit(100).All(countries)
+	err = db.countries.Find(query).Sort("title").Sort("-priority").All(countries)
 	return countries.Titles(), err
 }
 
