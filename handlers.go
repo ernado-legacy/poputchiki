@@ -399,6 +399,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
 	user := new(User)
 	query, err := parser.Query(user)
+	log.Println(query)
 
 	if err != nil {
 		return Render(ValidationError(err))
@@ -714,8 +715,8 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataB
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
-	photo, err := uploadPhoto(r, t, realtime, db, webpAccept, adapter)
+func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	photo, err := uploadPhoto(r, t, realtime, db, webp, adapter)
 	if err == ErrBadRequest {
 		return Render(ValidationError(err))
 	}
@@ -723,6 +724,31 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 		return Render(BackendError(err))
 	}
 	engine.Handle(activities.Photo)
+	photo.Prepare(adapter, webp, VaMp4, AaOgg)
+	go func() {
+		p, err := db.GetUserPhoto(t.Id)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if len(p) > 1 {
+			return
+		}
+		i := new(StripeItem)
+		i.Id = bson.NewObjectId()
+		i.User = t.Id
+		i.ImageJpeg = photo.ThumbnailJpeg
+		i.ImageWebp = photo.ThumbnailWebp
+		i.Type = "photo"
+		i.Media = photo
+		s, err := db.AddStripeItem(i, photo)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		engine.Handle(activities.Promo)
+		s.Prepare(db, adapter, webp, VaMp4, AaOgg)
+	}()
 	return Render(photo)
 }
 
@@ -1200,6 +1226,9 @@ func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.
 	engine.Handle(activities.Like)
 	v := db.GetVideo(id)
 	go u.Push(NewUpdate(v.User, t.Id, UpdateLikes, v))
+	go func() {
+		db.AddGuest(t.Id, v.User)
+	}()
 	return Render(v)
 }
 
@@ -1229,6 +1258,9 @@ func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.
 	engine.Handle(activities.Like)
 	p, _ := db.GetPhoto(id)
 	go u.Push(NewUpdate(p.User, t.Id, UpdateLikes, p))
+	go func() {
+		db.AddGuest(t.Id, p.User)
+	}()
 	return Render(p)
 }
 
@@ -1290,7 +1322,10 @@ func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, 
 		return Render(BackendError(err))
 	}
 	s, _ := db.GetStatus(id)
-	log.Println(u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s)))
+	u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s))
+	go func() {
+		db.AddGuest(t.Id, s.User)
+	}()
 	return Render(s)
 }
 
