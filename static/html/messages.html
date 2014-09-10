@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" ng-app="store">
+<html lang="ru" ng-app="chat">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,6 +10,54 @@
         padding-top: 40px;
       }
 
+      .avatar {
+        width: 60px;
+        height: 60px;
+      }
+
+      .user.active {
+        opacity: 1.0;
+        box-shadow: 10px 11px 27px -15px rgba(0,0,0,0.43);
+      }
+
+      .user-add {
+        text-aling: center;
+        padding: 10px !important;
+      }
+
+      .count {
+        float: right;
+        margin-top: 20px;
+      }
+
+      .message {
+        padding: 3px;
+        border-radius: 3px;
+        background-color: white;
+        margin-bottom: 3px;
+      }
+
+      .your {
+        background-color: #AEC6CF;
+      }
+
+      .user {
+        background-color: white;
+        border-radius: 3px;
+        padding: 2px;
+        opacity: 0.6;
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+
+      .username {
+        margin-left: 2px;
+      }
+
+      #chat {
+        height: 300px;
+        overflow-y: scroll;
+      }
     </style>
     <!-- Bootstrap -->
     <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
@@ -20,33 +68,49 @@
     <h1>Администрирование<h1>
     <h2>Сообщения</h2>
     <p><a href="/api/admin">Главная страница админки</a>
-    <ul class="pager">
-      <li class="previous"><a href="#">&larr; Назад</a></li>
-      <li class="next"><a href="#">Вперед &rarr;</a></li>
-    </ul>    
-    <div>
-      <label>Name:</label>
-      <input type="text" ng-model="yourName" placeholder="Enter a name here">
-      <hr>
-      <h1>Hello {{yourName + "-кун"}}!</h1>
-
-      <div ng-controller="StoreController as store">
-      <h1> {{store.product.name}} </h1>
-      <h2> {{store.product.price}} </h2>
-      <h3> {{store.product.description}} </h3>
+    <div class="row">
+      <div class="col-md-3" ng-controller="AccountsController as accounts">
+      Аккаунты под управлением
+        <div class="user" 
+          ng-repeat="account in accounts" 
+          ng-class="{active: isActive(account)}" 
+          ng-click="setActive(account)">
+          <img ng-src="{{ account.avatar_url }}" alt="avatar" class="img-circle avatar">
+          <span class="username">{{ account.name }}</span>
+          <span class="badge count" ng-show="account.count">{{ account.count }}</span>
+        </div>
+        <div class="user user-add">добавить</div>
       </div>
-    </div>
-      <div class="messages"></div>
-      <ul class="pager">
-      <li class="previous pager-older"><a href="#">&larr; Назад</a></li>
-      <li class="next"><a href="#">Вперед &rarr;</a></li>
-    </ul>
+      <div class="col-md-6">
+      Сообщения
+      <div ng-controller="MessagesCountroller" id="chat" scroll-glue ng-model="glued">
+        <div ng-repeat="message in messages" ng-class="{your: !isActive(message)}" class="message">{{ message.text }}</div>
+      </div>
+      <div>
+        <form novalidate ng-submit="send()" ng-controller="MessageFormController">
+          <input type="text" name="text" placeholder="сообщение" ng-model="text">
+          <input type="submit" id="submit" value="отправить" />
+        </form>
+      </div>
+      </div>
+      <div class="col-md-3" ng-controller="ChatsController as chats">
+      Чаты
+        <div class="user" 
+          ng-repeat="account in chats" 
+          ng-class="{active: isActive(account)}" 
+          ng-click="setActive(account)">
+          <img ng-src="{{ account.user.avatar_url }}" alt="avatar" class="img-circle avatar">
+          <span class="username">{{ account.user.name }}</span>
+          <span class="badge count" ng-show="account.count">{{ account.count }}</span>
+        </div>
     </div>
   </div>
 
   <script src="/api/static/js/jquery.min.js"></script>
   <script src="/api/static/js/bootstrap.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-rc.0/angular.min.js"></script>
+  <script src="/api/static/js/angular.js"></script>
+  <script src="/api/static/js/angular-route.js"></script>
+  <script src="/api/static/js/scrollglue.js"></script>
   <script type="text/javascript">
 
 var WS_RECONNECT = 1000;
@@ -74,15 +138,82 @@ function ws() {
     }
 }
 
-(function(){
-  var app = angular.module("store", []);
+  var app = angular.module("chat", ['luegg.directives']);
+  var account_ids = [
+    "53ff42ede4a8cad134ae3916",
+    "53ff61f8e4a8cad134ae7916"
+  ];
 
-  app.controller('StoreController', function() {
-    this.product = gem;
-  })
+  app.controller('AccountsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $scope.accounts = [];
+    $rootScope.active = null;
+    angular.forEach(account_ids, function(value) {
+      $http.get('/api/user/' + value).success(function(data) {
+        $scope.accounts.push(data);
+      });
+    });
+    $scope.setActive = function(account) {
+      $rootScope.active = account.id; 
+    };
+    $scope.isActive = function(account) {
+      return account.id === $rootScope.active;
+    };
+  }]);
+  app.controller('ChatsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $scope.chats = [];
+    $rootScope.chat = null;
+    $scope.update = function() {
+      if ($rootScope.active == null) {
+        return
+      }
+      $http.get('/api/user/' + $rootScope.active + '/chats').success(function(data) {
+        $scope.chats = data;
+        if($scope.chats.length > 0) {
+          $rootScope.chat = $scope.chats[0].id;
+        }
+      });
+    };
+    $rootScope.$watch('active', $scope.update);    
+    $scope.setActive = function(chat) {
+      $rootScope.chat = chat.id; 
+    };
+    $scope.isActive = function(chat) {
+      return chat.id === $rootScope.chat;
+    };
+  }]);
 
-  gem 
+  app.controller('MessageFormController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $scope.text = null;
+    $scope.send = function() {
+      if (!$scope.text) {
+        return;
+      }
+      var message = {text: $scope.text, origin: $rootScope.active};
+      $http({method: 'PUT', url: '/api/user/' + $rootScope.chat + '/messages', data: message}).success(function(data) {
+        $scope.text = "";
+        $rootScope.messages.push(message);
+      });
+    }
+  }]);
 
+  app.controller('MessagesCountroller', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $rootScope.messages = [];
+    $scope.glued = true;
+
+    $scope.update = function() {
+      if ($rootScope.active == null || $rootScope.chat == null) {
+        return
+      }
+      $http.get('/api/chat/' + $rootScope.active + '/' + $rootScope.chat).success(function(data) {
+        $rootScope.messages = data;
+      });
+    };
+    $rootScope.$watch('chat', $scope.update);
+
+    $scope.isActive = function(message) {
+      return message.origin === $rootScope.active;
+    };
+  }]);
   </script>
   </body>
 </html>

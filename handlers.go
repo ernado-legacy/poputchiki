@@ -477,10 +477,11 @@ func Must(err error) {
 }
 
 type MessageText struct {
-	Text string `json:"text"`
+	Text   string        `json:"text"`
+	Origin bson.ObjectId `json:"origin,omitempty"`
 }
 
-func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
+func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater, admin IsAdmin) (int, []byte) {
 	message := &MessageText{}
 	err := parser.Parse(message)
 	if err != nil {
@@ -489,6 +490,11 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 
 	text := message.Text
 	origin := t.Id
+
+	if len(message.Origin.Hex()) > 0 && admin {
+		origin = message.Origin
+		log.Println("administrative message forced origin", origin.Hex())
+	}
 
 	if text == "" {
 		return Render(ValidationError(errors.New("Blank text")))
@@ -586,6 +592,37 @@ func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *
 		log.Println("SetReadMessagesFromUser", err)
 	}
 	return Render(messages)
+}
+
+func GetChat(db DataBase, pagination Pagination, parms martini.Params) (int, []byte) {
+	if !bson.IsObjectIdHex(parms["user"]) {
+		return Render(ErrorBadId)
+	}
+	if !bson.IsObjectIdHex(parms["chat"]) {
+		return Render(ErrorBadId)
+	}
+	user, chat := bson.ObjectIdHex(parms["user"]), bson.ObjectIdHex(parms["chat"])
+	messages, err := db.GetMessagesFromUser(user, chat, pagination)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	if messages == nil {
+		return Render([]interface{}{})
+	}
+	if err = db.SetReadMessagesFromUser(user, chat); err != nil {
+		log.Println("SetReadMessagesFromUser", err)
+	}
+	return Render(messages)
+}
+
+func RemoveChat(db DataBase, origin bson.ObjectId, t *gotok.Token) (int, []byte) {
+	if err := db.RemoveChat(t.Id, origin); err != nil {
+		if err == mgo.ErrNotFound {
+			return Render(ErrorUserNotFound)
+		}
+		return Render(BackendError(err))
+	}
+	return Render("ok")
 }
 
 // GetChats returns all user chats
@@ -728,30 +765,31 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 	}
 	engine.Handle(activities.Photo)
 	photo.Prepare(adapter, webp, VaMp4, AaOgg)
-	go func() {
-		p, err := db.GetUserPhoto(t.Id)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		if len(p) > 1 {
-			return
-		}
-		i := new(StripeItem)
-		i.Id = bson.NewObjectId()
-		i.User = t.Id
-		i.ImageJpeg = photo.ThumbnailJpeg
-		i.ImageWebp = photo.ThumbnailWebp
-		i.Type = "photo"
-		i.Media = photo
-		s, err := db.AddStripeItem(i, photo)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		engine.Handle(activities.Promo)
-		s.Prepare(db, adapter, webp, VaMp4, AaOgg)
-	}()
+
+	// go func() {
+	// 	p, err := db.GetUserPhoto(t.Id)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return
+	// 	}
+	// 	if len(p) > 1 {
+	// 		return
+	// 	}
+	// 	i := new(StripeItem)
+	// 	i.Id = bson.NewObjectId()
+	// 	i.User = t.Id
+	// 	i.ImageJpeg = photo.ThumbnailJpeg
+	// 	i.ImageWebp = photo.ThumbnailWebp
+	// 	i.Type = "photo"
+	// 	i.Media = photo
+	// 	s, err := db.AddStripeItem(i, photo)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return
+	// 	}
+	// 	engine.Handle(activities.Promo)
+	// 	s.Prepare(db, adapter, webp, VaMp4, AaOgg)
+	// }()
 	return Render(photo)
 }
 

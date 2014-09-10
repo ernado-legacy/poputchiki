@@ -229,12 +229,14 @@ func NewApp() *Application {
 
 		r.Get("/user", GetCurrentUser)
 
+		r.Get("/chat/:user/:chat", NeedAdmin, GetChat)
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)
 			r.Get("/login", NeedAdmin, AdminLogin)
 			r.Put("/messages", SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
+			r.Delete("/messages", RemoveChat)
 			r.Post("/invite", SendInvite)
 			r.Get("/chats", GetChats)
 			r.Get("/photo", GetUserPhoto)

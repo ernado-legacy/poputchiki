@@ -123,7 +123,10 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w ht
 	c.Map(token)
 }
 
-func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token) {
+func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token, admin models.IsAdmin) {
+	if admin {
+		return
+	}
 	if t.Id != id {
 		log.Println(t.Id.Hex(), id)
 		code, data := Render(ErrorNotAllowed)

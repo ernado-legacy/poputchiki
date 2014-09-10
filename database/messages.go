@@ -12,6 +12,10 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 	return messages, err
 }
 
+func (db *DB) RemoveChat(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
+	return db.messages.Remove(bson.M{"user": userReciever, "chat": userOrigin})
+}
+
 func (db *DB) GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error) {
 	message := new(models.Message)
 	if err = db.messages.Find(bson.M{"user": userReciever, "chat": userOrigin}).Sort("time").One(message); err != nil {

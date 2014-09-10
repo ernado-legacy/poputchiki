@@ -60,6 +60,7 @@ type DataBase interface {
 	SetRead(user, id bson.ObjectId) error
 	SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error
 	GetUnreadCount(id bson.ObjectId) (int, error)
+	RemoveChat(userReciever bson.ObjectId, userOrigin bson.ObjectId) error
 
 	AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error
 	RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error

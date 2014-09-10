@@ -42,6 +42,19 @@ func TestMessages(t *testing.T) {
 				}
 				So(found, ShouldBeTrue)
 			})
+			Convey("Remove chats", func() {
+				So(db.RemoveChat(destination, origin), ShouldBeNil)
+				chats, err := db.GetChats(destination)
+				So(err, ShouldBeNil)
+				found := false
+				for k := range chats {
+					if chats[k].Id == origin {
+						So(chats[k].Unread, ShouldEqual, 1)
+						found = true
+					}
+				}
+				So(found, ShouldBeFalse)
+			})
 			Convey("Last message id", func() {
 				id, err := db.GetLastMessageIdFromUser(destination, origin)
 				So(err, ShouldBeNil)
