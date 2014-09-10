@@ -271,7 +271,7 @@ func NewApp() *Application {
 
 		r.Get("/updates/counters", GetCounters)
 		r.Get("/updates", GetUpdates)
-		r.Post("/updates/:id", SetUpdateRead)
+		r.Post("/updates/:id", IdWrapper, SetUpdateRead)
 
 		r.Put("/status", AddStatus)
 		r.Post("/status", AddStatus)
