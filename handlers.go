@@ -200,7 +200,7 @@ func RemoveFromBlacklist(db DataBase, id bson.ObjectId, r *http.Request, parser 
 		if err == mgo.ErrNotFound {
 			return Render(ErrorUserNotFound)
 		}
-		return Render(ErrorBadRequest)
+		return Render(BackendError(err))
 	}
 	return Render("removed")
 }
@@ -223,8 +223,7 @@ func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request, parser 
 		if err == mgo.ErrNotFound {
 			return Render(ErrorUserNotFound)
 		}
-		log.Println(err)
-		return Render(ErrorBadRequest)
+		return Render(BackendError(err))
 	}
 	return Render("removed")
 }
@@ -424,11 +423,12 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	if len(query) == 0 {
 		return Render(ValidationError(errors.New("no fields to change")))
 	}
-
+	log.Println(query)
 	// encoding to user - checking type & field existance
 	user = new(User)
 	err = convert(query, user)
 	if err != nil {
+		log.Println("converting error", err)
 		return Render(ValidationError(err))
 	}
 
@@ -441,11 +441,13 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	newQuery := bson.M{}
 	tmp, err := bson.Marshal(user)
 	if err != nil {
+		log.Println("marchaling error", err)
 		return Render(ValidationError(err))
 	}
 	// unmarshalling to bson map
 	err = bson.Unmarshal(tmp, &newQuery)
 	if err != nil {
+		log.Println("unmarchaling error", err)
 		return Render(ValidationError(err))
 	}
 
