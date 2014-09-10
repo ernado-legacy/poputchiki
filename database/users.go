@@ -60,21 +60,11 @@ func (db *DB) GetUsername(username string) *User {
 }
 
 func (db *DB) AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error {
-	var u User
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"favorites": favId}}}
-
-	_, err := db.users.FindId(id).Apply(change, &u)
-
-	return err
+	return db.users.UpdateId(id, bson.M{"$addToSet": bson.M{"favorites": favId}})
 }
 
 func (db *DB) RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error {
-	var u User
-	change := mgo.Change{Update: bson.M{"$pull": bson.M{"favorites": favId}}}
-
-	_, err := db.users.FindId(id).Apply(change, &u)
-
-	return err
+	return db.users.UpdateId(id, bson.M{"$pull": bson.M{"favorites": favId}})
 }
 
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
@@ -129,21 +119,11 @@ func (db *DB) AddGuest(id bson.ObjectId, guest bson.ObjectId) error {
 }
 
 func (db *DB) AddToBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error {
-	var u User
-	change := mgo.Change{Update: bson.M{"$addToSet": bson.M{"blacklist": blacklisted}}}
-
-	_, err := db.users.FindId(id).Apply(change, &u)
-
-	return err
+	return db.users.UpdateId(id, bson.M{"$addToSet": bson.M{"blacklist": blacklisted}})
 }
 
 func (db *DB) RemoveFromBlacklist(id bson.ObjectId, blacklisted bson.ObjectId) error {
-	var u User
-	change := mgo.Change{Update: bson.M{"$pull": bson.M{"blacklist": blacklisted}}}
-
-	_, err := db.users.FindId(id).Apply(change, &u)
-
-	return err
+	return db.users.UpdateId(id, bson.M{"$pull": bson.M{"blacklist": blacklisted}})
 }
 
 type guestByTime []*GuestUser
