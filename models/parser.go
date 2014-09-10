@@ -35,7 +35,8 @@ func mapToStruct(q url.Values, val interface{}) (bson.M, error) {
 		}
 		value := q[key]
 		if field.Type.Name() == "bool" {
-			nQ[key] = strings.ToLower(value[0]) == "true"
+			v := strings.ToLower(value[0])
+			nQ[key] = v == "true" || v == "1"
 			continue
 		}
 		if field.Type.Kind() == reflect.Slice {
