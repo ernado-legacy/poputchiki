@@ -46,6 +46,12 @@ func (db *DB) SetRead(user, id bson.ObjectId) error {
 
 func (db *DB) SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
 	query := bson.M{"destination": userReciever, "origin": userOrigin}
+	selector := bson.M{"target.destination": userReciever, "target.origin": userOrigin}
+	update := bson.M{"$set": bson.M{"read": true}}
+	_, err := db.updates.UpdateAll(selector, update)
+	if err != nil {
+		return err
+	}
 	return db.setRead(query)
 }
 
