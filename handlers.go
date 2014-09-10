@@ -401,6 +401,7 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	log.Println(query)
 
 	if err != nil {
+		log.Println("parser error", err)
 		return Render(ValidationError(err))
 	}
 
