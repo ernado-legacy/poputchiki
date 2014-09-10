@@ -308,3 +308,10 @@ func (db *DB) UserIsSubscribed(id bson.ObjectId, subscription string) (bool, err
 	}
 	return n == 1, nil
 }
+
+func (db *DB) GetUsersByEmail(email string) (Users, error) {
+	pattern := bson.RegEx{Pattern: fmt.Sprintf("^%s", email)}
+	query := bson.M{"email": pattern}
+	users := new(Users)
+	return *users, db.users.Find(query).Limit(10).All(users)
+}

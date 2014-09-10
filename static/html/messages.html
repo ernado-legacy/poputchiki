@@ -58,6 +58,14 @@
         height: 300px;
         overflow-y: scroll;
       }
+
+      .circle {
+        border-radius: 50%;
+        color: green;
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
     </style>
     <!-- Bootstrap -->
     <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
@@ -79,7 +87,15 @@
           <span class="username">{{ account.name }}</span>
           <span class="badge count" ng-show="account.count">{{ account.count }}</span>
         </div>
-        <div class="user user-add">добавить</div>
+        <div ng-controller="AccountSearch">
+          <div class="user user-add" ng-click="activate()">добавить</div>
+          <div ng-show="show">
+            <form novalidate>
+              <input type="text" name="text" placeholder="email" ng-model="email">
+            </form>
+            <div ng-repeat="account in result" ng-click="add(account)">{{ account.name }}</div>
+          </div>
+        </div>
       </div>
       <div class="col-md-6">
       Сообщения
@@ -93,7 +109,7 @@
         </form>
       </div>
       </div>
-      <div class="col-md-3" ng-controller="ChatsController as chats">
+      <div class="col-md-3" ng-controller="ChatsController">
       Чаты
         <div class="user" 
           ng-repeat="account in chats" 
@@ -102,6 +118,7 @@
           <img ng-src="{{ account.user.avatar_url }}" alt="avatar" class="img-circle avatar">
           <span class="username">{{ account.user.name }}</span>
           <span class="badge count" ng-show="account.count">{{ account.count }}</span>
+          <div class="circle" ng-show="account.user.online">online</div>
         </div>
     </div>
   </div>
@@ -113,51 +130,79 @@
   <script src="/api/static/js/scrollglue.js"></script>
   <script type="text/javascript">
 
-var WS_RECONNECT = 1000;
+  var WS_RECONNECT = 1000;
 
-function ws() {
-    try {
-        var host = window.location.hostname;
-        connection = new WebSocket('ws://' + host + '/api/realtime');
-    } catch(e) {
-        console.log("ws error", e)
-        return setTimeout( ws, WS_RECONNECT );
-    }
-    connection.onopen = function () {
-        console.log('ws connected')
-    };
+  function ws() {
+      try {
+          var host = window.location.hostname;
+          connection = new WebSocket('ws://' + host + '/api/realtime?id=5406ce2027d41003fa6a4d4b');
+      } catch(e) {
+          console.log("ws error", e)
+          return setTimeout( ws, WS_RECONNECT );
+      }
+      connection.onopen = function () {
+          console.log('ws connected')
+      };
 
-    connection.onmessage = function (event) {
-        data = JSON.parse(event.data);
-        console.log("got message", data);
-    };
+      connection.onmessage = function (event) {
+          data = JSON.parse(event.data);
+          console.log("got message", data);
+      };
 
-    connection.onclose = function () {
-        console.log('ws closed; reconnecting')
-        return setTimeout( ws, WS_RECONNECT );
-    }
-}
+      connection.onclose = function () {
+          console.log('ws closed; reconnecting')
+          return setTimeout( ws, WS_RECONNECT );
+      }
+
+      return connection;
+  }
+
+  ws();
 
   var app = angular.module("chat", ['luegg.directives']);
   var account_ids = [
-    "53ff42ede4a8cad134ae3916",
-    "53ff61f8e4a8cad134ae7916"
+    "5406ce2027d41003fa6a4d4b"
   ];
 
   app.controller('AccountsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
     $scope.accounts = [];
+    $scope.account_ids = account_ids;
     $rootScope.active = null;
-    angular.forEach(account_ids, function(value) {
-      $http.get('/api/user/' + value).success(function(data) {
-        $scope.accounts.push(data);
+    $scope.update = function() {
+      angular.forEach($scope.account_ids, function(value) {
+        $scope.accounts = [];
+        $http.get('/api/user/' + value).success(function(data) {
+          $scope.accounts.push(data);
+        });
       });
-    });
+    };
+    $scope.update();
     $scope.setActive = function(account) {
       $rootScope.active = account.id; 
     };
     $scope.isActive = function(account) {
       return account.id === $rootScope.active;
     };
+    $scope.add = function(account) {
+      $scope.accounts.push(account);
+    };
+  }]);
+  app.controller('AccountSearch', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $scope.email = "";
+    $scope.result = [];
+    $scope.show = false;
+    $scope.activate = function(){
+      $scope.show = !$scope.show;
+    };
+    $scope.$watch('email', function(){
+      if (!$scope.email) {
+        $scope.result = [];
+        return;
+      }
+      $http.get('/api/users/' + $scope.email).success(function(data) {
+        $scope.result = data;
+      });
+    });
   }]);
   app.controller('ChatsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
     $scope.chats = [];

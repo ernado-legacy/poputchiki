@@ -641,6 +641,9 @@ func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adap
 			dialogs[k].OriginUser.CleanPrivate()
 		}
 	}
+	if len(dialogs) == 0 {
+		return Render([]interface{}{})
+	}
 	return Render(dialogs)
 }
 
@@ -895,6 +898,18 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	return Render(SearchResult{result, count})
 }
 
+func GetUsersByEmail(db DataBase, t *gotok.Token, parm martini.Params, webpAccept WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+	users, err := db.GetUsersByEmail(parm["email"])
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	u := db.Get(t.Id)
+	if len(users) == 0 {
+		return Render([]interface{}{})
+	}
+	users.Prepare(adapter, db, webpAccept, audio, u)
+	return Render(users)
+}
 func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, audio AudioAccept, adapter *weed.Adapter) (int, []byte) {
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)

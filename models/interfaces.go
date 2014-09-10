@@ -41,6 +41,7 @@ type DataBase interface {
 	GetUsername(username string) *User
 	Get(id bson.ObjectId) *User
 	Add(u *User) error
+	GetUsersByEmail(email string) (Users, error)
 	Update(id bson.ObjectId, update bson.M) (*User, error)
 	// Delete(id bson.ObjectId) error
 	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
