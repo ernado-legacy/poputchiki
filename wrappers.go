@@ -179,6 +179,7 @@ func AudioWrapper(c martini.Context, r *http.Request) {
 	urlAccept := r.URL.Query().Get("audio")
 	if urlAccept != "" {
 		accept = models.AudioAccept(urlAccept)
+		c.Map(accept)
 		return
 	}
 	cookie, err := r.Cookie("audio")
