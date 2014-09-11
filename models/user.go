@@ -202,9 +202,7 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 	u.SetAvatarUrl(adapter, db, webp)
 
 	if u.Audio != "" {
-		if audio == AaAac {
-			u.AudioUrl, _ = adapter.GetUrl(u.AudioAAC)
-		}
+		u.AudioUrl, _ = adapter.GetUrl(u.AudioAAC)
 		if audio == AaOgg {
 			u.AudioUrl, _ = adapter.GetUrl(u.AudioOGG)
 		}
