@@ -98,7 +98,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 				return
 			}
 			db.AddGuest(id, t.Id)
-			u.Push(NewUpdate(id, t.Id, UpdateGuests, nil))
+			u.Push(NewUpdate(id, t.Id, UpdateGuests, user))
 		}()
 	}
 	// preparing for rendering to json
@@ -542,6 +542,7 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 	}
 	Must(realtime.Push(origin, toOrigin))
 	Must(realtime.Push(destination, toDestination))
+
 	Must(db.AddInvite(toOrigin))
 	Must(db.AddInvite(toDestination))
 	engine.Handle(activities.Invite)

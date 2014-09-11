@@ -127,6 +127,7 @@
   <script src="/api/static/js/bootstrap.min.js"></script>
   <script src="/api/static/js/angular.js"></script>
   <script src="/api/static/js/angular-route.js"></script>
+  <script src="/api/static/js/angular-local-storage.js"></script>
   <script src="/api/static/js/scrollglue.js"></script>
   <script type="text/javascript">
 
@@ -159,14 +160,15 @@
 
   ws();
 
-  var app = angular.module("chat", ['luegg.directives']);
+  var app = angular.module("chat", ['luegg.directives', 'LocalStorageModule']);
   var account_ids = [
     "5406ce2027d41003fa6a4d4b"
   ];
 
-  app.controller('AccountsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
-    $scope.accounts = [];
+  app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', function($scope, $rootScope, $http, localStorageService) {
+    $scope.accounts = []; 
     $scope.account_ids = account_ids;
+    localStorageService.bind($scope, 'account_ids', account_ids);
     $rootScope.active = null;
     $scope.update = function() {
       angular.forEach($scope.account_ids, function(value) {
