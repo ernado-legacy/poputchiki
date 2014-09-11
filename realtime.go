@@ -69,7 +69,7 @@ func chackOrigin(r *http.Request) bool {
 	return true
 }
 
-func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func (realtime *RealtimeRedis) RealtimeHandler(admin models.IsAdmin, w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
 	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
 	_, ok := w.(http.Hijacker)
 	if !ok {
@@ -80,12 +80,38 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 		return Render(BackendError(err))
 	}
 
-	c := realtime.GetWSChannel(t.Id)
+	q := r.URL.Query()
+	var channels []ReltWSChannel
+	channel := make(chan models.Update)
+	var targets []bson.ObjectId
+	if admin && len(q["id"]) > 0 {
+		for _, target := range q["id"] {
+			if !bson.IsObjectIdHex(target) {
+				return Render(ErrorBadRequest)
+			}
+			targets = append(targets, bson.ObjectIdHex(target))
+		}
+	} else {
+		targets = append(targets, t.Id)
+	}
+
+	for _, target := range targets {
+		c := realtime.GetWSChannel(target)
+		channels = append(channels, c)
+		go func() {
+			for event := range c.channel {
+				channel <- event
+			}
+		}()
+	}
+
 	connClosed := make(chan bool, 10)
 
 	go func() {
 		<-connClosed
-		realtime.CloseWs(c)
+		for _, c := range channels {
+			realtime.CloseWs(c)
+		}
 		log.Println("connection closed")
 	}()
 
@@ -106,19 +132,25 @@ func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, r *http.Re
 		}
 	}()
 
-	for event := range c.channel {
+	process := func(event models.Update) error {
 		log.Println("[realtime] recieved event for", event.Destination.Hex())
 		log.Printf("%+v", event)
 		if err := event.Prepare(db, adapter, webp, video, audio); err != nil {
-			log.Println(err)
+			return err
 		}
-		err := conn.WriteJSON(event)
-		if err != nil {
-			log.Println(err)
+		if err := conn.WriteJSON(event); err != nil {
 			connClosed <- true
+			return err
+		}
+		return nil
+	}
+
+	for event := range channel {
+		if err := process(event); err != nil {
 			return Render(BackendError(err))
 		}
 	}
+
 	return Render("ok")
 }
 
@@ -303,6 +335,9 @@ func (a *autoUpdater) Push(destination bson.ObjectId, body interface{}) error {
 	t := strings.ToLower(reflect.TypeOf(body).Elem().Name())
 	if t == "message" {
 		t = "messages"
+	}
+	if t == "invite" {
+		t = "invites"
 	}
 	return a.updater.Push(models.NewUpdate(destination, a.token.Id, t, body))
 }

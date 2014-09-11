@@ -19,8 +19,13 @@ type Message struct {
 	LastMessage bson.ObjectId `json:"last_message,omitempty" bson:"-"`
 }
 
-func NewInvites(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
-	return newMessagePair(db, origin, destination, text, true)
+type Invite Message
+
+func NewInvites(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Invite) {
+	m1, m2 := newMessagePair(db, origin, destination, text, true)
+	atoOrigin := Invite(*m1)
+	atoDestination := Invite(*m2)
+	return &atoOrigin, &atoDestination
 }
 
 func NewMessagePair(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {

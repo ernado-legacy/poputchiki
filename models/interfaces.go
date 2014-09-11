@@ -54,6 +54,7 @@ type DataBase interface {
 	GetAllGuestUsers(id bson.ObjectId) ([]*GuestUser, error)
 
 	AddMessage(m *Message) error
+	AddInvite(i *Invite) error
 	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, paginaton Pagination) ([]*Message, error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
@@ -170,7 +171,7 @@ type DataBase interface {
 
 type RealtimeInterface interface {
 	Updater
-	RealtimeHandler(w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte)
+	RealtimeHandler(admin IsAdmin, w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte)
 	// PushAll(update Update) error
 }
 

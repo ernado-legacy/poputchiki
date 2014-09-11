@@ -29,6 +29,10 @@ func (db *DB) AddMessage(m *models.Message) error {
 	return db.messages.Insert(m)
 }
 
+func (db *DB) AddInvite(i *models.Invite) error {
+	return db.messages.Insert(i)
+}
+
 func (db *DB) RemoveMessage(id bson.ObjectId) error {
 	return db.messages.RemoveId(id)
 }

@@ -542,8 +542,8 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 	}
 	Must(realtime.Push(origin, toOrigin))
 	Must(realtime.Push(destination, toDestination))
-	Must(db.AddMessage(toOrigin))
-	Must(db.AddMessage(toDestination))
+	Must(db.AddInvite(toOrigin))
+	Must(db.AddInvite(toDestination))
 	engine.Handle(activities.Invite)
 
 	return Render("message sent")
