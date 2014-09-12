@@ -46,6 +46,7 @@ type SearchQuery struct {
 	Sponsor      string
 	Host         string
 	Registered   string
+	Online       string
 }
 
 // NewQuery returns query object with parsed fields from url params
@@ -158,6 +159,10 @@ func (q *SearchQuery) ToBson() bson.M {
 
 	if q.Host != "" {
 		query = append(query, bson.M{"is_host": true})
+	}
+
+	if q.Online != "" {
+		query = append(query, bson.M{"online": true})
 	}
 
 	if len(query) > 0 {
