@@ -165,6 +165,7 @@ type DataBase interface {
 	GetUpdatesCount(destination bson.ObjectId) ([]*UpdateCounter, error)
 	GetUpdates(destination bson.ObjectId, t string, pagination Pagination) ([]*Update, error)
 	SetUpdateRead(destination, id bson.ObjectId) error
+	SetUpdatesRead(destination bson.ObjectId, t string) error
 	IsUpdateDublicate(origin, destination bson.ObjectId, t string, duration time.Duration) (bool, error)
 	GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error)
 }

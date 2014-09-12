@@ -1899,6 +1899,17 @@ func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *htt
 	return Render(updates)
 }
 
+func SetUpdatesRead(db DataBase, token *gotok.Token, req *http.Request) (int, []byte) {
+	t := req.URL.Query().Get("type")
+	if t == "" {
+		return Render(ValidationError(errors.New("Blank type")))
+	}
+	if err := db.SetUpdatesRead(token.Id, t); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(t)
+}
+
 func SetUpdateRead(db DataBase, token *gotok.Token, id bson.ObjectId) (int, []byte) {
 	if err := db.SetUpdateRead(token.Id, id); err != nil {
 		return Render(BackendError(err))

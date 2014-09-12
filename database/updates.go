@@ -29,6 +29,13 @@ func (db *DB) GetUpdates(destination bson.ObjectId, t string, pagination models.
 	return s, db.updates.Find(bson.M{"destination": destination, "type": t}).Sort("-time").Skip(pagination.Offset).Limit(pagination.Count).All(&s)
 }
 
+func (db *DB) SetUpdatesRead(destination bson.ObjectId, t string) error {
+	selector := bson.M{"destination": destination, "type": t}
+	update := bson.M{"$set": bson.M{"read": true}}
+	_, err := db.updates.UpdateAll(selector, update)
+	return err
+}
+
 func (db *DB) IsUpdateDublicate(origin, destination bson.ObjectId, t string, duration time.Duration) (bool, error) {
 	fromTime := time.Now().Add(-duration)
 	query := bson.M{"time": bson.M{"$gte": fromTime}, "type": t, "user": origin, "destination": destination}
