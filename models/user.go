@@ -102,6 +102,14 @@ type User struct {
 	Rating              float64         `json:"rating"                 bson:"rating"`
 	Subscriptions       []string        `json:"subscriptions,omitempty"bson:"subscriptions"`
 	Registered          time.Time       `json:"registered,omitempty"   bson:"registered"`
+	Orientation         string          `json:"orientation" bson:"orientation,omitempty"`
+	Relations           string          `json:"relations" bson:"relations,omitempty"`
+	Children            string          `json:"children" bson:"children,omitempty"`
+	Education           string          `json:"education" bson:"education,omitempty"`
+	AttitudeSmoking     string          `json:"attitude_to_smoking" bson:"attitude_to_smoking,omitempty"`
+	AttitudeAlcohol     string          `json:"attitude_to_alcohol" bson:"attitude_to_alcohol,omitempty"`
+	Wealth              string          `json:"wealth" bson:"wealth,omitempty"`
+	Accommodation       string          `json:"accommodation" bson:"accommodation,omitempty"`
 }
 
 type GuestUser struct {
