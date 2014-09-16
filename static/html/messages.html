@@ -117,7 +117,7 @@
           ng-click="setActive(account)">
           <img ng-src="{{ account.user.avatar_url }}" alt="avatar" class="img-circle avatar">
           <span class="username">{{ account.user.name }}</span>
-          <span class="badge count" ng-show="account.count">{{ account.count }}</span>
+          <span class="badge count" ng-show="account.unread">{{ account.unread }}</span>
           <div class="circle" ng-show="account.user.online">online</div>
         </div>
 
@@ -143,34 +143,61 @@
   <script src="/api/static/js/scrollglue.js"></script>
   <script type="text/javascript">
 
-  var WS_RECONNECT = 1000;
-
-  function ws() {
-      try {
-          var host = window.location.hostname;
-          connection = new WebSocket('ws://' + host + '/api/realtime');
-      } catch(e) {
-          console.log("ws error", e)
-          return setTimeout( ws, WS_RECONNECT );
+  function WS() {
+    var self = this;
+    self.timeout = 1000;
+    self.accounts = [];
+    var host = window.location.hostname;
+    self.callbacks = [
+      function(data) {
+        console.log('got event', data.type)
+      },
+      function(data) {
+        console.log('from user', data.user)
       }
-      connection.onopen = function () {
-          console.log('ws connected')
+    ]
+    self.setAccounts = function(accounts) {
+      self.connection.close();
+      self.accounts = accounts;
+      self.reconnect();
+    }
+    self.addCallback = function(callback) {
+      console.log('adding callback');
+      self.callbacks.push(callback);
+    }
+    self.reconnect = function() {
+      var url = 'ws://' + host + '/api/realtime';
+      if (self.accounts.length > 0) {
+        url = url + '?id=' + self.accounts.join(',')
+      }
+      self.connection = new WebSocket(url);
+      self.connection.onopen = function () {
+        console.log('ws connected')
       };
 
-      connection.onmessage = function (event) {
-          data = JSON.parse(event.data);
-          console.log("got message", data);
+      self.connection.onmessage = function (event) {
+        data = JSON.parse(event.data);
+        angular.forEach(self.callbacks, function(value) {
+          value(data);
+        });
       };
 
-      connection.onclose = function () {
-          console.log('ws closed; reconnecting')
-          return setTimeout( ws, WS_RECONNECT );
+      self.connection.onclose = function () {
+        console.log('ws closed; reconnecting')
+        return setTimeout(self.reconnect, self.timeout);
       }
+    }
+    try {
+      self.reconnect()
+    } catch(e) {
+      console.log("ws error", e)
+      return setTimeout(self.reconnect, self.timeout);
+    }
 
-      return connection;
+    return self;
   }
 
-  ws();
+  var connection = WS();
 
   var app = angular.module("chat", ['luegg.directives', 'LocalStorageModule']);
   app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', '$q', function($scope, $rootScope, $http, localStorageService, $q) {
@@ -178,7 +205,7 @@
     $rootScope.active = null;
     $scope.account_ids = localStorageService.get('account_ids');
     $scope.$watch('account_ids', function(){
-      console.log('set');
+      connection.setAccounts($scope.account_ids);
       localStorageService.set('account_ids', $scope.account_ids);
     }, true);
     $scope.update = function() {
@@ -242,6 +269,32 @@
   app.controller('ChatsController', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
     $scope.chats = [];
     $rootScope.chat = null;
+    $scope.onData = function(data) {
+      console.log('chat handling', data.type)
+      if (data.type != "messages") {
+        return;
+      }
+      var message = data.target;
+      if (message.chat == $rootScope.chat) {
+        return;
+      }
+      if (message.destination != $rootScope.active) {
+        console.log('user not active');
+        return;
+      }
+      $scope.$apply(function() {
+        for (var i = 0; i < $scope.chats.length; i++) {
+          if($scope.chats[i].id == message.chat) {
+            console.log($scope.chats[i]);
+            console.log('increasing count', $scope.chats[i].unread);
+            $scope.chats[i].unread += 1;
+            console.log('count', $scope.chats[i].unread);
+            return
+          }
+        };
+      });
+    };
+    connection.addCallback($scope.onData);
     $scope.update = function() {
       if ($rootScope.active == null) {
         return
@@ -254,9 +307,21 @@
       });
     };
     $rootScope.$watch('active', $scope.update);    
+    $rootScope.$watch('chat', function(){
+      angular.forEach($scope.chats, function(value){
+        if (value.id == $rootScope.chat) {
+          value.unread = 0;
+        }
+      });
+    });
     $scope.setActive = function(chat) {
       $rootScope.chat = chat.id; 
-    };
+      angular.forEach($scope.chats, function(value){
+        if (value.id == chat.id) {
+          value.unread = 0;
+        }
+      });
+    };  
     $scope.isActive = function(chat) {
       return chat.id === $rootScope.chat;
     };
@@ -275,7 +340,7 @@
       var message = {text: $scope.text, origin: $rootScope.active};
       $http({method: 'PUT', url: '/api/user/' + $rootScope.chat + '/messages', data: message}).success(function(data) {
         $scope.text = "";
-        $rootScope.messages.push(message);
+        // $rootScope.messages.push(message);
       });
     }
   }]);
@@ -283,7 +348,33 @@
   app.controller('MessagesCountroller', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
     $rootScope.messages = [];
     $scope.glued = true;
-
+    $scope.onData = function(data) {
+      console.log('data handling', data.type)
+      if (data.type != "messages") {
+        return;
+      }
+      var message = data.target;
+      console.log(message.chat, $rootScope.chat);
+      if (message.chat != $rootScope.chat) {
+        console.log('it is bad chat, lel');
+        return;
+      }
+      if ($rootScope.messages.length > 0) {
+        var messages = $rootScope.messages;
+        for (var i = messages.length - 1; i >= 0; i--) {
+          console.log(messages[i].id, message.id);
+          if (messages[i].id == message.id) {
+            console.log('already in chat');
+            return;
+          }
+        };
+      }
+      console.log('appear');
+      $scope.$apply(function() {
+        $rootScope.messages.push(message);
+      });
+    };
+    connection.addCallback($scope.onData);
     $scope.update = function() {
       if ($rootScope.active == null || $rootScope.chat == null) {
         return

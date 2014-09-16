@@ -85,7 +85,8 @@ func (realtime *RealtimeRedis) RealtimeHandler(admin models.IsAdmin, w http.Resp
 	channel := make(chan models.Update)
 	var targets []bson.ObjectId
 	if admin && q.Get("id") != "" {
-		for _, target := range q["id"] {
+		ids := strings.Split(q.Get("id"), ",")
+		for _, target := range ids {
 			if !bson.IsObjectIdHex(target) {
 				return Render(ErrorBadRequest)
 			}
