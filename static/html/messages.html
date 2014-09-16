@@ -120,6 +120,18 @@
           <span class="badge count" ng-show="account.count">{{ account.count }}</span>
           <div class="circle" ng-show="account.user.online">online</div>
         </div>
+
+        <div ng-controller="ChatSearch">
+          <div class="user user-add" ng-click="activate()">добавить</div>
+          <div ng-show="show">
+            <form novalidate>
+              <input type="text" name="text" placeholder="Имя" ng-model="name">
+            </form>
+            <div ng-repeat="account in result" ng-click="add(account)">
+            {{ account.name }}, {{ account.age }}, {{ account.city }}
+            </div>
+          </div>
+        </div>
     </div>
   </div>
 
@@ -136,7 +148,7 @@
   function ws() {
       try {
           var host = window.location.hostname;
-          connection = new WebSocket('ws://' + host + '/api/realtime?id=5406ce2027d41003fa6a4d4b');
+          connection = new WebSocket('ws://' + host + '/api/realtime');
       } catch(e) {
           console.log("ws error", e)
           return setTimeout( ws, WS_RECONNECT );
@@ -161,20 +173,23 @@
   ws();
 
   var app = angular.module("chat", ['luegg.directives', 'LocalStorageModule']);
-  var account_ids = [
-    "5406ce2027d41003fa6a4d4b"
-  ];
-
-  app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', function($scope, $rootScope, $http, localStorageService) {
+  app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', '$q', function($scope, $rootScope, $http, localStorageService, $q) {
     $scope.accounts = []; 
-    $scope.account_ids = account_ids;
-    localStorageService.bind($scope, 'account_ids', account_ids);
     $rootScope.active = null;
+    $scope.account_ids = localStorageService.get('account_ids');
+    $scope.$watch('account_ids', function(){
+      console.log('set');
+      localStorageService.set('account_ids', $scope.account_ids);
+    }, true);
     $scope.update = function() {
+      $scope.accounts = [];
       angular.forEach($scope.account_ids, function(value) {
-        $scope.accounts = [];
         $http.get('/api/user/' + value).success(function(data) {
           $scope.accounts.push(data);
+          if ($rootScope.active || $scope.accounts.length == 0) {
+            return;
+          }
+          $rootScope.active = $scope.accounts[0].id;
         });
       });
     };
@@ -186,6 +201,7 @@
       return account.id === $rootScope.active;
     };
     $scope.add = function(account) {
+      $scope.account_ids.push(account.id);
       $scope.accounts.push(account);
     };
   }]);
@@ -203,6 +219,23 @@
       }
       $http.get('/api/users/' + $scope.email).success(function(data) {
         $scope.result = data;
+      });
+    });
+  }]);
+  app.controller('ChatSearch', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
+    $scope.name = "";
+    $scope.result = [];
+    $scope.show = false;
+    $scope.activate = function(){
+      $scope.show = !$scope.show;
+    };
+    $scope.$watch('name', function(){
+      if (!$scope.name) {
+        $scope.result = [];
+        return;
+      }
+      $http.get('/api/search?count=15&name=' + $scope.name).success(function(data) {
+        $scope.result = data.result;
       });
     });
   }]);
@@ -226,6 +259,10 @@
     };
     $scope.isActive = function(chat) {
       return chat.id === $rootScope.chat;
+    };
+    $scope.add = function(account) {
+      $scope.chats.push({id: account.id, user: account});
+      $rootScope.chat = account.id;
     };
   }]);
 

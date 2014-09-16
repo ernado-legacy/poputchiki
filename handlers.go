@@ -1905,19 +1905,17 @@ func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *htt
 	return Render(updates)
 }
 
-func sendCounters(db DataBase, token *gotok.Token, updater AutoUpdater) error {
+func sendCounters(db DataBase, token *gotok.Token, realtime RealtimeInterface) error {
 	counters, err := db.GetUpdatesCount(token.Id)
 	if err != nil {
 		return err
 	}
-	return updater.Push(token.Id, Counters(counters))
+	update := NewUpdate(token.Id, token.Id, "counters", Counters(counters))
+	return realtime.Push(update)
 }
 
-func SetUpdatesRead(db DataBase, token *gotok.Token, req *http.Request, realtime AutoUpdater) (int, []byte) {
+func SetUpdatesRead(db DataBase, token *gotok.Token, req *http.Request, realtime RealtimeInterface) (int, []byte) {
 	t := req.URL.Query().Get("type")
-	if t == "" {
-		return Render(ValidationError(errors.New("Blank type")))
-	}
 	if err := db.SetUpdatesRead(token.Id, t); err != nil {
 		return Render(BackendError(err))
 	}
@@ -1927,7 +1925,7 @@ func SetUpdatesRead(db DataBase, token *gotok.Token, req *http.Request, realtime
 	return Render(t)
 }
 
-func SetUpdateRead(db DataBase, token *gotok.Token, id bson.ObjectId, realtime AutoUpdater) (int, []byte) {
+func SetUpdateRead(db DataBase, token *gotok.Token, id bson.ObjectId, realtime RealtimeInterface) (int, []byte) {
 	if err := db.SetUpdateRead(token.Id, id); err != nil {
 		return Render(BackendError(err))
 	}

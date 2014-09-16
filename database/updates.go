@@ -30,7 +30,10 @@ func (db *DB) GetUpdates(destination bson.ObjectId, t string, pagination models.
 }
 
 func (db *DB) SetUpdatesRead(destination bson.ObjectId, t string) error {
-	selector := bson.M{"destination": destination, "type": t}
+	selector := bson.M{"destination": destination}
+	if t != "" {
+		selector = bson.M{"destination": destination, "type": t}
+	}
 	update := bson.M{"$set": bson.M{"read": true}}
 	_, err := db.updates.UpdateAll(selector, update)
 	return err

@@ -151,6 +151,8 @@ func (u *User) CleanPrivate() {
 	u.Favorites = nil
 	u.Blacklist = nil
 	u.Balance = 0
+	u.AndroidTokens = nil
+	u.IOsTokens = nil
 }
 
 func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept) {

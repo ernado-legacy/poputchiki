@@ -180,6 +180,7 @@ func NewApp() *Application {
 	m.Map(weedAdapter)
 	updater = &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}}
 	m.Map(updater)
+	m.Map(realtime)
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)
 	m.Map(models.GetMailDispatcher(templates, "noreply@"+mailDomain, mailgunClient, db))
@@ -278,6 +279,7 @@ func NewApp() *Application {
 		r.Get("/updates/counters", GetCounters)
 		r.Get("/updates", GetUpdates)
 		r.Post("/updates", SetUpdatesRead)
+		r.Delete("/updates", SetUpdatesRead)
 		r.Post("/updates/:id", IdWrapper, SetUpdateRead)
 
 		r.Put("/status", AddStatus)
