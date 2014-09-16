@@ -221,6 +221,9 @@ func NewApp() *Application {
 		r.Post("/pay/:value", GetTransactionUrl)
 		r.Get("/pay/:value", GetTransactionUrl)
 
+		r.Post("/push/:system/:token", AddToken)
+		r.Delete("/push/:system/:token", RemoveToken)
+
 		r.Get("/topup", TopUp)
 		r.Post("/topup", TopUp)
 

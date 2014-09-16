@@ -168,6 +168,11 @@ type DataBase interface {
 	SetUpdatesRead(destination bson.ObjectId, t string) error
 	IsUpdateDublicate(origin, destination bson.ObjectId, t string, duration time.Duration) (bool, error)
 	GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error)
+
+	RemoveAndroidToken(id bson.ObjectId, token string) error
+	RemoveIosToken(id bson.ObjectId, token string) error
+	AddAndroidToken(id bson.ObjectId, token string) error
+	AddIosToken(id bson.ObjectId, token string) error
 }
 
 type RealtimeInterface interface {

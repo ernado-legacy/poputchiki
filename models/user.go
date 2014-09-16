@@ -110,6 +110,8 @@ type User struct {
 	AttitudeAlcohol     string          `json:"attitude_to_alcohol" bson:"attitude_to_alcohol,omitempty"`
 	Wealth              string          `json:"wealth" bson:"wealth,omitempty"`
 	Accommodation       string          `json:"accommodation" bson:"accommodation,omitempty"`
+	IOsTokens           []string        `json:"ios_tokens,omitempty"  bson:"ios_tokens,omitempty"`
+	AndroidTokens       []string        `json:"android_tokens,omitempty" bson:"android_tokens,omitempty"`
 }
 
 type GuestUser struct {

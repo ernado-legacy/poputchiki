@@ -13,7 +13,8 @@ func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.Ob
 }
 
 func (db *DB) RemoveChat(userReciever bson.ObjectId, userOrigin bson.ObjectId) error {
-	return db.messages.Remove(bson.M{"user": userReciever, "chat": userOrigin})
+	_, err := db.messages.RemoveAll(bson.M{"user": userReciever, "chat": userOrigin})
+	return err
 }
 
 func (db *DB) GetLastMessageIdFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId) (id bson.ObjectId, err error) {

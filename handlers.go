@@ -1282,10 +1282,12 @@ func LikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.
 	}
 	engine.Handle(activities.Like)
 	v := db.GetVideo(id)
-	go u.Push(NewUpdate(v.User, t.Id, UpdateLikes, v))
-	go func() {
-		db.AddGuest(t.Id, v.User)
-	}()
+	if v.User != t.Id {
+		go u.Push(NewUpdate(v.User, t.Id, UpdateLikes, v))
+		go func() {
+			db.AddGuest(t.Id, v.User)
+		}()
+	}
 	return Render(v)
 }
 
@@ -1314,10 +1316,12 @@ func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.
 	}
 	engine.Handle(activities.Like)
 	p, _ := db.GetPhoto(id)
-	go u.Push(NewUpdate(p.User, t.Id, UpdateLikes, p))
-	go func() {
-		db.AddGuest(t.Id, p.User)
-	}()
+	if p.User != t.Id {
+		go u.Push(NewUpdate(p.User, t.Id, UpdateLikes, p))
+		go func() {
+			db.AddGuest(t.Id, p.User)
+		}()
+	}
 	return Render(p)
 }
 
@@ -1379,10 +1383,12 @@ func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, 
 		return Render(BackendError(err))
 	}
 	s, _ := db.GetStatus(id)
-	u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s))
-	go func() {
-		db.AddGuest(t.Id, s.User)
-	}()
+	if s.User != t.Id {
+		u.Push(NewUpdate(s.User, t.Id, UpdateLikes, s))
+		go func() {
+			db.AddGuest(t.Id, s.User)
+		}()
+	}
 	return Render(s)
 }
 
@@ -1952,6 +1958,56 @@ func WantToTravel(parser Parser, db DataBase, mail MailHtmlSender, token *gotok.
 		return Render(BackendError(err))
 	}
 	return Render(v)
+}
+
+func AddToken(db DataBase, parm martini.Params, t *gotok.Token) (int, []byte) {
+	system := parm["system"]
+	token := parm["token"]
+
+	if token == "" {
+		return Render(ValidationError(errors.New("Пустой токен")))
+	}
+	if system != "ios" && system != "android" {
+		return Render(ValidationError(errors.New("Система должна быть ios или android")))
+	}
+
+	var err error
+	if system == "ios" {
+		err = db.AddIosToken(t.Id, token)
+	} else {
+		err = db.AddAndroidToken(t.Id, token)
+	}
+
+	if err != nil {
+		return Render(BackendError(err))
+	}
+
+	return Render(token)
+}
+
+func RemoveToken(db DataBase, parm martini.Params, t *gotok.Token) (int, []byte) {
+	system := parm["system"]
+	token := parm["token"]
+
+	if token == "" {
+		return Render(ValidationError(errors.New("Пустой токен")))
+	}
+	if system != "ios" && system != "android" {
+		return Render(ValidationError(errors.New("Система должна быть ios или android")))
+	}
+
+	var err error
+	if system == "ios" {
+		err = db.RemoveIosToken(t.Id, token)
+	} else {
+		err = db.RemoveAndroidToken(t.Id, token)
+	}
+
+	if err != nil {
+		return Render(BackendError(err))
+	}
+
+	return Render(token)
 }
 
 // init for random

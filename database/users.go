@@ -30,6 +30,39 @@ func (db *DB) SetVipTill(id bson.ObjectId, t time.Time) error {
 	return db.users.Update(bson.M{"_id": id}, bson.M{"$set": bson.M{"vip_till": t}})
 }
 
+func (db *DB) addToken(id bson.ObjectId, field, token string) error {
+	value := bson.M{field: token}
+	update := bson.M{"$addToSet": value}
+	selector := bson.M{"_id": bson.M{"$ne": id}, field: token}
+	if err := db.users.UpdateId(id, update); err != nil {
+		return err
+	}
+	update = bson.M{"$pull": value}
+	_, err := db.users.UpdateAll(selector, update)
+	return err
+}
+
+func (db *DB) removeToken(id bson.ObjectId, field, token string) error {
+	update := bson.M{"$pull": bson.M{field: token}}
+	return db.users.UpdateId(id, update)
+}
+
+func (db *DB) RemoveAndroidToken(id bson.ObjectId, token string) error {
+	return db.removeToken(id, "android_token", token)
+}
+
+func (db *DB) RemoveIosToken(id bson.ObjectId, token string) error {
+	return db.removeToken(id, "ios_token", token)
+}
+
+func (db *DB) AddAndroidToken(id bson.ObjectId, token string) error {
+	return db.addToken(id, "android_token", token)
+}
+
+func (db *DB) AddIosToken(id bson.ObjectId, token string) error {
+	return db.addToken(id, "ios_token", token)
+}
+
 func (db *DB) Get(id bson.ObjectId) *User {
 	var u User
 	err := db.users.FindId(id).One(&u)
