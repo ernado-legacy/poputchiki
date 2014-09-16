@@ -37,6 +37,8 @@ type UpdateCounter struct {
 	Count int    `json:"count" bson:"count"`
 }
 
+type Counters []*UpdateCounter
+
 func NewUpdate(destination, user bson.ObjectId, updateType string, media interface{}) Update {
 	u := new(Update)
 	u.Id = bson.NewObjectId()
