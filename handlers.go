@@ -1857,7 +1857,7 @@ func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter
 	if err != nil {
 		return Render(BackendError(err))
 	}
-	optsAac := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "aac"}
+	optsAac := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "mp3"}
 	optsAac.Duration = 15
 	optsVorbis := &conv.AudioOptions{Bitrate: AUDIO_BITRATE, Format: "libvorbis"}
 	optsVorbis.Duration = 15

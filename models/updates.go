@@ -21,8 +21,8 @@ type Update struct {
 	Destination bson.ObjectId `json:"destination,omitempty" bson:"destination"`
 	User        bson.ObjectId `json:"user"                  bson:"user"`
 	UserObject  *User         `json:"user_object,omitempty" bson:"-"`
-	ImageWebp   string        `json:"image_webp,omitempty"  bson:"image_webp"`
-	ImageJpeg   string        `json:"image_jpeg,omitempty"  bson:"image_jpeg"`
+	ImageWebp   string        `json:"image_webp,omitempty"  bson:"image_webp,omitempty"`
+	ImageJpeg   string        `json:"image_jpeg,omitempty"  bson:"image_jpeg,omitempty"`
 	ImageUrl    string        `json:"image_url,omitempty"   bson:"-"`
 	Read        bool          `json:"read"                  bson:"read"`
 	Type        string        `json:"type,omitempty"        bson:"type,omitempty"`
@@ -30,6 +30,32 @@ type Update struct {
 	Url         string        `json:"url,omitempty"         bson:"-"`
 	Target      interface{}   `json:"target,omitempty"      bson:"target,omitempty"`
 	Time        time.Time     `json:"time"                  bson:"time"`
+}
+
+func (u *Update) Theme() (theme string) {
+	if u.Type == "messages" {
+		theme = fmt.Sprintf("Пользователь %s прислал вам сообщение", u.UserObject.Name)
+	}
+	if u.Type == "guests" {
+		theme = fmt.Sprintf("Пользователь %s заходил на вашу страницу", u.UserObject.Name)
+	}
+
+	if u.Type == "likes" {
+		var t string
+		if u.TargetType == "video" {
+			t = "ваше видео"
+		}
+		if u.TargetType == "photo" {
+			t = "ваше фото"
+		}
+		if u.TargetType == "status" {
+			t = "ваш статус"
+		}
+
+		theme = fmt.Sprintf("Пользователь %s оценил %s", u.UserObject.Name, t)
+	}
+
+	return
 }
 
 type UpdateCounter struct {

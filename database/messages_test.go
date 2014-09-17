@@ -30,6 +30,38 @@ func TestMessages(t *testing.T) {
 			So(db.AddMessage(mDestination), ShouldBeNil)
 			Convey("Integrity", Integrity(db, uOrigin))
 			Convey("Integrity", Integrity(db, uDestination))
+			Convey("Add notification", func() {
+				_, err := db.AddUpdate(destination, origin, "messages", mDestination)
+				So(err, ShouldBeNil)
+				counters, err := db.GetUpdatesCount(destination)
+				So(err, ShouldBeNil)
+				So(len(counters), ShouldNotEqual, 1)
+				found := false
+				for _, v := range counters {
+					if v.Type == "messages" {
+						found = true
+						So(v.Count, ShouldEqual, 1)
+					}
+				}
+				So(found, ShouldBeTrue)
+				Convey("Set read", func() {
+					So(db.SetReadMessagesFromUser(destination, origin), ShouldBeNil)
+					found := false
+					counters, err := db.GetUpdatesCount(destination)
+					So(err, ShouldBeNil)
+					for _, v := range counters {
+						if v.Type == "messages" {
+							found = true
+						}
+					}
+					updates, err := db.GetUpdates(destination, "messages", models.Pagination{})
+					So(err, ShouldBeNil)
+					for _, update := range updates {
+						So(update.Read, ShouldBeTrue)
+					}
+					So(found, ShouldBeFalse)
+				})
+			})
 			Convey("Destination chats", func() {
 				chats, err := db.GetChats(destination)
 				So(err, ShouldBeNil)

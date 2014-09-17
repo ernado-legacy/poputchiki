@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/GeertJohan/go.rice"
 	"github.com/ernado/gotok"
@@ -15,6 +16,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -239,6 +241,7 @@ type RealtimeUpdater struct {
 	db       models.DataBase
 	realtime models.Updater
 	email    models.Updater
+	push     models.Updater
 }
 
 type EmailUpdater struct {
@@ -246,6 +249,39 @@ type EmailUpdater struct {
 	client    *mailgun.Client
 	templates *rice.Box
 	adapter   *weed.Adapter
+}
+
+type PushNotificationsUpdater struct {
+	db      models.DataBase
+	adapter *weed.Adapter
+}
+
+func (e *PushNotificationsUpdater) Push(update models.Update) error {
+	u := url.URL{}
+	u.Host = "cydev.ru"
+	u.Scheme = "https"
+	u.Path = fmt.Sprintf("/%s/push", "poputchiki")
+	q := u.Query()
+	if err := update.Prepare(e.db, e.adapter, false, VaWebm, AaOgg); err != nil {
+		log.Println("[email]", err)
+	}
+	q.Add("message", update.Theme())
+	user := e.db.Get(update.Destination)
+	for _, token := range user.IOsTokens {
+		q.Add("appleid", token)
+	}
+	for _, token := range user.AndroidTokens {
+		q.Add("googleid", token)
+	}
+	u.RawQuery = q.Encode()
+	resp, err := http.Post(u.String(), "text/html", nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("Bad code %s!=200", resp.StatusCode))
+	}
+	return nil
 }
 
 func (e *EmailUpdater) GetTemplate(update models.Update) (template string, err error) {
@@ -267,7 +303,7 @@ func (e *EmailUpdater) Push(update models.Update) error {
 		return err
 	}
 	email := fmt.Sprintf("Попутчики <%s>", "noreply@"+mailDomain)
-	message, err := models.NewMail(template, email, u.Email, update.Type, update)
+	message, err := models.NewMail(template, email, u.Email, update.Theme(), update)
 	if err != nil {
 		return err
 	}
@@ -299,16 +335,19 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 		log.Println("[updates]", "realtime error", err)
 		return err
 	}
+	dublicate, err := u.db.IsUpdateDublicate(update.User, update.Destination, update.Type, DublicateUpdatesTimeout)
+	if err != nil {
+		return err
+	}
+	if dublicate {
+		log.Println("[updates]", "dublicate")
+		return nil
+	}
+	if err := u.push.Push(update); err != nil {
+		log.Println("[updates] push", err)
+	}
 	if !target.Online {
 		log.Println("[updates]", "user offline")
-		dublicate, err := u.db.IsUpdateDublicate(update.User, update.Destination, update.Type, DublicateUpdatesTimeout)
-		if err != nil {
-			return err
-		}
-		if dublicate {
-			log.Println("[updates]", "dublicate")
-			return nil
-		}
 		subscription := models.GetEventType(update.Type, update.Target)
 		subscribed, err := u.db.UserIsSubscribed(update.Destination, subscription)
 		if err != nil {

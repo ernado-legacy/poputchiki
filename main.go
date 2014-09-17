@@ -178,7 +178,7 @@ func NewApp() *Application {
 	m.Map(tokenStorage)
 	weedAdapter := weed.NewAdapter(weedUrl)
 	m.Map(weedAdapter)
-	updater = &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}}
+	updater = &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, &PushNotificationsUpdater{db, weedAdapter}}
 	m.Map(updater)
 	m.Map(realtime)
 	m.Map(db)

@@ -167,7 +167,7 @@
     }
     self.reconnect = function() {
       var url = 'ws://' + host + '/api/realtime';
-      if (self.accounts.length > 0) {
+      if (self.accounts && self.accounts.length > 0) {
         url = url + '?id=' + self.accounts.join(',')
       }
       self.connection = new WebSocket(url);
@@ -228,6 +228,9 @@
       return account.id === $rootScope.active;
     };
     $scope.add = function(account) {
+      if (!$scope.account_ids) {
+        $scope.account_ids = [];
+      }
       $scope.account_ids.push(account.id);
       $scope.accounts.push(account);
     };
