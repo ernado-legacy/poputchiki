@@ -437,7 +437,7 @@ func (a *Application) ConvertResultListener() {
 					err = db.UpdateAudioOGG(id, fid)
 					audio.AudioOgg = fid
 				}
-				if resp.Format == "m4a" {
+				if resp.Format == "mp3" {
 					err = db.UpdateAudioAAC(id, fid)
 					audio.AudioAac = fid
 				}
