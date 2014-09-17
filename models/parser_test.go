@@ -83,6 +83,25 @@ func TestParser(t *testing.T) {
 				So(v.World[0], ShouldEqual, "world")
 				So(v.World[1], ShouldEqual, "hello")
 			})
+			Convey("Comma-separated to array", func() {
+				req, _ := http.NewRequest("GET", "/?world=world,hello,kekus", nil)
+				v := &TestStructList{}
+				err := Parse(req, v)
+				So(err, ShouldBeNil)
+				So(len(v.World), ShouldEqual, 3)
+				So(v.World[0], ShouldEqual, "world")
+				So(v.World[1], ShouldEqual, "hello")
+				So(v.World[2], ShouldEqual, "kekus")
+			})
+			Convey("Comma-separated with escapes to array", func() {
+				req, _ := http.NewRequest("GET", "/?world=\"world,hello\",kekus", nil)
+				v := &TestStructList{}
+				err := Parse(req, v)
+				So(err, ShouldBeNil)
+				So(len(v.World), ShouldEqual, 2)
+				So(v.World[0], ShouldEqual, "world,hello")
+				So(v.World[1], ShouldEqual, "kekus")
+			})
 		})
 	})
 }

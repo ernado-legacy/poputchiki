@@ -1,6 +1,8 @@
 package models
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"gopkg.in/mgo.v2/bson"
@@ -34,13 +36,25 @@ func mapToStruct(q url.Values, val interface{}) (bson.M, error) {
 			continue
 		}
 		value := q[key]
+		if len(value) == 0 {
+			continue
+		}
 		if field.Type.Name() == "bool" {
 			v := strings.ToLower(value[0])
 			nQ[key] = v == "true" || v == "1"
 			continue
 		}
 		if field.Type.Kind() == reflect.Slice {
-			nQ[key] = value
+			if len(value) > 1 {
+				nQ[key] = value
+				continue
+			}
+			reader := csv.NewReader(bytes.NewBufferString(value[0]))
+			record, err := reader.Read()
+			if err != nil {
+				return nQ, err
+			}
+			nQ[key] = record
 			continue
 		}
 		if len(value) == 1 {
