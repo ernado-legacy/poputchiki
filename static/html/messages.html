@@ -229,6 +229,27 @@
       });
     };
     $scope.update();
+    $scope.onData = function(data) {
+      console.log('accounts handling', data.type)
+      if (data.type != "messages") {
+        return;
+      }
+      if (data.destination == $rootScope.active) {
+        console.log('chat is active');
+        return;
+      }
+      angular.forEach($scope.accounts, function(value){
+        if (data.destination == value.id) {
+          console.log('found destination');
+          if (!value.count) {
+            value.count == 0;
+          }
+          console.log('increasing');
+          value.count += 1;
+        }
+      })
+    };
+    connection.addCallback($scope.onData);
     $scope.setActive = function(account) {
       $rootScope.active = account.id; 
     };
@@ -290,16 +311,12 @@
         return;
       }
       if (message.destination != $rootScope.active) {
-        console.log('user not active');
         return;
       }
       $scope.$apply(function() {
         for (var i = 0; i < $scope.chats.length; i++) {
           if($scope.chats[i].id == message.chat) {
-            console.log($scope.chats[i]);
-            console.log('increasing count', $scope.chats[i].unread);
             $scope.chats[i].unread += 1;
-            console.log('count', $scope.chats[i].unread);
             return
           }
         };
@@ -351,7 +368,6 @@
       var message = {text: $scope.text, origin: $rootScope.active};
       $http({method: 'PUT', url: '/api/user/' + $rootScope.chat + '/messages', data: message}).success(function(data) {
         $scope.text = "";
-        // $rootScope.messages.push(message);
       });
     }
   }]);
@@ -367,7 +383,6 @@
       var message = data.target;
       console.log(message.chat, $rootScope.chat);
       if (message.chat != $rootScope.chat) {
-        console.log('it is bad chat, lel');
         return;
       }
       if ($rootScope.messages.length > 0) {
@@ -375,7 +390,6 @@
         for (var i = messages.length - 1; i >= 0; i--) {
           console.log(messages[i].id, message.id);
           if (messages[i].id == message.id) {
-            console.log('already in chat');
             return;
           }
         };
