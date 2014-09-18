@@ -175,7 +175,15 @@
       if (self.accounts && self.accounts.length > 0) {
         url = url + '?id=' + self.accounts.join(',')
       }
-      self.connection = new WebSocket(url);
+      try {
+        if (self.connection) {
+          self.connection.close();
+        }
+        self.connection = new WebSocket(url);
+      } catch(e) {
+        console.log("ws error", e)
+        return setTimeout(self.reconnect, self.timeout);
+      }
       self.connection.onopen = function () {
         console.log('ws connected')
       };
@@ -194,12 +202,7 @@
     }
 
     self.connect = function() {
-      try {
-        self.reconnect()
-      } catch(e) {
-        console.log("ws error", e)
-        return setTimeout(self.reconnect, self.timeout);
-      }
+      self.reconnect()
     }
 
     return self;
