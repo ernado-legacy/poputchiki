@@ -293,7 +293,7 @@
       $scope.accounts.push(account);
     };
     $scope.remove = function(account) {
-      $scope.account_ids.splice($scope.account_ids.indexOf(account.id));
+      $scope.account_ids.splice($scope.account_ids.indexOf(account.id), 1);
       $scope.update();
     }
   }]);
