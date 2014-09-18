@@ -580,17 +580,19 @@ func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
 	return Render(UnreadCount{n})
 }
 
-func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token, pagination Pagination) (int, []byte) {
+func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token, pagination Pagination, realtime RealtimeInterface) (int, []byte) {
 	messages, err := db.GetMessagesFromUser(t.Id, origin, pagination)
-	if err != nil {
+	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))
 	}
 	if messages == nil {
 		return Render([]interface{}{})
 	}
-	err = db.SetReadMessagesFromUser(t.Id, origin)
-	if err != nil {
-		log.Println("SetReadMessagesFromUser", err)
+	if err := db.SetReadMessagesFromUser(t.Id, origin); err != nil {
+		return Render(BackendError(err))
+	}
+	if err := sendCounters(db, t, realtime); err != nil {
+		return Render(BackendError(err))
 	}
 	return Render(messages)
 }
@@ -627,18 +629,23 @@ func RemoveChat(db DataBase, origin bson.ObjectId, t *gotok.Token) (int, []byte)
 }
 
 // GetChats returns all user chats
-func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, token *gotok.Token) (int, []byte) {
 	dialogs, err := db.GetChats(id)
+	user := db.Get(token.Id)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	for k := range dialogs {
 		if dialogs[k].User != nil {
 			dialogs[k].User.Prepare(adapter, db, webp, audio)
+			dialogs[k].User.SetIsFavorite(user)
+			dialogs[k].User.SetIsBlacklisted(user)
 			dialogs[k].User.CleanPrivate()
 		}
 		if dialogs[k].OriginUser != nil {
 			dialogs[k].OriginUser.Prepare(adapter, db, webp, audio)
+			dialogs[k].User.SetIsFavorite(user)
+			dialogs[k].User.SetIsBlacklisted(user)
 			dialogs[k].OriginUser.CleanPrivate()
 		}
 	}
