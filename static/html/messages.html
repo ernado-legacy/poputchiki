@@ -71,6 +71,27 @@
         top: 3px;
         right: 3px;
       }
+
+      .remove {
+        float:right;
+        margin-top:-2px;
+        margin-right:-2px;
+        cursor:pointer;
+        color: #fff;
+        border: 1px solid #AEAEAE;
+        border-radius: 11px;
+        background: red;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-block;
+        line-height: 0px;
+        padding: 6px 3px;    
+        opacity: 0.5;
+      }
+
+      .remove:before {
+        content: "x";
+      }
     </style>
     <!-- Bootstrap -->
     <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
@@ -91,6 +112,7 @@
           <img ng-src="{{ account.avatar_url }}" alt="avatar" class="img-circle avatar">
           <span class="username">{{ account.name }}</span>
           <span class="badge count" ng-show="account.count">{{ account.count }}</span>
+          <div class="remove" ng-click="remove(account)"></div>
         </div>
         <div ng-controller="AccountSearch">
           <div class="user user-add" ng-click="activate()">добавить</div>
@@ -226,26 +248,26 @@
           }
           $rootScope.active = $scope.accounts[0].id;
         });
+
       });
     };
     $scope.update();
     $scope.onData = function(data) {
-      console.log('accounts handling', data.type)
       if (data.type != "messages") {
         return;
       }
       if (data.destination == $rootScope.active) {
-        console.log('chat is active');
         return;
       }
       angular.forEach($scope.accounts, function(value){
         if (data.destination == value.id) {
-          console.log('found destination');
-          if (!value.count) {
-            value.count == 0;
-          }
-          console.log('increasing');
-          value.count += 1;
+          $scope.$apply(function(){
+            if (!value.count) {
+              value.count = 0;
+            }
+            value.count += 1;
+          });
+          return false;
         }
       })
     };
@@ -256,6 +278,13 @@
     $scope.isActive = function(account) {
       return account.id === $rootScope.active;
     };
+    $scope.$watch('active', function(){
+      angular.forEach($scope.accounts, function(value){
+        if ($scope.isActive(value)) {
+          value.count = 0;
+        }
+      });
+    });
     $scope.add = function(account) {
       if (!$scope.account_ids) {
         $scope.account_ids = [];
@@ -263,6 +292,10 @@
       $scope.account_ids.push(account.id);
       $scope.accounts.push(account);
     };
+    $scope.remove = function(account) {
+      $scope.account_ids.splice($scope.account_ids.indexOf(account.id));
+      $scope.update();
+    }
   }]);
   app.controller('AccountSearch', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
     $scope.email = "";
@@ -376,25 +409,21 @@
     $rootScope.messages = [];
     $scope.glued = true;
     $scope.onData = function(data) {
-      console.log('data handling', data.type)
       if (data.type != "messages") {
         return;
       }
       var message = data.target;
-      console.log(message.chat, $rootScope.chat);
       if (message.chat != $rootScope.chat) {
         return;
       }
       if ($rootScope.messages.length > 0) {
         var messages = $rootScope.messages;
         for (var i = messages.length - 1; i >= 0; i--) {
-          console.log(messages[i].id, message.id);
           if (messages[i].id == message.id) {
             return;
           }
         };
       }
-      console.log('appear');
       $scope.$apply(function() {
         $rootScope.messages.push(message);
       });
