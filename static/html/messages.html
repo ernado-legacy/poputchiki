@@ -187,17 +187,21 @@
         return setTimeout(self.reconnect, self.timeout);
       }
     }
-    try {
-      self.reconnect()
-    } catch(e) {
-      console.log("ws error", e)
-      return setTimeout(self.reconnect, self.timeout);
+
+    self.connect = function() {
+      try {
+        self.reconnect()
+      } catch(e) {
+        console.log("ws error", e)
+        return setTimeout(self.reconnect, self.timeout);
+      }
     }
 
     return self;
   }
 
-  var connection = WS();
+  var connection = new WS();
+  connection.connect();
 
   var app = angular.module("chat", ['luegg.directives', 'LocalStorageModule']);
   app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', '$q', function($scope, $rootScope, $http, localStorageService, $q) {
