@@ -95,6 +95,7 @@ type User struct {
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 	IsFavorite          bool            `json:"is_favourite"           bson:"-"`
+	IsBlacklisted       bool            `json:"is_blacklisted"           bson:"-"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible,omitempty"    bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
@@ -193,11 +194,20 @@ func (u *User) SetIsFavorite(user *User) {
 	}
 }
 
+func (u *User) SetIsBlacklisted(user *User) {
+	for _, v := range user.Blacklist {
+		if v == u.Id {
+			u.IsBlacklisted = true
+		}
+	}
+}
+
 type Users []*User
 
 func (u Users) SetIsFavorite(user *User) {
 	for _, v := range u {
 		v.SetIsFavorite(user)
+		v.SetIsBlacklisted(user)
 	}
 }
 
