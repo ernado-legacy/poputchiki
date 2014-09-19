@@ -97,7 +97,7 @@ type User struct {
 	LikingsAgeMax       int             `json:"likings_age_max,omitempty"      bson:"likings_age_max,omitempty"`
 	IsAdmin             bool            `json:"-"                      bson:"is_admin"`
 	IsFavorite          bool            `json:"is_favourite"           bson:"-"`
-	IsBlacklisted       bool            `json:"is_blacklisted"           bson:"-"`
+	IsBlacklisted       bool            `json:"is_blacklisted"         bson:"-"`
 	Location            []float64       `json:"location,omitempty"     bson:"location"`
 	Invisible           bool            `json:"invisible,omitempty"    bson:"invisible"`
 	Vip                 bool            `json:"vip"                    bson:"vip,omitempty"`
@@ -105,15 +105,15 @@ type User struct {
 	Rating              float64         `json:"rating"                 bson:"rating"`
 	Subscriptions       []string        `json:"subscriptions,omitempty"bson:"subscriptions"`
 	Registered          time.Time       `json:"registered,omitempty"   bson:"registered"`
-	Orientation         string          `json:"orientation" bson:"orientation"`
-	Relations           string          `json:"relations" bson:"relations"`
-	Children            string          `json:"children" bson:"children"`
-	Education           string          `json:"education" bson:"education"`
-	AttitudeSmoking     string          `json:"attitude_to_smoking" bson:"attitude_to_smoking"`
-	AttitudeAlcohol     string          `json:"attitude_to_alcohol" bson:"attitude_to_alcohol"`
-	Wealth              string          `json:"wealth" bson:"wealth"`
-	Accommodation       string          `json:"accommodation" bson:"accommodation"`
-	IOsTokens           []string        `json:"ios_tokens,omitempty"  bson:"ios_tokens,omitempty"`
+	Orientation         string          `json:"orientation"            bson:"orientation"`
+	Relations           string          `json:"relations"              bson:"relations"`
+	Children            string          `json:"children"               bson:"children"`
+	Education           string          `json:"education"              bson:"education"`
+	AttitudeSmoking     string          `json:"attitude_to_smoking"    bson:"attitude_to_smoking"`
+	AttitudeAlcohol     string          `json:"attitude_to_alcohol"    bson:"attitude_to_alcohol"`
+	Wealth              string          `json:"wealth"                 bson:"wealth"`
+	Accommodation       string          `json:"accommodation"          bson:"accommodation"`
+	IOsTokens           []string        `json:"ios_tokens,omitempty"   bson:"ios_tokens,omitempty"`
 	AndroidTokens       []string        `json:"android_tokens,omitempty" bson:"android_tokens,omitempty"`
 }
 
