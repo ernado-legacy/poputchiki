@@ -15,8 +15,8 @@ var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday"
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
 	"likings_sex", "likings_destinations", "likings_seasons", "likings_country", "likings_city",
 	"about", "location", "likings_age_min", "likings_age_max", "password", "invisible", "subscriptions",
-   "orientation", "relations", "children", "education", "attitude_to_smoking",
-   "attitude_to_alcohol", "wealth", "accommodation",
+	"orientation", "relations", "children", "education", "attitude_to_smoking",
+	"attitude_to_alcohol", "wealth", "accommodation",
 }
 
 const (
@@ -105,18 +105,17 @@ type User struct {
 	Rating              float64         `json:"rating"                 bson:"rating"`
 	Subscriptions       []string        `json:"subscriptions,omitempty"bson:"subscriptions"`
 	Registered          time.Time       `json:"registered,omitempty"   bson:"registered"`
-	Orientation         string          `json:"orientation" bson:"orientation,omitempty"`
-	Relations           string          `json:"relations" bson:"relations,omitempty"`
-	Children            string          `json:"children" bson:"children,omitempty"`
-	Education           string          `json:"education" bson:"education,omitempty"`
-	AttitudeSmoking     string          `json:"attitude_to_smoking" bson:"attitude_to_smoking,omitempty"`
-	AttitudeAlcohol     string          `json:"attitude_to_alcohol" bson:"attitude_to_alcohol,omitempty"`
-	Wealth              string          `json:"wealth" bson:"wealth,omitempty"`
-	Accommodation       string          `json:"accommodation" bson:"accommodation,omitempty"`
+	Orientation         string          `json:"orientation" bson:"orientation"`
+	Relations           string          `json:"relations" bson:"relations"`
+	Children            string          `json:"children" bson:"children"`
+	Education           string          `json:"education" bson:"education"`
+	AttitudeSmoking     string          `json:"attitude_to_smoking" bson:"attitude_to_smoking"`
+	AttitudeAlcohol     string          `json:"attitude_to_alcohol" bson:"attitude_to_alcohol"`
+	Wealth              string          `json:"wealth" bson:"wealth"`
+	Accommodation       string          `json:"accommodation" bson:"accommodation"`
 	IOsTokens           []string        `json:"ios_tokens,omitempty"  bson:"ios_tokens,omitempty"`
 	AndroidTokens       []string        `json:"android_tokens,omitempty" bson:"android_tokens,omitempty"`
 }
-
 
 type GuestUser struct {
 	User `bson:"-"`
