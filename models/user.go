@@ -15,6 +15,8 @@ var UserWritableFields = []string{"name", "email", "phone", "avatar", "birthday"
 	"city", "country", "weight", "growth", "destinations", "sex", "is_sponsor", "is_host",
 	"likings_sex", "likings_destinations", "likings_seasons", "likings_country", "likings_city",
 	"about", "location", "likings_age_min", "likings_age_max", "password", "invisible", "subscriptions",
+   "orientation", "relations", "children", "education", "attitude_to_smoking",
+   "attitude_to_alcohol", "wealth", "accommodation",
 }
 
 const (
@@ -114,6 +116,7 @@ type User struct {
 	IOsTokens           []string        `json:"ios_tokens,omitempty"  bson:"ios_tokens,omitempty"`
 	AndroidTokens       []string        `json:"android_tokens,omitempty" bson:"android_tokens,omitempty"`
 }
+
 
 type GuestUser struct {
 	User `bson:"-"`

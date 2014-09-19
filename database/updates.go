@@ -46,7 +46,7 @@ func (db *DB) IsUpdateDublicate(origin, destination bson.ObjectId, t string, dur
 	if err != nil {
 		return false, err
 	}
-	return count > 1, nil
+	return count > 0, nil
 }
 
 func (db *DB) GetUpdatesTypeCount(destination bson.ObjectId, t string) (int, error) {

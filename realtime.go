@@ -324,21 +324,25 @@ func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.Object
 func (u *RealtimeUpdater) Push(update models.Update) error {
 	log.Println("[updates]", "handling", update.Type, update.Id.Hex())
 	target := u.db.Get(update.Destination)
-	_, err := u.db.AddUpdateDirect(&update)
-	if err != nil {
-		log.Printf("%+v", update)
-		log.Println(err)
-		return err
-	}
-	err = u.realtime.Push(update)
-	if err != nil {
-		log.Println("[updates]", "realtime error", err)
-		return err
-	}
 	dublicate, err := u.db.IsUpdateDublicate(update.User, update.Destination, update.Type, DublicateUpdatesTimeout)
 	if err != nil {
 		return err
 	}
+	if dublicate && update.Type == models.UpdateGuests {
+		log.Println("[updates]", "dublicate")
+		return nil
+	}
+	_, err = u.db.AddUpdateDirect(&update)
+	if err != nil {
+		log.Println("[updates]", "realtime error", err)
+		return err
+	}
+
+	if err := u.realtime.Push(update); err != nil {
+		log.Println("[updates]", "realtime error", err)
+		return err
+	}
+
 	if dublicate {
 		log.Println("[updates]", "dublicate")
 		return nil
