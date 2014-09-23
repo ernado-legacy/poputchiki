@@ -86,6 +86,10 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 			return Render(ErrorBlacklisted)
 		}
 	}
+	if t == nil {
+		user.CleanPrivate()
+	}
+
 	// hiding private fields for non-owner
 	if t != nil && t.Id != id {
 		user.CleanPrivate()
