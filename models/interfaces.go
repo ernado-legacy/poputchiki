@@ -43,6 +43,7 @@ type DataBase interface {
 	Add(u *User) error
 	GetUsersByEmail(email string) (Users, error)
 	Update(id bson.ObjectId, update bson.M) (*User, error)
+	AvatarRemove(user, id bson.ObjectId) error
 	// Delete(id bson.ObjectId) error
 	AddToFavorites(id bson.ObjectId, favId bson.ObjectId) error
 	RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error

@@ -80,13 +80,17 @@
         color: #fff;
         border: 1px solid #AEAEAE;
         border-radius: 11px;
-        background: red;
+        background: gray;
         font-size: 12px;
         font-weight: bold;
         display: inline-block;
         line-height: 0px;
         padding: 6px 3px;    
         opacity: 0.5;
+      }
+
+      .send-button, .text {
+        margin-top: 3px;
       }
 
       .remove:before {
@@ -118,7 +122,7 @@
           <div class="user user-add" ng-click="activate()">добавить</div>
           <div ng-show="show">
             <form novalidate>
-              <input type="text" name="text" placeholder="email" ng-model="email">
+              <input type="text" name="text" placeholder="email" ng-model="email" class="form-control">
             </form>
             <div ng-repeat="account in result" ng-click="add(account)">{{ account.name }}</div>
           </div>
@@ -131,8 +135,12 @@
       </div>
       <div>
         <form novalidate ng-submit="send()" ng-controller="MessageFormController">
-          <input type="text" name="text" placeholder="сообщение" ng-model="text">
-          <input type="submit" id="submit" value="отправить" />
+        <div class="row">
+          <div class="col-lg-12">
+            <textarea type="text" name="text" placeholder="сообщение" ng-model="text" class="form-control text" enter-submit="send()"></textarea>
+            <input type="submit" id="submit" value="отправить" class="btn btn-primary send-button" /> 
+          </div>
+        </div>
         </form>
       </div>
       </div>
@@ -152,7 +160,7 @@
           <div class="user user-add" ng-click="activate()">добавить</div>
           <div ng-show="show">
             <form novalidate>
-              <input type="text" name="text" placeholder="Имя" ng-model="name">
+              <input type="text" name="text" placeholder="Имя" ng-model="name" class="form-control">
             </form>
             <div ng-repeat="account in result" ng-click="add(account)">
             {{ account.name }}, {{ account.age }}, {{ account.city }}
@@ -192,6 +200,7 @@
       self.callbacks.push(callback);
     }
     self.reconnect = function() {
+      self.timeout *= 2;
       var url = 'ws://' + host + '/api/realtime';
       if (self.accounts && self.accounts.length > 0) {
         url = url + '?id=' + self.accounts.join(',')
@@ -230,6 +239,22 @@
   connection.connect();
 
   var app = angular.module("chat", ['luegg.directives', 'LocalStorageModule']);
+  app.directive('enterSubmit', function () {
+    return {
+      restrict: 'A',
+      link: function (scope, elem, attrs) {
+        elem.bind('keydown', function(event) {
+          var code = event.keyCode || event.which;
+          if (code === 13) {
+            if (!event.shiftKey) {
+              event.preventDefault();
+              scope.$apply(attrs.enterSubmit);
+            }
+          }
+        });
+      }
+    }
+  });
   app.controller('AccountsController', ['$scope', '$rootScope', '$http', 'localStorageService', '$q', function($scope, $rootScope, $http, localStorageService, $q) {
     $scope.accounts = []; 
     $rootScope.active = null;

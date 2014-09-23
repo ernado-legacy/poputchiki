@@ -87,7 +87,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 		}
 	}
 	// hiding private fields for non-owner
-	if t.Id != id {
+	if t != nil && t.Id != id {
 		user.CleanPrivate()
 		go func() {
 			defer func() {
@@ -103,7 +103,9 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 	}
 	// preparing for rendering to json
 	user.Prepare(adapter, db, webp, audio)
-	user.SetIsFavorite(db.Get(t.Id))
+	if t != nil {
+		user.SetIsFavorite(db.Get(t.Id))
+	}
 	return Render(user)
 }
 
@@ -1355,6 +1357,10 @@ func RemovePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, admin IsAdmin) (
 		return Render(ErrorObjectNotFound)
 	}
 	if err != nil {
+		return Render(BackendError(err))
+	}
+	err = db.AvatarRemove(userId, id)
+	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))
 	}
 	return Render("ok")

@@ -210,39 +210,16 @@ func NewApp() *Application {
 		r.Get("/countries", GetCountries)
 		r.Get("/confirm/email/:token", ConfirmEmail)
 	})
-	m.Get(root+"/pay/success", RobokassaSuccessHandler)
 	m.Group(root, func(r martini.Router) {
-		r.Get("/admin", NeedAdmin, AdminView)
-		r.Get("/admin/photo", NeedAdmin, PhotoView)
-		r.Get("/admin/messages", NeedAdmin, AdminMessages)
-		r.Get("/confirm/phone/start", ConfirmPhoneStart)
-		r.Get("/confirm/phone/:token", ConfirmPhone)
-		r.Post("/feedback", Feedback)
-		r.Post("/travel", WantToTravel)
-		r.Post("/pay/:value", GetTransactionUrl)
-		r.Get("/pay/:value", GetTransactionUrl)
-
-		r.Post("/push/:system/:token", AddToken)
-		r.Delete("/push/:system/:token", RemoveToken)
-
-		r.Get("/topup", TopUp)
-		r.Post("/topup", TopUp)
-
-		r.Get("/token", GetToken)
-		r.Post("/vip/:duration", EnableVip)
-
-		r.Get("/user", GetCurrentUser)
-
-		r.Get("/chat/:user/:chat", NeedAdmin, GetChat)
-		r.Get("/users/:email", NeedAdmin, GetUsersByEmail)
+		r.Get("/stripe", GetStripe)
 		r.Group("/user/:id", func(r martini.Router) {
 			r.Get("", GetUser)
 			r.Get("/status", GetCurrentStatus)
 			r.Get("/login", NeedAdmin, AdminLogin)
-			r.Put("/messages", SendMessage)
+			r.Put("/messages", NeedAuth, SendMessage)
 			r.Get("/messages", GetMessagesFromUser)
-			r.Delete("/messages", RemoveChat)
-			r.Post("/invite", SendInvite)
+			r.Delete("/messages", NeedAuth, RemoveChat)
+			r.Post("/invite", NeedAuth, SendInvite)
 			r.Get("/chats", GetChats)
 			r.Get("/photo", GetUserPhoto)
 			r.Get("/video", GetUserVideo)
@@ -268,11 +245,36 @@ func NewApp() *Application {
 				d.Get("/unread", GetUnreadCount)
 				d.Get("/followers", GetFollowers)
 
-			}, IdEqualityRequired)
+			}, NeedAuth, IdEqualityRequired)
 
 		}, IdWrapper)
+	})
+	m.Get(root+"/pay/success", RobokassaSuccessHandler)
+	m.Group(root, func(r martini.Router) {
+		r.Get("/admin", NeedAdmin, AdminView)
+		r.Get("/admin/photo", NeedAdmin, PhotoView)
+		r.Get("/admin/messages", NeedAdmin, AdminMessages)
+		r.Get("/confirm/phone/start", ConfirmPhoneStart)
+		r.Get("/confirm/phone/:token", ConfirmPhone)
+		r.Post("/feedback", Feedback)
+		r.Post("/travel", WantToTravel)
+		r.Post("/pay/:value", GetTransactionUrl)
+		r.Get("/pay/:value", GetTransactionUrl)
 
-		r.Get("/stripe", GetStripe)
+		r.Post("/push/:system/:token", AddToken)
+		r.Delete("/push/:system/:token", RemoveToken)
+
+		r.Get("/topup", TopUp)
+		r.Post("/topup", TopUp)
+
+		r.Get("/token", GetToken)
+		r.Post("/vip/:duration", EnableVip)
+
+		r.Get("/user", GetCurrentUser)
+
+		r.Get("/chat/:user/:chat", NeedAdmin, GetChat)
+		r.Get("/users/:email", NeedAdmin, GetUsersByEmail)
+
 		r.Post("/stripe", AddStripeItem)
 		r.Put("/stripe", AddStripeItem)
 

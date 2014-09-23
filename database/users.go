@@ -100,6 +100,12 @@ func (db *DB) RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error {
 	return db.users.UpdateId(id, bson.M{"$pull": bson.M{"favorites": favId}})
 }
 
+func (db *DB) AvatarRemove(user, id bson.ObjectId) error {
+	selector := bson.M{"_id": user, "avatar": id}
+	update := bson.M{"$unser": "avatar"}
+	return db.users.Update(selector, update)
+}
+
 func (db *DB) GetFavorites(id bson.ObjectId) []*User {
 	var favoritesIds []bson.ObjectId
 	var favorites []*User

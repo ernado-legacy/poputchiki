@@ -145,6 +145,22 @@ func TestStatus(t *testing.T) {
 	})
 }
 
+func TestSeo(t *testing.T) {
+	a := NewTestApp()
+	defer a.Close()
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(a.Reset)
+		token := new(gotok.Token)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token), ShouldBeNil)
+		Convey("User get", func() {
+			So(a.Process(nil, "GET", "/api/user/"+token.Id.Hex(), nil, nil), ShouldBeNil)
+		})
+		Convey("Stripe get", func() {
+			So(a.Process(nil, "GET", "/api/stripe", nil, nil), ShouldBeNil)
+		})
+	})
+}
+
 func TestUpload(t *testing.T) {
 	path := "test/image.jpg"
 	a := NewTestApp()
@@ -267,16 +283,6 @@ func TestMethods(t *testing.T) {
 				a.ServeHTTP(res, req)
 				a.DropDatabase()
 				So(res.Code, ShouldEqual, http.StatusBadRequest)
-			})
-			Convey("401 Unauthorized", func() {
-				res := httptest.NewRecorder()
-				err := json.Unmarshal(tokenBody, &token1)
-				So(err, ShouldEqual, nil)
-				reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", bson.NewObjectId().Hex(), "badtoken")
-				req, _ := http.NewRequest("GET", reqUrl, nil)
-				a.ServeHTTP(res, req)
-				a.DropDatabase()
-				So(res.Code, ShouldEqual, http.StatusUnauthorized)
 			})
 			Convey("404 Not found with nonexistent id", func() {
 				res := httptest.NewRecorder()
@@ -481,7 +487,7 @@ func TestMethods(t *testing.T) {
 
 						// trying to get user information with scope
 						reqUrl := fmt.Sprintf("/api/user/%s/?token=%s", id.Hex(), token1.Token)
-						req, _ := http.NewRequest("GET", reqUrl, nil)
+						req, _ := http.NewRequest("POST", reqUrl, nil)
 						a.ServeHTTP(res, req)
 
 						a.DropDatabase()

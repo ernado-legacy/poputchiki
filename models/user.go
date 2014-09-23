@@ -189,6 +189,9 @@ func diff(t1, t2 time.Time) (years int) {
 }
 
 func (u *User) SetIsFavorite(user *User) {
+	if user == nil {
+		return
+	}
 	for _, v := range user.Favorites {
 		if v == u.Id {
 			u.IsFavorite = true
@@ -197,6 +200,9 @@ func (u *User) SetIsFavorite(user *User) {
 }
 
 func (u *User) SetIsBlacklisted(user *User) {
+	if user == nil {
+		return
+	}
 	for _, v := range user.Blacklist {
 		if v == u.Id {
 			u.IsBlacklisted = true
