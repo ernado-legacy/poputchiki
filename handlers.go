@@ -82,7 +82,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 	}
 	// checking for blacklist
 	for _, u := range user.Blacklist {
-		if u == t.Id {
+		if t != nil && u == t.Id {
 			return Render(ErrorBlacklisted)
 		}
 	}
