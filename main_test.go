@@ -161,6 +161,17 @@ func TestSeo(t *testing.T) {
 	})
 }
 
+func TestUpdates(t *testing.T) {
+	a := NewTestApp()
+	defer a.Close()
+	Convey("Registration with unique username and valid password should be successfull", t, func() {
+		Reset(a.Reset)
+		token1, token2 := new(gotok.Token), new(gotok.Token)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token1), ShouldBeNil)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"kekele", "shelele"}, token2), ShouldBeNil)
+	})
+}
+
 func TestUpload(t *testing.T) {
 	path := "test/image.jpg"
 	a := NewTestApp()
