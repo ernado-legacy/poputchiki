@@ -181,7 +181,7 @@ func TestMessages(t *testing.T) {
 							n, err := db.GetUnreadCount(destination)
 							So(n, ShouldEqual, 3)
 							So(err, ShouldBeNil)
-							Convey("Fist message should be second", func() {
+							Convey("First message should be second", func() {
 								messages, err := db.GetMessagesFromUser(destination, origin, pagination)
 								So(err, ShouldBeNil)
 								So(len(messages), ShouldEqual, 3)
@@ -208,8 +208,17 @@ func TestMessages(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 			Convey("Read destination", func() {
-				So(db.SetRead(destination, idDestination), ShouldBeNil)
-				m, err := db.GetMessage(idDestination)
+				m, err := db.GetMessage(idOrigin)
+				So(err, ShouldBeNil)
+				So(m.Read, ShouldBeFalse)
+				m, err = db.GetMessage(idDestination)
+				So(err, ShouldBeNil)
+				So(m.Read, ShouldBeFalse)
+				So(db.SetReadMessagesFromUser(destination, origin), ShouldBeNil)
+				m, err = db.GetMessage(idDestination)
+				So(err, ShouldBeNil)
+				So(m.Read, ShouldBeTrue)
+				m, err = db.GetMessage(idOrigin)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)
 				Convey("Integrity", Integrity(db, uOrigin))

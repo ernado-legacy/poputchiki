@@ -49,7 +49,7 @@ func newMessagePair(db DataBase, origin, destination bson.ObjectId, text string,
 	toDestination.Destination = destination
 	toOrigin.Text = text
 	toDestination.Text = text
-	toOrigin.Read = true
+	toOrigin.Read = false
 
 	lastOrigin, err := db.GetLastMessageIdFromUser(origin, destination)
 	if err != nil {

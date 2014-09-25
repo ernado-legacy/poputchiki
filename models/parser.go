@@ -101,6 +101,9 @@ func Parse(r *http.Request, v interface{}) error {
 		if len(r.PostForm) > 0 {
 			return mapToStructValue(r.PostForm, v)
 		}
+		if r.MultipartForm != nil && len(r.MultipartForm.Value) > 0 {
+			return mapToStructValue(r.MultipartForm.Value, v)
+		}
 	}
 	return mapToStructValue(r.URL.Query(), v)
 }

@@ -166,9 +166,68 @@ func TestUpdates(t *testing.T) {
 	defer a.Close()
 	Convey("Registration with unique username and valid password should be successfull", t, func() {
 		Reset(a.Reset)
-		token1, token2 := new(gotok.Token), new(gotok.Token)
+		token1, token2, token3 := new(gotok.Token), new(gotok.Token), new(gotok.Token)
 		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"lalka", "kopalka"}, token1), ShouldBeNil)
 		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"kekele", "shelele"}, token2), ShouldBeNil)
+		So(a.Process(nil, "POST", "/api/auth/register/", LoginCredentials{"asdfsadf", "123gfdxcv"}, token3), ShouldBeNil)
+		Convey("Guest", func() {
+			link := fmt.Sprintf("/api/user/%s", token2.Id.Hex())
+			So(a.Process(token1, "GET", link, nil, nil), ShouldBeNil)
+			So(a.Process(token3, "GET", link, nil, nil), ShouldBeNil)
+			So(a.Process(token3, "GET", link, nil, nil), ShouldBeNil)
+			time.Sleep(time.Millisecond * 100)
+			log.Println("getting updates")
+			guests := []*GuestUser{}
+			link = fmt.Sprintf("/api/user/%s/guests", token2.Id.Hex())
+			So(a.Process(token2, "GET", link, nil, &guests), ShouldBeNil)
+			counters := Counters{}
+			updates, err := a.db.GetUpdates(token2.Id, UpdateGuests, Pagination{})
+			So(err, ShouldBeNil)
+			So(len(updates), ShouldEqual, 2)
+			for _, update := range updates {
+				log.Println(update)
+			}
+			So(a.Process(token2, "GET", "/api/updates/counters", nil, &counters), ShouldBeNil)
+			found := false
+			So(len(counters), ShouldEqual, 2)
+			for _, counter := range counters {
+				if counter.Type == "guests" {
+					found = true
+					So(counter.Count, ShouldEqual, 2)
+				}
+			}
+			So(found, ShouldBeTrue)
+		})
+		Convey("Like", func() {
+			status := new(Status)
+			So(a.Process(token2, "POST", "/api/status?text=test", nil, status), ShouldBeNil)
+			link := fmt.Sprintf("/api/status/%s/like", status.Id.Hex())
+			So(a.Process(token1, "POST", link, nil, nil), ShouldBeNil)
+			So(a.Process(token3, "POST", link, nil, nil), ShouldBeNil)
+			time.Sleep(time.Millisecond * 100)
+			log.Println("getting updates")
+			Convey("Counters", func() {
+				counters := Counters{}
+				So(a.Process(token2, "GET", "/api/updates/counters", nil, &counters), ShouldBeNil)
+				So(len(counters), ShouldEqual, 2)
+				found := false
+				for _, counter := range counters {
+					if counter.Type == "likes" {
+						found = true
+						So(counter.Count, ShouldEqual, 2)
+					}
+				}
+				So(found, ShouldBeTrue)
+			})
+			Convey("Updates", func() {
+				updates, err := a.db.GetUpdates(token2.Id, UpdateGuests, Pagination{})
+				So(err, ShouldBeNil)
+				So(len(updates), ShouldEqual, 2)
+				for _, update := range updates {
+					log.Println(update)
+				}
+			})
+		})
 	})
 }
 

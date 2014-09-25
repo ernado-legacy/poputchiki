@@ -174,6 +174,15 @@ type DataBase interface {
 	RemoveIosToken(id bson.ObjectId, token string) error
 	AddAndroidToken(id bson.ObjectId, token string) error
 	AddIosToken(id bson.ObjectId, token string) error
+
+	AddPresent(present *Present) error
+	RemovePresent(id bson.ObjectId) error
+	GetPresentByType(t string) (*Present, error)
+	GetAllPresents() ([]*Present, error)
+	SendPresent(origin, destination bson.ObjectId, t string) (*PresentEvent, error)
+	GetUserPresents(destination bson.ObjectId) ([]*PresentEvent, error)
+	GetPresent(id bson.ObjectId) (*Present, error)
+	UpdatePresent(id bson.ObjectId, present *Present) (*Present, error)
 }
 
 type RealtimeInterface interface {

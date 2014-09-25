@@ -51,7 +51,7 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 }
 
 func (r *RealtimeRedis) Push(update models.Update) error {
-	log.Println("[realtime] pushing update for", update.Destination.Hex())
+	log.Println("[realtime] pushing update for", update.Destination.Hex(), update.Type, update.TargetType)
 	conn := r.Conn()
 	defer conn.Close()
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, update.Destination.Hex()}
@@ -62,7 +62,7 @@ func (r *RealtimeRedis) Push(update models.Update) error {
 	}
 	_, err = conn.Do("PUBLISH", key, eJson)
 	if err == nil {
-		log.Println("[realtime] pushed for", update.Destination.Hex())
+		log.Println("[realtime] pushed for", update.Destination.Hex(), update.Type, update.TargetType)
 	}
 	return err
 }
@@ -257,6 +257,11 @@ type PushNotificationsUpdater struct {
 }
 
 func (e *PushNotificationsUpdater) Push(update models.Update) error {
+	user := e.db.Get(update.Destination)
+	if len(user.IOsTokens) == 0 && len(user.AndroidTokens) == 0 {
+		log.Println("[updates]", "no tokens")
+		return nil
+	}
 	u := url.URL{}
 	u.Host = "cydev.ru"
 	u.Scheme = "https"
@@ -266,7 +271,6 @@ func (e *PushNotificationsUpdater) Push(update models.Update) error {
 		log.Println("[email]", err)
 	}
 	q.Add("message", update.Theme())
-	user := e.db.Get(update.Destination)
 	for _, token := range user.IOsTokens {
 		q.Add("appleid", token)
 	}

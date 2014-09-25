@@ -2039,6 +2039,107 @@ func RemoveToken(db DataBase, parm martini.Params, t *gotok.Token) (int, []byte)
 	return Render(token)
 }
 
+func AddPresent(db DataBase, adapter *weed.Adapter, req *http.Request, parser Parser) (int, []byte) {
+	f, h, err := req.FormFile(FORM_FILE)
+	type Data struct {
+		Cost  int    `json:"cost"`
+		Title string `json:"string`
+	}
+	data := new(Data)
+	if err := parser.Parse(data); err != nil {
+		return Render(ValidationError(err))
+	}
+	if data.Title == "" {
+		return Render(ValidationError(errors.New("Bad title")))
+	}
+	if data.Cost < 0 {
+		return Render(ValidationError(errors.New("Bad cost")))
+	}
+	format := "jpg"
+	s := strings.Split(h.Header.Get(ContentTypeHeader), "/")
+	if len(s) == 2 {
+		format = s[1]
+	}
+	if err != nil {
+		return Render(ValidationError(errors.New(fmt.Sprintf("No file at %s field", FORM_FILE))))
+	}
+	fid, _, _, err := adapter.Upload(f, "image", format)
+	present := new(Present)
+	present.Image = fid
+	present.Title = data.Title
+	present.Cost = data.Cost
+	present.Time = time.Now()
+	if err := db.AddPresent(present); err != nil {
+		return Render(BackendError(err))
+	}
+	if err := present.Prepare(adapter); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(present)
+}
+
+func GetAllPresents(db DataBase, adapter *weed.Adapter) (int, []byte) {
+	presents, err := db.GetAllPresents()
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	if err := Presents(presents).Prepare(adapter); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(presents)
+}
+
+func RemovePresent(db DataBase, id bson.ObjectId) (int, []byte) {
+	if err := db.RemovePresent(id); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render("ok")
+}
+
+func AdminPresents(w http.ResponseWriter) (int, []byte) {
+	data, err := AllTemplates.Bytes("presents.html")
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	return http.StatusOK, data
+}
+
+func UpdatePresent(db DataBase, id bson.ObjectId, parser Parser, req *http.Request, adapter *weed.Adapter) (int, []byte) {
+	present := new(Present)
+	f, h, ferr := req.FormFile(FORM_FILE)
+	log.Println(req.Form, req.PostForm)
+	if err := parser.Parse(present); err != nil {
+		return Render(ValidationError(err))
+	}
+	if present.Title == "" {
+		return Render(ValidationError(errors.New("Bad title")))
+	}
+	if present.Cost < 0 {
+		return Render(ValidationError(errors.New("Bad cost")))
+	}
+	if ferr == nil {
+		log.Println("file is updated")
+		format := "jpg"
+		s := strings.Split(h.Header.Get(ContentTypeHeader), "/")
+		if len(s) == 2 {
+			format = s[1]
+		}
+		fid, _, _, err := adapter.Upload(f, "image", format)
+		if err != nil {
+			return Render(BackendError(err))
+		}
+		present.Image = fid
+	}
+	p, err := db.UpdatePresent(id, present)
+	if err != nil {
+		return Render(err)
+	}
+	if err := p.Prepare(adapter); err != nil {
+		return Render(BackendError(err))
+	}
+	return Render(p)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

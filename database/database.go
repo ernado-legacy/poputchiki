@@ -13,22 +13,24 @@ const (
 )
 
 var (
-	collection           = "users"
-	citiesCollection     = "cities"
-	countriesCollection  = "countries"
-	guestsCollection     = "guests"
-	messagesCollection   = "messages"
-	statusesCollection   = "statuses"
-	photoCollection      = "photo"
-	albumsCollection     = "albums"
-	filesCollection      = "files"
-	videoCollection      = "video"
-	conftokensCollection = "conftokens"
-	audioCollection      = "audio"
-	stripeCollection     = "stripe"
-	tokenCollection      = "tokens"
-	updatesCollection    = "updates"
-	activitiesCollection = "activities"
+	collection              = "users"
+	citiesCollection        = "cities"
+	countriesCollection     = "countries"
+	guestsCollection        = "guests"
+	messagesCollection      = "messages"
+	statusesCollection      = "statuses"
+	photoCollection         = "photo"
+	albumsCollection        = "albums"
+	filesCollection         = "files"
+	videoCollection         = "video"
+	conftokensCollection    = "conftokens"
+	audioCollection         = "audio"
+	stripeCollection        = "stripe"
+	tokenCollection         = "tokens"
+	updatesCollection       = "updates"
+	activitiesCollection    = "activities"
+	presentsCollection      = "presents"
+	presentEventsCollection = "present_events"
 )
 
 type DB struct {
@@ -47,6 +49,8 @@ type DB struct {
 	countries      *mgo.Collection
 	activities     *mgo.Collection
 	updates        *mgo.Collection
+	presents       *mgo.Collection
+	presentEvents  *mgo.Collection
 	salt           string
 	offlineTimeout time.Duration
 }
@@ -62,7 +66,7 @@ func TestDatabase() *DB {
 // Drop all collections of database
 func (db *DB) Drop() {
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
-		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities, db.updates}
+		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities, db.updates, db.presents, db.presentEvents}
 
 	for k := range collections {
 		collections[k].DropCollection()
@@ -130,6 +134,9 @@ func (database *DB) Init() {
 	must(db.C(collection).EnsureIndex(index))
 	must(db.C(collection).EnsureIndexKey("$text:status"))
 	must(db.C(updatesCollection).EnsureIndexKey("destination"))
+	index = mgo.Index{Key: []string{"type", "time", "destination"}}
+	must(db.C(presentEventsCollection).EnsureIndex(index))
+	must(db.C(presentsCollection).EnsureIndexKey("title"))
 }
 
 func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
@@ -153,6 +160,8 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	database.updates = db.C(updatesCollection)
 	database.countries = cityDB.C(countriesCollection)
 	database.cities = cityDB.C(citiesCollection)
+	database.presents = db.C(presentsCollection)
+	database.presentEvents = db.C(presentEventsCollection)
 	database.Init()
 	return database
 }

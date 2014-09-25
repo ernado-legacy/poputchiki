@@ -83,7 +83,7 @@ func GetEventType(updateType string, media interface{}) string {
 	if media == nil {
 		return updateType
 	}
-	if updateType == SubscriptionInvites || updateType == SubscriptionMessages {
+	if updateType == SubscriptionInvites || updateType == SubscriptionMessages || updateType == SubscriptionGuests {
 		return updateType
 	}
 	return fmt.Sprintf("%s_%s", updateType, strings.ToLower(reflect.TypeOf(media).Elem().Name()))

@@ -65,7 +65,7 @@ func (db *DB) SetReadMessagesFromUser(userReciever bson.ObjectId, userOrigin bso
 }
 
 func (db *DB) GetUnreadCount(id bson.ObjectId) (int, error) {
-	query := bson.M{"user": id, "read": false}
+	query := bson.M{"user": id, "read": false, "destination": id}
 	return db.messages.Find(query).Count()
 }
 

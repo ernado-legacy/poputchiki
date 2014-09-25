@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru" ng-app="presents">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Попутчики: панель управления</title>
+    <style type="text/css">
+      body {
+        padding-top: 40px;
+      }
+
+      .present-image {
+        width: 200px;
+        height: 200px;
+      }
+
+      .upload-toggle {
+        cursor: pointer;
+      }
+
+      .edit-in-place span {
+          cursor: pointer;
+      }
+      .edit-in-place input {
+          display: none;
+      }
+      .edit-in-place.active span {
+          display: none;
+      }
+      .edit-in-place.active input {
+          display: inline-block;
+      }
+
+      .avatar {
+        width: 60px;
+        height: 60px;
+      }
+
+      .user.active {
+        opacity: 1.0;
+        box-shadow: 10px 11px 27px -15px rgba(0,0,0,0.43);
+      }
+
+      .user-add {
+        text-aling: center;
+        padding: 10px !important;
+      }
+
+      .count {
+        float: right;
+        margin-top: 20px;
+      }
+
+      .message {
+        padding: 3px;
+        border-radius: 3px;
+        background-color: white;
+        margin-bottom: 3px;
+      }
+
+      .your {
+        background-color: #AEC6CF;
+      }
+
+      .present {
+        background-color: white;
+        border-radius: 6px;
+        padding: 2px;
+        position: inherit;
+        margin-bottom: 5px;
+      }
+
+      .username {
+        margin-left: 2px;
+      }
+
+      #chat {
+        height: 300px;
+        overflow-y: scroll;
+      }
+
+      .circle {
+        position: absolute;
+        border-radius: 50%;
+        width: 8px;
+        height: 8px;
+        background-color: green;
+        position: absolute;
+        top: 3px;
+        right: 3px;
+      }
+
+      .remove {
+        float:right;
+        margin-top: 1px;
+        margin-right: 1px;
+        cursor:pointer;
+        color: #fff;
+        border: 1px solid #AEAEAE;
+        border-radius: 11px;
+        background: gray;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-block;
+        line-height: 0px;
+        padding: 6px 3px;    
+        opacity: 0.5;
+      }
+
+      .send-button, .text {
+        margin-top: 3px;
+      }
+
+      .remove:before {
+        content: "x";
+      }
+    </style>
+    <!-- Bootstrap -->
+    <link href="/api/static/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+  <div class="container">
+    <div class="jumbotron">
+    <h1>Администрирование</h1>
+    <h2>Подарки</h2>
+    <p><a href="/api/admin">Главная страница админки</a></p>
+    <div class="panel panel-default" ng-controller="Uploader" >
+      <div class="panel-heading upload-toggle" ng-click="toggle()">
+        <h3 class="panel-title">Добавить подарок</h3>
+      </div>
+      <div class="panel-body" ng-show="show">
+        <form name="form" novalidate>
+        <div class="alert alert-danger" role="alert" ng-show="error">{{ error }}</div>
+        <div class="form-group">
+          <label for="exampleInputEmail1">Название подарка</label>
+          <input type="text" class="form-control" name="title" ng-model="title" placeholder="Название">
+        </div>
+        <div class="form-group" ng-class="{'has-error': form.cost.$invalid && form.cost.$dirty}">
+          <label for="cost">Цена</label>
+          <input type="number" class="form-control" name="cost" ng-model="cost" placeholder="100" ng-pattern="onlyNumbers">
+        </div>
+        <div class="form-group">
+          <label for="exampleInputFile">Картинка для подарка</label>
+          <input type="file" id="file" ng-file-select="onFileSelect($files)" accept="image/*">
+          <p class="help-block">Квадратное изображение не менее 200 пикселей</p>
+        </div>
+        <button class="btn btn-default" ng-click="addPresent()" ng-class="{disabled: !selectedFiles || !cost || !title}">Добавить</button>
+        </form>
+      </div>
+    </div>
+    <div class="panel panel-default" ng-controller="Updater" ng-show="present">
+      <div class="panel-heading upload-toggle" ng-click="cancel()">
+        <h3 class="panel-title">Изменить подарок</h3>
+      </div>
+      <div class="panel-body" ng-show="present">
+      <div class="present">
+        <div class="row"> 
+          <div class="col-md-3">
+            <img ng-src="{{ trustSrc(present.url) }}" alt="image" class="present-image">
+          </div>
+          <div class="col-md-3" class="title"><edit-in-place value="present.title"></edit-in-place></div>
+          <div class="col-md-3" class="cost"><edit-in-place value="present.cost"></edit-in-place></div>
+        </div>
+      </div> 
+        <form name="form" novalidate>
+        <div class="alert alert-danger" role="alert" ng-show="error">{{ error }}</div>
+        <div class="form-group">
+          <label for="exampleInputEmail1">Название подарка</label>
+          <input type="text" class="form-control" name="title" ng-model="present.title" placeholder="Название">
+        </div>
+        <div class="form-group" ng-class="{'has-error': form.cost.$invalid && form.cost.$dirty}">
+          <label for="cost">Цена</label>
+          <input type="number" class="form-control" name="cost" ng-model="present.cost" placeholder="100" ng-pattern="onlyNumbers">
+        </div>
+        <div class="form-group">
+          <label for="exampleInputFile">Картинка для подарка</label>
+          <input type="file" id="file" ng-file-select="onFileSelect($files)" accept="image/*">
+          <p class="help-block">Квадратное изображение не менее 200 пикселей</p>
+        </div>
+        <button class="btn btn-primary" ng-click="savePresent()" ng-class="{disabled: !present.cost || !present.title}">Сохранить</button>
+        <button class="btn btn-default" ng-click="hide()">Закрыть</button>
+        <button class="btn btn-warning" ng-click="cancel()">Отмена</button>
+        <button class="btn btn-danger" ng-click="remove()">Удалить</button>
+        </form>
+      </div>
+    </div>
+    <div ng-controller="Presents"> 
+      <div class="present" 
+        ng-repeat="present in presents">
+        <div class="remove" ng-click="remove(present)"></div>
+        <div class="row"> 
+          <div class="col-md-3">
+            <img ng-src="{{ trustSrc(present.url) }}" alt="image" class="present-image">
+          </div>
+          <div class="col-md-3" class="title"><edit-in-place value="present.title"></edit-in-place></div>
+          <div class="col-md-3" class="cost"><edit-in-place value="present.cost"></edit-in-place></div>
+
+          <div class="col-md-3" class="cost">
+          <button class="btn btn-default" ng-click="editPresent(present)" >Изменить</button>
+          </div>
+        </div>
+      </div>      
+    </div>
+    </div>
+  </div>
+  <script src="/api/static/js/angular.js"></script>
+  <script src="/api/static/js/angular-sanitize.js"></script>
+  <script src="/api/static/js/angular-route.js"></script>
+  <script src="/api/static/js/angular-file-upload.min.js"></script>
+  <script type="text/javascript">
+  var app = angular.module('presents', ['angularFileUpload', 'ngSanitize']);
+  app.directive('editInPlace', function () {
+      return {
+          restrict: 'E',
+          scope: {
+              value: '='
+          },
+          template: '<span ng-click="edit()" ng-bind="value"></span><input ng-model="value"></input>',
+          link: function ($scope, element, attrs) {
+              // Let's get a reference to the input element, as we'll want to reference it.
+              var inputElement = angular.element(element.children()[1]);
+
+              // This directive should have a set class so we can style it.
+              element.addClass('edit-in-place');
+
+              // Initially, we're not editing.
+              $scope.editing = false;
+
+              // ng-click handler to activate edit-in-place
+              $scope.edit = function () {
+                  $scope.editing = true;
+
+                  // We control display through a class on the directive itself. See the CSS.
+                  element.addClass('active');
+
+                  // And we must focus the element. 
+                  // `angular.element()` provides a chainable array, like jQuery so to access a native DOM function, 
+                  // we have to reference the first element in the array.
+                  inputElement[0].focus();
+              };
+
+              // When we leave the input, we're done editing.
+              inputElement.prop('onblur', function () {
+                  $scope.editing = false;
+                  element.removeClass('active');
+              });
+          }
+      };
+  });
+  app.controller('Presents', ['$scope', '$http', '$rootScope', '$sce', '$upload', function($scope, $http, $rootScope, $sce, $upload) {
+    $scope.presents = [];
+    $scope.trustSrc = function(src) {
+      return $sce.trustAsResourceUrl(src);
+    }
+    $scope.remove = function(present) {
+      angular.forEach($scope.presents, function(value, key) {
+        if (value.id == present.id) {
+          $scope.presents.splice(key, 1);
+        }
+      });
+      $http.delete('/api/present/' + present.id).success(function(data){
+        console.log('removed', present.id);
+      }).error(function(data){
+        $rootScope.addPresent(present);
+      });
+    };
+
+    $scope.fetch = function() {
+      $http.get('/api/present/').success(function(data) {
+        $scope.presents = data;
+        console.log('loaded', data.length, 'presents');
+      }).error(function(data) {
+        console.log(data);
+        $scope.presents = [];
+      });
+    };
+    $scope.fetch();
+    $rootScope.fetchPresents = $scope.fetch;
+    $rootScope.addPresent = function(present) {
+      $scope.presents.unshift(present);
+    };
+  }]);
+
+  app.controller('Uploader', [ '$scope', '$upload', '$rootScope', function($scope, $upload, $rootScope) {
+    $scope.onlyNumbers = /^\d+$/;
+    $scope.show = false;
+    $scope.toggle = function() {
+      $scope.show = !$scope.show;
+    }
+    $scope.onFileSelect = function($files) {
+      $scope.selectedFiles = $files;
+    };
+    $scope.addPresent = function() {
+      $scope.error = "";
+      for (var i = 0; i < $scope.selectedFiles.length; i++) {
+        var file = $scope.selectedFiles[i];
+        $scope.upload = $upload.upload({
+          url: '/api/present/add',
+          data: {title: $scope.title, cost: $scope.cost},
+          file: file,
+        }).success(function(data) {
+          $scope.title = "";
+          $scope.cost = null;
+          $rootScope.addPresent(data);
+        }).error(function(data) {
+          console.log('error', data);
+          $scope.error = data.error;
+        });
+      }
+    }
+  }]);
+  app.controller('Updater', [ '$scope', '$upload', '$rootScope', '$sce', '$http', function($scope, $upload, $rootScope, $sce, $http) {
+    $scope.onlyNumbers = /^\d+$/;
+    $scope.show = false;
+    $scope.selectedFiles = [];
+    $scope.trustSrc = function(src) {
+      return $sce.trustAsResourceUrl(src);
+    }
+    $scope.toggle = function() {
+      $scope.show = !$scope.show;
+    }
+    $scope.hide = function() {
+      $scope.present = null;
+    }
+    $scope.cancel = function() {
+      $scope.present.title = $scope.backup.title;
+      $scope.present.cost = $scope.backup.cost;
+      $scope.present.url = $scope.backup.url;
+      $scope.hide();
+    }
+    $scope.onFileSelect = function($files) {
+      $scope.selectedFiles = $files;
+    };
+    $rootScope.editPresent = function(present) {
+      $scope.error = "";
+      $scope.backup = angular.copy(present);
+      $scope.present = present;
+      $scope.selectedFiles = [];
+    };
+    $scope.remove = function() {
+      present = $scope.present;
+      angular.forEach($scope.presents, function(value, key) {
+        if (value.id == present.id) {
+          $scope.presents.splice(key, 1);
+        }
+      });
+      $http.delete('/api/present/' + present.id).success(function(data){
+        console.log('removed', present.id);
+        angular.forEach($scope.presents, function(value, key) {
+          if (value.id == present.id) {
+            $scope.presents.splice(key, 1);
+          }
+        });
+        $scope.hide();
+      }).error(function(data){
+        $rootScope.addPresent(present);
+        $scope.error = data.error;
+      });
+    };
+    $scope.savePresent = function() {
+      var data = {
+        title: $scope.present.title,
+        cost: $scope.present.cost
+      };
+      var file = null;
+      if ($scope.selectedFiles.length == 1) {
+        file = $scope.selectedFiles[0];
+      }
+      $scope.upload = $upload.upload({
+        url: '/api/present/' + $scope.present.id,
+        data: data,
+        file: file,
+      }).success(function(data) {
+        $scope.error = "";
+        $scope.present.url = data.url;
+        $scope.present.title = data.title;
+        $scope.present.cost = data.cost;
+      }).error(function(data) {
+        console.log('error', data);
+        $scope.error = data.error;
+      });
+    }
+  }]);
+  </script>
+  </body>
+</html>

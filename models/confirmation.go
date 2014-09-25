@@ -112,13 +112,11 @@ func NewMail(src, origin, destination, subject string, data interface{}) (m Mail
 		return
 	}
 	buff := new(bytes.Buffer)
-	log.Printf("[email] %+v", data)
 	if err = t.Execute(buff, data); err != nil {
 		log.Println("[email]", err)
 		return
 	}
 	m.Mail = buff.String()
-	log.Println("[email]", m.Mail)
 	return
 }
 

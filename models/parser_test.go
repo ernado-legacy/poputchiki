@@ -52,7 +52,6 @@ func TestParser(t *testing.T) {
 			So(v.Hello, ShouldEqual, "world")
 			So(v.World, ShouldEqual, "1")
 		})
-
 		Convey("form", func() {
 			req, _ := http.NewRequest("POST", "/", nil)
 			req.PostForm = url.Values{}
