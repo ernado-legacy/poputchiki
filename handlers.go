@@ -26,6 +26,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -2168,6 +2169,49 @@ func GetUserPresents(db DataBase, id bson.ObjectId, adapter *weed.Adapter, token
 	}
 
 	return Render(presents)
+}
+
+// Convert bytes to human readable string. Like a 2 MB, 64.2 KB, 52 B
+func FormatBytes(i uint64) (result string) {
+	switch {
+	case i > (1024 * 1024 * 1024 * 1024):
+		result = fmt.Sprintf("%#.02f TB", float64(i)/1024/1024/1024/1024)
+	case i > (1024 * 1024 * 1024):
+		result = fmt.Sprintf("%#.02f GB", float64(i)/1024/1024/1024)
+	case i > (1024 * 1024):
+		result = fmt.Sprintf("%#.02f MB", float64(i)/1024/1024)
+	case i > 1024:
+		result = fmt.Sprintf("%#.02f KB", float64(i)/1024)
+	default:
+		result = fmt.Sprintf("%d B", i)
+	}
+	result = strings.Trim(result, " ")
+	return
+}
+
+func GetSystemStatus(db DataBase) (int, []byte) {
+	type System struct {
+		Goroutines     int    `json:"goroutines"`
+		Allocated      string `json:"allocated"`
+		AllocatedHeap  string `json:"allocated_heap"`
+		AllocatedTotal string `json:"allocated_total"`
+		Online         int    `json:"online"`
+		RegisteredDay  int    `json:"registered_day"`
+		RegisteredWeek int    `json:"registered_week"`
+	}
+
+	data := new(System)
+	data.Goroutines = runtime.NumGoroutine()
+	mem := new(runtime.MemStats)
+	runtime.ReadMemStats(mem)
+	data.Allocated = FormatBytes(mem.Alloc)
+	data.AllocatedHeap = FormatBytes(mem.HeapAlloc)
+	data.AllocatedTotal = FormatBytes(mem.TotalAlloc)
+	data.Online = db.Online()
+	data.RegisteredDay = db.RegisteredCount(time.Hour * 24)
+	data.RegisteredWeek = db.RegisteredCount(time.Hour * 24 * 7)
+
+	return Render(data)
 }
 
 // init for random

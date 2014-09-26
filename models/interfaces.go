@@ -75,6 +75,8 @@ type DataBase interface {
 	SetVipTill(id bson.ObjectId, t time.Time) error
 	SetVip(id bson.ObjectId, vip bool) error
 
+	Online() int
+	RegisteredCount(duration time.Duration) int
 	SetOnline(id bson.ObjectId) error
 	SetOffline(id bson.ObjectId) error
 

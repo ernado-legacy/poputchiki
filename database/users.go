@@ -63,6 +63,18 @@ func (db *DB) AddIosToken(id bson.ObjectId, token string) error {
 	return db.addToken(id, "ios_token", token)
 }
 
+func (db *DB) Online() int {
+	n, _ := db.users.Find(bson.M{"online": true}).Count()
+	return n
+}
+
+func (db *DB) RegisteredCount(duration time.Duration) int {
+	now := time.Now()
+	from := now.Add(-duration)
+	n, _ := db.users.Find(bson.M{"registered": bson.M{"$gte": from}}).Count()
+	return n
+}
+
 func (db *DB) Get(id bson.ObjectId) *User {
 	var u User
 	err := db.users.FindId(id).One(&u)

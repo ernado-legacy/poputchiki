@@ -202,6 +202,7 @@ func NewApp() *Application {
 		r.Get("/fb/redirect", FacebookAuthRedirect)
 	})
 	m.Get(root, Index)
+	m.Get(root+"/system", GetSystemStatus)
 	m.Group(root, func(r martini.Router) {
 		r.Get("/cities", GetCities)
 		r.Get("/places", GetPlaces)
