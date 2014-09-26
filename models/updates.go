@@ -32,6 +32,14 @@ type Update struct {
 	Time        time.Time     `json:"time"                  bson:"time"`
 }
 
+func (u Update) String() string {
+	payload := "without payload"
+	if u.TargetType != "" {
+		payload = fmt.Sprintf("with %s", u.TargetType)
+	}
+	return fmt.Sprintf("{Update about %s %s for %s}", u.Type, payload, u.Destination.Hex())
+}
+
 func (u *Update) Theme() (theme string) {
 	if u.Type == "messages" {
 		theme = fmt.Sprintf("Пользователь %s прислал вам сообщение", u.UserObject.Name)

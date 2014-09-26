@@ -162,7 +162,6 @@ func NewApp() *Application {
 	templates := rice.MustFindBox("static/html/letters")
 	AllTemplates = rice.MustFindBox("static/html")
 
-	var updater models.Updater
 	m.Map(queryClient)
 	m.Map(&gofbauth.Client{"1518821581670594", "97161fd30ed48e5a3e25811ed02d0f3a", "http://poputchiki.ru" + root + "/auth/fb/redirect", "email,user_birthday"})
 	m.Map(&govkauth.Client{"4456019", "0F4CUYU2Iq9H7YhANtdf", "http://poputchiki.ru" + root + "/auth/vk/redirect", "offline,email"})
@@ -174,13 +173,13 @@ func NewApp() *Application {
 	m.Use(VideoWrapper)
 	m.Use(PaginationWrapper)
 	m.Use(ParserWrapper)
-	m.Use(AutoUpdaterWrapper)
 	m.Map(tokenStorage)
 	weedAdapter := weed.NewAdapter(weedUrl)
 	m.Map(weedAdapter)
-	updater = &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, &PushNotificationsUpdater{db, weedAdapter}}
-	m.Map(updater)
 	m.Map(realtime)
+	m.Use(AutoUpdaterWrapper)
+	updater := &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, &PushNotificationsUpdater{db, weedAdapter}}
+	m.MapTo(updater, (*models.Updater)(nil))
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)
 	m.Map(models.GetMailDispatcher(templates, "noreply@"+mailDomain, mailgunClient, db))
@@ -230,6 +229,7 @@ func NewApp() *Application {
 				d.Post("", UpdateUser)
 
 				d.Post("/fav", AddToFavorites)
+				d.Post("/present/:type", SendPresent)
 				d.Put("/fav", AddToFavorites)
 				d.Delete("/fav", RemoveFromFavorites)
 				d.Get("/fav", GetFavorites)

@@ -51,7 +51,7 @@ func (realtime *RealtimeRedis) Conn() redis.Conn {
 }
 
 func (r *RealtimeRedis) Push(update models.Update) error {
-	log.Println("[realtime] pushing update for", update.Destination.Hex(), update.Type, update.TargetType)
+	log.Println("[realtime] pushing", update)
 	conn := r.Conn()
 	defer conn.Close()
 	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, update.Destination.Hex()}
@@ -62,7 +62,7 @@ func (r *RealtimeRedis) Push(update models.Update) error {
 	}
 	_, err = conn.Do("PUBLISH", key, eJson)
 	if err == nil {
-		log.Println("[realtime] pushed for", update.Destination.Hex(), update.Type, update.TargetType)
+		log.Println("[realtime] pushed", update)
 	}
 	return err
 }
@@ -326,7 +326,7 @@ func (u *RealtimeUpdater) Handle(eventType string, user, destination bson.Object
 }
 
 func (u *RealtimeUpdater) Push(update models.Update) error {
-	log.Println("[updates]", "handling", update.Type, update.Id.Hex())
+	log.Println("[updates]", "handling", update)
 	target := u.db.Get(update.Destination)
 	dublicate, err := u.db.IsUpdateDublicate(update.User, update.Destination, update.Type, DublicateUpdatesTimeout)
 	if err != nil {
@@ -370,7 +370,7 @@ func (u *RealtimeUpdater) Push(update models.Update) error {
 			log.Println("[updates]", "not subscribed")
 		}
 	}
-	log.Println("[updates]", "handled", update.Id.Hex())
+	log.Println("[updates]", "handled", update)
 	return nil
 }
 

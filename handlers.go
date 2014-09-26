@@ -2140,6 +2140,36 @@ func UpdatePresent(db DataBase, id bson.ObjectId, parser Parser, req *http.Reque
 	return Render(p)
 }
 
+func SendPresent(db DataBase, id bson.ObjectId, parm martini.Params, adapter *weed.Adapter, parser Parser, token *gotok.Token) (int, []byte) {
+	t := parm["title"]
+	type Data struct {
+		Text string `json:"text"`
+	}
+	data := new(Data)
+	if err := parser.Parse(data); err != nil {
+		return Render(ValidationError(err))
+	}
+
+	present, err := db.SendPresent(token.Id, id, t)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+
+	return Render(present)
+}
+
+func GetUserPresents(db DataBase, id bson.ObjectId, adapter *weed.Adapter, token *gotok.Token) (int, []byte) {
+	presents, err := db.GetUserPresents(id)
+	if err != nil && err != mgo.ErrNotFound {
+		return Render(BackendError(err))
+	}
+	if len(presents) == 0 {
+		return Render([]interface{}{})
+	}
+
+	return Render(presents)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

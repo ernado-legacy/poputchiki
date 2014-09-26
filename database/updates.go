@@ -3,11 +3,13 @@ package database
 import (
 	"github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"time"
 )
 
 func (db *DB) AddUpdate(destination, user bson.ObjectId, updateType string, media interface{}) (*models.Update, error) {
 	u := models.NewUpdate(destination, user, updateType, media)
+	log.Println("[db]", "adding update", u)
 	return &u, db.updates.Insert(&u)
 }
 
@@ -18,6 +20,7 @@ func (db *DB) SetUpdateRead(destination, id bson.ObjectId) error {
 }
 
 func (db *DB) AddUpdateDirect(u *models.Update) (*models.Update, error) {
+	log.Println("[db]", "adding update", u)
 	return u, db.updates.Insert(u)
 }
 

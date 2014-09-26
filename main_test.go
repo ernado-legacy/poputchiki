@@ -220,7 +220,35 @@ func TestUpdates(t *testing.T) {
 				So(found, ShouldBeTrue)
 			})
 			Convey("Updates", func() {
-				updates, err := a.db.GetUpdates(token2.Id, UpdateGuests, Pagination{})
+				updates, err := a.db.GetUpdates(token2.Id, UpdateLikes, Pagination{})
+				So(err, ShouldBeNil)
+				So(len(updates), ShouldEqual, 2)
+				for _, update := range updates {
+					log.Println(update)
+				}
+			})
+		})
+		Convey("Invites", func() {
+			link := fmt.Sprintf("/api/user/%s/invite", token1.Id.Hex())
+			So(a.Process(token2, "POST", link, nil, nil), ShouldBeNil)
+			So(a.Process(token3, "POST", link, nil, nil), ShouldBeNil)
+			time.Sleep(time.Millisecond * 100)
+			log.Println("getting updates")
+			Convey("Counters", func() {
+				counters := Counters{}
+				So(a.Process(token1, "GET", "/api/updates/counters", nil, &counters), ShouldBeNil)
+				So(len(counters), ShouldEqual, 2)
+				found := false
+				for _, counter := range counters {
+					if counter.Type == "invites" {
+						found = true
+						So(counter.Count, ShouldEqual, 2)
+					}
+				}
+				So(found, ShouldBeTrue)
+			})
+			Convey("Updates", func() {
+				updates, err := a.db.GetUpdates(token1.Id, "invites", Pagination{})
 				So(err, ShouldBeNil)
 				So(len(updates), ShouldEqual, 2)
 				for _, update := range updates {
