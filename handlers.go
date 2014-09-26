@@ -1633,6 +1633,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 		newUser.Sex = user.Sex
 		newUser.Subscriptions = Subscriptions
 		newUser.Balance = startCapital
+		newUser.Registered = time.Now()
 		err = db.Add(newUser)
 		if err != nil {
 			code, _ := Render(ErrorBackend)
@@ -1690,6 +1691,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w
 		newUser.Balance = startCapital
 		newUser.Birthday = fbUser.Birthday
 		newUser.Rating = 100.0
+		newUser.Registered = time.Now()
 		newUser.Subscriptions = Subscriptions
 		err = db.Add(newUser)
 		if err != nil {
