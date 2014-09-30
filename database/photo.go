@@ -51,6 +51,13 @@ func (db *DB) UpdatePhoto(user, id bson.ObjectId, photo *Photo) (*Photo, error) 
 	return p, err
 }
 
+func (db *DB) SetPhotoHidden(user, id bson.ObjectId, hidden bool) error {
+	update := bson.M{"$set": bson.M{"hidden": hidden}}
+	selector := bson.M{"_id": id, "user": user}
+	// _, err :=
+	return db.photo.Update(selector, update)
+}
+
 func (db *DB) SearchAllPhoto(pagination Pagination) ([]*Photo, int, error) {
 	if pagination.Count == 0 {
 		pagination.Count = searchCount

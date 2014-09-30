@@ -87,12 +87,13 @@ func getHash(password string, s string) string {
 }
 
 type Application struct {
-	session *mgo.Session
-	p       *redis.Pool
-	m       *martini.ClassicMartini
-	db      models.DataBase
-	adapter *weed.Adapter
-	updater models.Updater
+	session      *mgo.Session
+	p            *redis.Pool
+	m            *martini.ClassicMartini
+	db           models.DataBase
+	adapter      *weed.Adapter
+	updater      models.Updater
+	emailUpdater *EmailUpdater
 }
 
 func newPool() *redis.Pool {
@@ -178,7 +179,8 @@ func NewApp() *Application {
 	m.Map(weedAdapter)
 	m.Map(realtime)
 	m.Use(AutoUpdaterWrapper)
-	updater := &RealtimeUpdater{db, realtime, &EmailUpdater{db, mailgunClient, templates, weedAdapter}, &PushNotificationsUpdater{db, weedAdapter}}
+	emailUpdater := &EmailUpdater{db, mailgunClient, templates, weedAdapter}
+	updater := &RealtimeUpdater{db, realtime, emailUpdater, &PushNotificationsUpdater{db, weedAdapter}}
 	m.MapTo(updater, (*models.Updater)(nil))
 	m.Map(db)
 	m.Use(activityEngine.Wrapper)
@@ -324,7 +326,7 @@ func NewApp() *Application {
 		r.Delete("/photo/:id", IdWrapper, RemovePhoto)
 	}, NeedAuth, SetOnlineWrapper)
 
-	a := &Application{session, p, m, db, weedAdapter, updater}
+	a := &Application{session, p, m, db, weedAdapter, updater, emailUpdater}
 	a.InitDatabase()
 	return a
 }

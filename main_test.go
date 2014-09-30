@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/ernado/gotok"
 	. "github.com/ernado/poputchiki/models"
+	"text/template"
+
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 	"io"
@@ -158,6 +160,29 @@ func TestSeo(t *testing.T) {
 		Convey("Stripe get", func() {
 			So(a.Process(nil, "GET", "/api/stripe", nil, nil), ShouldBeNil)
 		})
+	})
+}
+
+func TestTemplates(t *testing.T) {
+	a := NewTestApp()
+	defer a.Close()
+	Convey("Templates", t, func() {
+		user := new(User)
+		avatarUrl := "http://avatar-url.ru"
+		name := "Username"
+		user.Name = name
+		user.AvatarUrl = avatarUrl
+		update := NewUpdate(bson.NewObjectId(), bson.NewObjectId(), "guests", user)
+		update.UserObject = user
+		src, err := a.emailUpdater.GetTemplate(update)
+		So(err, ShouldBeNil)
+		t, err := template.New("template").Parse(src)
+		So(err, ShouldBeNil)
+		buff := new(bytes.Buffer)
+		So(t.Execute(buff, update), ShouldBeNil)
+		s := buff.String()
+		So(s, ShouldContainSubstring, avatarUrl)
+		So(s, ShouldContainSubstring, name)
 	})
 }
 
