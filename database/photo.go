@@ -21,6 +21,21 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 	return p, err
 }
 
+// AddPhoto add new photo to database with provided image and thumbnail
+func (db *DB) AddHiddenPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
+	// creating photo
+	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid,
+		Time: time.Now(), Description: desctiption, ThumbnailJpeg: thumbnailJpeg.Fid, ThumbnailWebp: thumbnailWebp.Fid}
+	p.Hidden = true
+	err := db.photo.Insert(p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p, err
+}
+
 // GetPhoto returs photo by id
 func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 	p := &Photo{}
@@ -30,7 +45,7 @@ func (db *DB) GetPhoto(photo bson.ObjectId) (*Photo, error) {
 // GetUserPhoto returns avatar photo of user with provided user id
 func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 	p := []*Photo{}
-	err := db.photo.Find(bson.M{"user": user}).Sort("-time").All(&p)
+	err := db.photo.Find(bson.M{"user": user, "hidden": bson.M{"$ne": true}}).Sort("-time").All(&p)
 	if err != nil {
 		return nil, err
 	}
@@ -39,6 +54,10 @@ func (db *DB) GetUserPhoto(user bson.ObjectId) ([]*Photo, error) {
 
 // RemovePhoto removes photo from database ensuring ownership of user
 func (db *DB) RemovePhoto(user bson.ObjectId, id bson.ObjectId) error {
+	_, err := db.users.UpdateAll(bson.M{"_id": user, "avatar": id}, bson.M{"$unset": bson.M{"avatar": ""}})
+	if err != nil {
+		return err
+	}
 	return db.photo.Remove(bson.M{"_id": id, "user": user})
 }
 
@@ -107,7 +126,7 @@ func (db *DB) SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 		users[i] = user.Id
 		usersMap[user.Id] = user
 	}
-	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}, "hidden": bson.M{"$ne": true}}).Sort("-time").All(&photos); err != nil {
 		return photos, err
 	}
 	for _, photo := range photos {
@@ -134,7 +153,7 @@ func (db *DB) SearchMedia(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 		users[i] = user.Id
 		usersMap[user.Id] = user
 	}
-	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}}).Sort("-time").All(&photos); err != nil {
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}, "hidden": false}).Sort("-time").All(&photos); err != nil {
 		return photos, err
 	}
 	for _, photo := range photos {

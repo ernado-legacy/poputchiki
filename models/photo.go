@@ -24,7 +24,7 @@ type Photo struct {
 	ThumbnailJpeg string          `json:"-"                     bson:"thumbnail_jpeg"`
 	ThumbnailUrl  string          `json:"thumbnail_url"         bson:"-"`
 	Description   string          `json:"description,omitempty" bson:"description,omitempty"`
-	Hidden        bool            `json:"hidden,omitempty" bson:"hidden,omitempty"`
+	Hidden        bool            `json:"hidden,omitempty"      bson:"hidden,omitempty"`
 	Likes         int             `json:"likes"                 bson:"likes"`
 	LikedUsers    []bson.ObjectId `json:"liked_users"           bson:"liked_users"`
 	Time          time.Time       `json:"time"                  bson:"time"`

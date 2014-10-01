@@ -16,6 +16,8 @@ type Message struct {
 	Time        time.Time     `json:"time"                   bson:"time"`
 	Text        string        `json:"text"                   bson:"text"`
 	Invite      bool          `json:"invite"                 bson:"invite"`
+	Photo       string        `json:"photo_id"               bson:"photo_id"`
+	PhotoUrl    string        `json:"photo_url"              bson:"photo_url"`
 	LastMessage bson.ObjectId `json:"last_message,omitempty" bson:"-"`
 }
 

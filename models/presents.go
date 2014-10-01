@@ -38,12 +38,13 @@ type PresentEvent struct {
 // }
 
 type Present struct {
-	Id    bson.ObjectId `json:"id" bson:"_id"`
-	Title string        `json:"title" bson:"title"`
-	Image string        `bson:"image"`
-	Url   string        `json:"url"`
-	Cost  int           `json:"cost" bson:"cost"`
-	Time  time.Time     `bson:"time"`
+	Id       bson.ObjectId `json:"id" bson:"_id"`
+	Title    string        `json:"title" bson:"title"`
+	Image    string        `bson:"image"`
+	Url      string        `json:"url"`
+	Cost     int           `json:"cost" bson:"cost"`
+	Category string        `json:"category" bson:"category"`
+	Time     time.Time     `bson:"time"`
 }
 
 func (p *Present) Prepare(adapter *weed.Adapter) (err error) {
