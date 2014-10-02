@@ -773,6 +773,52 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataB
 	return newPhoto, err
 }
 
+func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
+	f, _, err := r.FormFile(FORM_FILE)
+	if err != nil {
+		log.Println("unable to read form file", err)
+		return nil, ErrBadRequest
+	}
+
+	length := r.ContentLength
+	if length > 1024*1024*PHOTO_MAX_MEGABYTES {
+		return nil, ErrBadRequest
+	}
+
+	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
+	progress := make(chan float32)
+	go func() {
+		for _ = range progress {
+			continue
+		}
+	}()
+	p, err := uploader.Upload(length, f, progress)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	c := func(input *photo.File) File {
+		output := &File{}
+		output.Id = bson.NewObjectId()
+		output.User = t.Id
+		convert(input, output)
+		db.AddFile(output)
+		return *output
+	}
+
+	newPhoto, err := db.AddPho
+	newPhoto.ImageUrl = p.ImageJpeg.Url
+	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
+
+	if bool(webpAccept) {
+		newPhoto.ImageUrl = p.ImageWebp.Url
+		newPhoto.ThumbnailUrl = p.ThumbnailWebp.Url
+	}
+	return newPhoto, err
+}
+
 func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webp, adapter)
 	if err == ErrBadRequest {

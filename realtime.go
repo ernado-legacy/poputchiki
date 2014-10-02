@@ -36,6 +36,7 @@ var upgrader = websocket.Upgrader{
 const (
 	REALTIME_REDIS_KEY   = "realtime"
 	REALTIME_CHANNEL_KEY = "channel"
+	REALTIME_GOLBAL      = "global"
 	RELT_BUFF_SIZE       = 100
 	RELT_WS_BUFF_SIZE    = 10
 	RELT_PING_RATE_MS    = 1000
@@ -63,6 +64,23 @@ func (r *RealtimeRedis) Push(update models.Update) error {
 	_, err = conn.Do("PUBLISH", key, eJson)
 	if err == nil {
 		log.Println("[realtime] pushed", update)
+	}
+	return err
+}
+
+func (r *RealtimeRedis) PushGlobal(update models.Update) error {
+	log.Println("[realtime] pushing global", update)
+	conn := r.Conn()
+	defer conn.Close()
+	args := []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, REALTIME_GOLBAL}
+	key := strings.Join(args, REDIS_SEPARATOR)
+	eJson, err := json.Marshal(update)
+	if err != nil {
+		return err
+	}
+	_, err = conn.Do("PUBLISH", key, eJson)
+	if err == nil {
+		log.Println("[realtime] pushed global", update)
 	}
 	return err
 }
@@ -167,6 +185,8 @@ func (realtime *RealtimeRedis) getChannel(id bson.ObjectId) chan models.Update {
 	key := strings.Join(args, REDIS_SEPARATOR)
 	log.Println("starting listeting", key)
 	psc.Subscribe(key)
+	args = []string{redisName, REALTIME_REDIS_KEY, REALTIME_CHANNEL_KEY, REALTIME_GOLBAL}
+	psc.Subscribe(strings.Join(args, REDIS_SEPARATOR))
 
 	go func() {
 		defer conn.Close()
