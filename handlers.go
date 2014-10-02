@@ -530,7 +530,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	if err := db.AddMessage(m2); err != nil {
 		Render(BackendError(err))
 	}
-	return Render("message sent")
+	return Render(m1)
 }
 
 func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
