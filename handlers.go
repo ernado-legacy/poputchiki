@@ -106,7 +106,7 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, context Context, u U
 			u.Push(NewUpdate(id, t.Id, UpdateGuests, user))
 		}()
 	}
-
+	user.Prepare(context)
 	return context.Render(user)
 }
 
