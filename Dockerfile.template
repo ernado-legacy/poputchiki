@@ -11,7 +11,7 @@ ENV ROOT /go/src/github.com/ernado/poputchiki
 RUN mkdir -p $ROOT
 # initial download
 RUN git clone git@github.com:ernado/poputchiki.git $ROOT
-RUN cd $ROOT && git pull # 3.10.2014
+RUN cd $ROOT && git pull # 03.10.2014
 RUN cd $ROOT && go get .
 
 # update
