@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strings"
@@ -122,6 +121,17 @@ type GuestUser struct {
 	Time time.Time `json:"time"  bson:"time"`
 }
 
+type Guests []*GuestUser
+
+func (g Guests) Prepare(context Context) error {
+	for _, user := range g {
+		user.Prepare(context)
+		user.SetIsBlacklisted(context)
+		user.SetIsFavorite(context)
+	}
+	return nil
+}
+
 func getHash(password, salt string) string {
 	// log.Printf("sha256(%s,%s)", password, salt)
 	hasher := sha256.New()
@@ -158,17 +168,15 @@ func (u *User) CleanPrivate() {
 	u.IOsTokens = nil
 }
 
-func (u *User) SetAvatarUrl(adapter *weed.Adapter, db DataBase, webp WebpAccept) {
-	photo, err := db.GetPhoto(u.Avatar)
+func (u *User) SetAvatarUrl(context Context) {
+	photo, err := context.DB.GetPhoto(u.Avatar)
 	if err == nil {
-		suffix := ".jpg"
 		fid := photo.ThumbnailJpeg
-		if webp {
+		if context.WebP {
 			fid = photo.ThumbnailWebp
-			suffix = ".webp"
 		}
-		url, _ := adapter.GetUrl(fid)
-		u.AvatarUrl = url + suffix
+		url, _ := context.Storage.URL(fid)
+		u.AvatarUrl = url
 	} else {
 		if u.Sex == SexFemale {
 			u.AvatarUrl = femaleNoAvater
@@ -188,7 +196,8 @@ func diff(t1, t2 time.Time) (years int) {
 	return years
 }
 
-func (u *User) SetIsFavorite(user *User) {
+func (u *User) SetIsFavorite(context Context) {
+	user := context.User
 	if user == nil {
 		return
 	}
@@ -199,7 +208,8 @@ func (u *User) SetIsFavorite(user *User) {
 	}
 }
 
-func (u *User) SetIsBlacklisted(user *User) {
+func (u *User) SetIsBlacklisted(context Context) {
+	user := context.User
 	if user == nil {
 		return
 	}
@@ -212,29 +222,21 @@ func (u *User) SetIsBlacklisted(user *User) {
 
 type Users []*User
 
-func (u Users) SetIsFavorite(user *User) {
+func (u Users) Prepare(context Context) {
 	for _, v := range u {
-		v.SetIsFavorite(user)
-		v.SetIsBlacklisted(user)
-	}
-}
-
-func (u Users) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept, user *User) {
-	u.SetIsFavorite(user)
-	for _, v := range u {
-		v.Prepare(adapter, db, webp, audio)
+		v.Prepare(context)
 		v.CleanPrivate()
 	}
 }
 
-func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audio AudioAccept) {
+func (u *User) Prepare(context Context) {
 	u.Password = ""
-	u.SetAvatarUrl(adapter, db, webp)
+	u.SetAvatarUrl(context)
 
 	if u.Audio != "" {
-		u.AudioUrl, _ = adapter.GetUrl(u.AudioAAC)
-		if audio == AaOgg {
-			u.AudioUrl, _ = adapter.GetUrl(u.AudioOGG)
+		u.AudioUrl, _ = context.Storage.URL(u.AudioAAC)
+		if context.Audio == AaOgg {
+			u.AudioUrl, _ = context.Storage.URL(u.AudioOGG)
 		}
 	}
 
@@ -255,4 +257,6 @@ func (u *User) Prepare(adapter *weed.Adapter, db DataBase, webp WebpAccept, audi
 		u.Age = diff(u.Birthday, now)
 	}
 
+	u.SetIsBlacklisted(context)
+	u.SetIsFavorite(context)
 }

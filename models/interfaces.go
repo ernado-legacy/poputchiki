@@ -3,13 +3,17 @@ package models
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/ernado/gotok"
 	"github.com/ernado/weed"
+	"github.com/go-martini/martini"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -23,6 +27,108 @@ type VideoAccept string
 
 // audio format accept
 type AudioAccept string
+
+type Storage interface {
+	URL(string) (string, error)
+}
+
+type Context struct {
+	Storage  Storage
+	Token    *gotok.Token
+	Video    VideoAccept
+	Audio    AudioAccept
+	WebP     WebpAccept
+	IsAdmin  IsAdmin
+	DB       DataBase
+	Request  *http.Request
+	User     *User
+	Renderer Renderer
+}
+
+type ContextRenderer struct {
+	context Context
+}
+
+func addStatus(value interface{}, status int) []byte {
+	j, err := json.Marshal(Response{status, value})
+	if err != nil {
+		log.Println(string(j), err)
+		panic(err)
+	}
+	return j
+}
+func (context Context) Render(value interface{}) (int, []byte) {
+	return context.Renderer.Render(value)
+}
+
+type Preparable interface {
+	Prepare(context Context) error
+}
+
+func (renderer ContextRenderer) Render(value interface{}) (int, []byte) {
+	var mobile bool
+
+	if strings.Contains(renderer.context.Request.URL.Path, "/api/mobile") {
+		mobile = true
+	}
+
+	preparable, ok := value.(Preparable)
+	if ok {
+		if err := preparable.Prepare(renderer.context); err != nil {
+			log.Println("[prepare]", err)
+		}
+	}
+
+	j, err := json.Marshal(value)
+	if err != nil {
+		j, err = json.Marshal(ErrorMarshal)
+		if err != nil {
+			log.Println(err)
+			panic(err)
+		}
+		return ErrorMarshal.Code, j
+	}
+	switch v := value.(type) {
+	case Error:
+		if v.Code == http.StatusInternalServerError {
+			log.Println(v)
+			debug.PrintStack()
+		}
+		if mobile {
+			return http.StatusOK, addStatus(value, v.Code)
+		}
+		return v.Code, j
+	default:
+		if mobile {
+			return http.StatusOK, addStatus(value, 0)
+		}
+		return http.StatusOK, j
+	}
+}
+
+type Renderer interface {
+	Render(value interface{}) (int, []byte)
+}
+
+func ContextWrapper(context martini.Context, t *gotok.Token, webp WebpAccept, video VideoAccept, audio AudioAccept, admin IsAdmin, db DataBase, request *http.Request, weed *weed.Adapter) {
+	c := Context{}
+	c.Storage = weed
+	c.Request = request
+	c.IsAdmin = admin
+	c.Token = t
+	c.Audio = audio
+	c.Video = video
+	c.DB = db
+	c.WebP = webp
+	if t != nil {
+		c.User = c.DB.Get(t.Id)
+	}
+	var renderer Renderer
+	renderer = ContextRenderer{c}
+	c.Renderer = renderer
+	context.Map(c)
+	context.Map(renderer)
+}
 
 var (
 	VaWebm VideoAccept = "webm"
@@ -189,7 +295,7 @@ type DataBase interface {
 
 type RealtimeInterface interface {
 	Updater
-	RealtimeHandler(admin IsAdmin, w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte)
+	RealtimeHandler(w http.ResponseWriter, context Context) (int, []byte)
 	// PushAll(update Update) error
 }
 
@@ -202,17 +308,17 @@ type AutoUpdater interface {
 }
 
 type PrepareInterface interface {
-	Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error
+	Prepare(context Context) error
 	Url() string
 }
 
 type PhotoSlice []*Photo
 type VideoSlice []*Video
 
-func (m PhotoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+func (m PhotoSlice) Prepare(context Context) error {
 	var e error
 	for _, elem := range m {
-		if err := elem.Prepare(adapter, webp, video, audio); err != nil {
+		if err := elem.Prepare(context); err != nil {
 			log.Println(err)
 			e = err
 		}
@@ -220,10 +326,10 @@ func (m PhotoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoA
 	return e
 }
 
-func (m VideoSlice) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+func (m VideoSlice) Prepare(context Context) error {
 	var e error
 	for _, elem := range m {
-		if err := elem.Prepare(adapter, webp, video, audio); err != nil {
+		if err := elem.Prepare(context); err != nil {
 			log.Println(err)
 			e = err
 		}

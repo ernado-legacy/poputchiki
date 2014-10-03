@@ -1,9 +1,7 @@
 package models
 
 import (
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 	"time"
 )
 
@@ -18,17 +16,12 @@ type Audio struct {
 	Duration    int64         `json:"duration"              bson:"duration"`
 }
 
-func (audio *Audio) Prepare(adapter *weed.Adapter, _ WebpAccept, _ VideoAccept, a AudioAccept) error {
+func (audio *Audio) Prepare(context Context) error {
 	var err error
-	log.Println(a, audio.AudioAac, audio.AudioOgg)
-	audio.AudioUrl, err = adapter.GetUrl(audio.AudioAac)
-	if a == AaOgg {
-		log.Println("OGG")
-		audio.AudioUrl, err = adapter.GetUrl(audio.AudioOgg)
-	} else {
-		log.Println("AAC")
+	audio.AudioUrl, err = context.Storage.URL(audio.AudioAac)
+	if context.Audio == AaOgg {
+		audio.AudioUrl, err = context.Storage.URL(audio.AudioOgg)
 	}
-
 	return err
 }
 

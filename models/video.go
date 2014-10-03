@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
@@ -22,19 +21,19 @@ type Video struct {
 	Duration      int64           `json:"duration"              bson:"duration"`
 }
 
-func (v *Video) Prepare(adapter *weed.Adapter, webp WebpAccept, video VideoAccept, _ AudioAccept) error {
+func (v *Video) Prepare(context Context) error {
 	var err error
-	v.VideoUrl, err = adapter.GetUrl(v.VideoMpeg)
-	if video == VaWebm {
-		v.VideoUrl, err = adapter.GetUrl(v.VideoWebm)
+	v.VideoUrl, err = context.Storage.URL(v.VideoMpeg)
+	if context.Video == VaWebm {
+		v.VideoUrl, err = context.Storage.URL(v.VideoWebm)
 	}
 	if err != nil {
 		return err
 	}
-	if webp {
-		v.ThumbnailUrl, err = adapter.GetUrl(v.ThumbnailWebp)
+	if context.WebP {
+		v.ThumbnailUrl, err = context.Storage.URL(v.ThumbnailWebp)
 	} else {
-		v.ThumbnailUrl, err = adapter.GetUrl(v.ThumbnailJpeg)
+		v.ThumbnailUrl, err = context.Storage.URL(v.ThumbnailJpeg)
 	}
 	if len(v.LikedUsers) == 0 {
 		v.LikedUsers = []bson.ObjectId{}

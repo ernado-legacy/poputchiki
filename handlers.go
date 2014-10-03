@@ -76,7 +76,7 @@ func Index() (int, []byte) {
 }
 
 // GetUser handler for getting full user information
-func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, u Updater) (int, []byte) {
+func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, context Context, u Updater) (int, []byte) {
 	user := db.Get(id)
 	if user == nil {
 		return Render(ErrorUserNotFound)
@@ -106,28 +106,12 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, webp WebpAccept, ada
 			u.Push(NewUpdate(id, t.Id, UpdateGuests, user))
 		}()
 	}
-	// preparing for rendering to json
-	user.Prepare(adapter, db, webp, audio)
-	if t != nil {
-		user.SetIsFavorite(db.Get(t.Id))
-	}
-	return Render(user)
+
+	return context.Render(user)
 }
 
-func GetCurrentUser(db DataBase, t *gotok.Token, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, u Updater) (int, []byte) {
-	user := db.Get(t.Id)
-	if user == nil {
-		return Render(ErrorUserNotFound)
-	}
-	// checking for blacklist
-	for _, u := range user.Blacklist {
-		if u == t.Id {
-			return Render(ErrorBlacklisted)
-		}
-	}
-	// preparing for rendering to json
-	user.Prepare(adapter, db, webp, audio)
-	return Render(user)
+func GetCurrentUser(db DataBase, context Context, r Renderer) (int, []byte) {
+	return r.Render(context.User)
 }
 
 type Target struct {
@@ -236,22 +220,17 @@ func RemoveFromFavorites(db DataBase, id bson.ObjectId, r *http.Request, parser 
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetFavorites(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetFavorites(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	favorites := db.GetFavorites(id)
 	// check for existance
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
-	// clean private fields and prepare data
-	for key, _ := range favorites {
-		favorites[key].CleanPrivate()
-		favorites[key].Prepare(adapter, db, webp, audio)
-	}
-	return Render(favorites)
+	return context.Render(Users(favorites))
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetFollowers(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetFollowers(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	favorites, err := db.GetAllUsersWithFavorite(id)
 	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))
@@ -260,24 +239,21 @@ func GetFollowers(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccep
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
-	// clean private fields and prepare data
-	Users(favorites).Prepare(adapter, db, webp, audio, db.Get(t.Id))
-	return Render(favorites)
+	return context.Render(Users(favorites))
 }
 
 // GetFavorites returns list of users in favorites of target user
-func GetBlacklisted(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetBlacklisted(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	blacklisted := db.GetBlacklisted(id)
 	// check for existance
 	if blacklisted == nil {
 		return Render([]interface{}{})
 	}
-	Users(blacklisted).Prepare(adapter, db, webp, audio, db.Get(t.Id))
-	return Render(blacklisted)
+	return context.Render(Users(blacklisted))
 }
 
 // GetFavorites returns list of users in guests of target user
-func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetGuests(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	guests, err := db.GetAllGuestUsers(id)
 	if err != nil {
 		return Render(BackendError(err))
@@ -286,14 +262,7 @@ func GetGuests(db DataBase, id bson.ObjectId, r *http.Request, webp WebpAccept, 
 	if guests == nil {
 		return Render([]interface{}{})
 	}
-	// clean private fields and prepare data
-	user := db.Get(t.Id)
-	for key, _ := range guests {
-		guests[key].CleanPrivate()
-		guests[key].Prepare(adapter, db, webp, audio)
-		guests[key].SetIsFavorite(user)
-	}
-	return Render(guests)
+	return context.Render(guests)
 }
 
 func AddToGuests(db DataBase, id bson.ObjectId, r *http.Request, realtime AutoUpdater) (int, []byte) {
@@ -402,7 +371,7 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 }
 
 // Update updates user information with provided key-value document
-func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, context Context) (int, []byte) {
 	user := new(User)
 	query, err := parser.Query(user)
 	log.Println(query)
@@ -429,15 +398,14 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	}
 	// checking field count
 	if len(query) == 0 {
-		return Render(ValidationError(errors.New("no fields to change")))
+		return context.Render(ValidationError(errors.New("no fields to change")))
 	}
-	log.Println(query)
 	// encoding to user - checking type & field existance
 	user = new(User)
 	err = convert(query, user)
 	if err != nil {
 		log.Println("converting error", err)
-		return Render(ValidationError(err))
+		return context.Render(ValidationError(err))
 	}
 
 	if user.Password != "" {
@@ -456,7 +424,7 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	err = bson.Unmarshal(tmp, &newQuery)
 	if err != nil {
 		log.Println("unmarchaling error", err)
-		return Render(ValidationError(err))
+		return context.Render(ValidationError(err))
 	}
 
 	// removing fields, that dont exist in initial query
@@ -469,12 +437,11 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, w
 	// updating user
 	_, err = db.Update(id, newQuery)
 	if err != nil {
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
 	// returning updated user
 	updated := db.Get(id)
-	updated.Prepare(adapter, db, webp, audio)
-	return Render(updated)
+	return context.Render(updated)
 }
 
 func Must(err error) {
@@ -484,8 +451,9 @@ func Must(err error) {
 }
 
 type MessageText struct {
-	Text   string        `json:"text"`
-	Origin bson.ObjectId `json:"origin,omitempty"`
+	Text    string        `json:"text"`
+	Origin  bson.ObjectId `json:"origin,omitempty"`
+	ImageId bson.ObjectId `json:"image,omitempty"`
 }
 
 func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater, admin IsAdmin) (int, []byte) {
@@ -508,6 +476,16 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	}
 
 	m1, m2 := NewMessagePair(db, origin, destination, text)
+	if len(message.ImageId.Hex()) > 0 {
+		p, err := db.GetPhoto(message.ImageId)
+		if err != nil {
+			errorText := fmt.Sprintf("Photo with id %s not found", message.ImageId.Hex())
+			return Render(ValidationError(errors.New(errorText)))
+		}
+		m1.Photo = p.ImageJpeg
+		m2.Photo = p.ImageJpeg
+	}
+
 	u := db.Get(destination)
 	if u == nil {
 		return Render(ErrorUserNotFound)
@@ -636,23 +614,18 @@ func RemoveChat(db DataBase, origin bson.ObjectId, t *gotok.Token) (int, []byte)
 }
 
 // GetChats returns all user chats
-func GetChats(db DataBase, id bson.ObjectId, webp WebpAccept, adapter *weed.Adapter, audio AudioAccept, token *gotok.Token) (int, []byte) {
+func GetChats(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	dialogs, err := db.GetChats(id)
-	user := db.Get(token.Id)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	for k := range dialogs {
 		if dialogs[k].User != nil {
-			dialogs[k].User.Prepare(adapter, db, webp, audio)
-			dialogs[k].User.SetIsFavorite(user)
-			dialogs[k].User.SetIsBlacklisted(user)
+			dialogs[k].User.Prepare(context)
 			dialogs[k].User.CleanPrivate()
 		}
 		if dialogs[k].OriginUser != nil {
-			dialogs[k].OriginUser.Prepare(adapter, db, webp, audio)
-			dialogs[k].User.SetIsFavorite(user)
-			dialogs[k].User.SetIsBlacklisted(user)
+			dialogs[k].OriginUser.Prepare(context)
 			dialogs[k].OriginUser.CleanPrivate()
 		}
 	}
@@ -808,7 +781,7 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 		return *output
 	}
 
-	newPhoto, err := db.AddPho
+	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
 	newPhoto.ImageUrl = p.ImageJpeg.Url
 	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
 
@@ -819,45 +792,19 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webp, adapter)
 	if err == ErrBadRequest {
-		return Render(ValidationError(err))
+		return context.Render(ValidationError(err))
 	}
 	if err != nil {
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
 	engine.Handle(activities.Photo)
-	photo.Prepare(adapter, webp, VaMp4, AaOgg)
-
-	// go func() {
-	// 	p, err := db.GetUserPhoto(t.Id)
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 		return
-	// 	}
-	// 	if len(p) > 1 {
-	// 		return
-	// 	}
-	// 	i := new(StripeItem)
-	// 	i.Id = bson.NewObjectId()
-	// 	i.User = t.Id
-	// 	i.ImageJpeg = photo.ThumbnailJpeg
-	// 	i.ImageWebp = photo.ThumbnailWebp
-	// 	i.Type = "photo"
-	// 	i.Media = photo
-	// 	s, err := db.AddStripeItem(i, photo)
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 		return
-	// 	}
-	// 	engine.Handle(activities.Promo)
-	// 	s.Prepare(db, adapter, webp, VaMp4, AaOgg)
-	// }()
-	return Render(photo)
+	return context.Render(photo)
 }
 
-func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engine activities.Handler) (int, []byte) {
+func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engine activities.Handler, context Context) (int, []byte) {
 	status := new(Status)
 	if err := parser.Parse(status); err != nil {
 		return Render(ValidationError(err))
@@ -865,24 +812,24 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engi
 
 	count, err := db.GetLastDayStatusesAmount(t.Id)
 	if err != nil {
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
 
 	allowed := statusesPerDay
-	u := db.Get(t.Id)
+	u := context.User
 	if u.Vip {
 		allowed = statusesPerDayVip
 	}
 	if count >= allowed {
-		return Render(ErrorInsufficentFunds)
+		return context.Render(ErrorInsufficentFunds)
 	}
 	status, err = db.AddStatus(t.Id, status.Text)
 	if err != nil {
 		go db.IncBalance(t.Id, PromoCost)
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
 	engine.Handle(activities.Status)
-	return Render(status)
+	return context.Render(status)
 }
 
 func GetStatus(db DataBase, t *gotok.Token, id bson.ObjectId) (int, []byte) {
@@ -938,16 +885,16 @@ func addGeo(db DataBase, t *gotok.Token, r *http.Request) url.Values {
 	return q
 }
 
-func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, context Context) (int, []byte) {
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
-		return Render(ValidationError(err))
+		return context.Render(ValidationError(err))
 	}
 	if err := query.Validate(db); err != nil {
-		return Render(ValidationError(err))
+		return context.Render(ValidationError(err))
 	}
-	u := db.Get(t.Id)
+	u := context.User
 	if !u.Vip {
 		query.Sponsor = ""
 	}
@@ -955,23 +902,21 @@ func SearchPeople(db DataBase, pagination Pagination, r *http.Request, t *gotok.
 	if err != nil {
 		return Render(BackendError(err))
 	}
-	Users(result).Prepare(adapter, db, webpAccept, audio, u)
-	return Render(SearchResult{result, count})
+	Users(result).Prepare(context)
+	return context.Render(SearchResult{result, count})
 }
 
-func GetUsersByEmail(db DataBase, t *gotok.Token, parm martini.Params, webpAccept WebpAccept, adapter *weed.Adapter, audio AudioAccept) (int, []byte) {
+func GetUsersByEmail(db DataBase, t *gotok.Token, parm martini.Params, context Context) (int, []byte) {
 	users, err := db.GetUsersByEmail(parm["email"])
 	if err != nil {
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
-	u := db.Get(t.Id)
 	if len(users) == 0 {
-		return Render([]interface{}{})
+		return context.Render([]interface{}{})
 	}
-	users.Prepare(adapter, db, webpAccept, audio, u)
-	return Render(users)
+	return context.Render(users)
 }
-func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, audio AudioAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, context Context) (int, []byte) {
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
@@ -980,7 +925,7 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 	if err := query.Validate(db); err != nil {
 		return Render(ValidationError(err))
 	}
-	u := db.Get(t.Id)
+	u := context.User
 	if !u.Vip {
 		query.Sponsor = ""
 	}
@@ -988,17 +933,14 @@ func SearchStatuses(db DataBase, pagination Pagination, r *http.Request, t *goto
 	if err != nil {
 		return Render(BackendError(err))
 	}
-	user := db.Get(t.Id)
 	for key, _ := range result {
-		result[key].Prepare(db, adapter, webpAccept, audio)
-		result[key].UserObject.CleanPrivate()
-		result[key].UserObject.SetIsFavorite(user)
+		result[key].UserObject.Prepare(context)
 	}
 
-	return Render(result)
+	return context.Render(result)
 }
 
-func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.Token, context Context) (int, []byte) {
 	q := addGeo(db, t, r)
 	query, err := NewQuery(q)
 	if err != nil {
@@ -1018,45 +960,38 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 		return Render(ErrorBackend)
 	}
 
-	var video VideoAccept
-	var audio AudioAccept
-
 	for key, _ := range result {
-		result[key].Prepare(adapter, webpAccept, video, audio)
 		if result[key].UserObject != nil {
-			result[key].UserObject.Prepare(adapter, db, webpAccept, audio)
-			result[key].UserObject.CleanPrivate()
+			result[key].UserObject.Prepare(context)
 		}
 	}
 
-	return Render(result)
+	return context.Render(result)
 }
 
-func AllPhoto(db DataBase, webp WebpAccept, adapter *weed.Adapter, paginaton Pagination) (int, []byte) {
+func AllPhoto(db DataBase, paginaton Pagination, context Context) (int, []byte) {
 	photo, count, err := db.SearchAllPhoto(paginaton)
 	if err != nil {
-		return Render(BackendError(err))
+		return context.Render(BackendError(err))
 	}
-	PhotoSlice(photo).Prepare(adapter, webp, VaMp4, AaAac)
-	return Render(SearchResult{photo, count})
+	PhotoSlice(photo).Prepare(context)
+	return context.Render(SearchResult{photo, count})
 }
 
-func GetUserPhoto(db DataBase, id bson.ObjectId, webpAccept WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func GetUserPhoto(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	photo, err := db.GetUserPhoto(id)
 	if err != nil {
 		return Render(ErrorBackend)
 	}
-	var video VideoAccept
-	var audio AudioAccept
 
 	for key := range photo {
-		photo[key].Prepare(adapter, webpAccept, video, audio)
+		photo[key].Prepare(context)
 	}
 
 	return Render(photo)
 }
 
-func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, pagination Pagination, context Context) (int, []byte) {
 	var media interface{}
 	user := db.Get(t.Id)
 	request := new(StripeItemRequest)
@@ -1115,22 +1050,21 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 		return Render(BackendError(err))
 	}
 	engine.Handle(activities.Promo)
-	s.Prepare(db, adapter, webp, video, audio)
-	return Render(s)
+	return context.Render(s)
 }
 
-func GetStripe(db DataBase, adapter *weed.Adapter, pagination Pagination, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func GetStripe(db DataBase, pagination Pagination, context Context) (int, []byte) {
 	stripe, err := db.GetStripe(pagination.Count, pagination.Offset)
 	if err != nil {
 		return Render(BackendError(err))
 	}
 	for _, v := range stripe {
-		if err := v.Prepare(db, adapter, webp, video, audio); err != nil {
+		if err := v.Prepare(context); err != nil {
 			log.Println(err)
 			// return Render(ErrorBackend)
 		}
 	}
-	return Render(stripe)
+	return context.Render(stripe)
 }
 
 func EnableVip(db DataBase, t *gotok.Token, parm martini.Params) (int, []byte) {
@@ -1359,14 +1293,13 @@ func RestoreLikeVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byt
 	return Render(db.GetVideo(id))
 }
 
-func GetLikersVideo(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetLikersVideo(id bson.ObjectId, db DataBase, context Context) (int, []byte) {
 	likers := db.GetLikesVideo(id)
 	// check for existance
 	if likers == nil {
 		return Render([]interface{}{})
 	}
-	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
-	return Render(likers)
+	return context.Render(Users(likers))
 }
 
 func LikePhoto(t *gotok.Token, id bson.ObjectId, db DataBase, engine activities.Handler, u Updater) (int, []byte) {
@@ -1428,14 +1361,13 @@ func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	return Render("ok")
 }
 
-func GetLikersPhoto(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetLikersPhoto(id bson.ObjectId, db DataBase, context Context) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
 	// check for existance
 	if likers == nil {
 		return Render([]interface{}{})
 	}
-	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
-	return Render(likers)
+	return context.Render(likers)
 }
 
 func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, []byte) {
@@ -1465,14 +1397,13 @@ func RestoreLikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []by
 	return Render(s)
 }
 
-func GetLikersStatus(id bson.ObjectId, db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, t *gotok.Token) (int, []byte) {
+func GetLikersStatus(id bson.ObjectId, db DataBase, context Context) (int, []byte) {
 	likers := db.GetLikesStatus(id)
 	// check for existance
 	if likers == nil {
 		return Render([]interface{}{})
 	}
-	Users(likers).Prepare(adapter, db, webp, audio, db.Get(t.Id))
-	return Render(likers)
+	return context.Render(Users(likers))
 }
 
 func GetCountries(db DataBase, req *http.Request) (int, []byte) {
@@ -1521,7 +1452,7 @@ func GetCityPairs(db DataBase, req *http.Request) (int, []byte) {
 	return Render(cities)
 }
 
-func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender, adapter *weed.Adapter) (int, []byte) {
+func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender, context Context) (int, []byte) {
 	email := args["email"]
 	u := db.GetUsername(email)
 	if u == nil {
@@ -1536,7 +1467,7 @@ func ForgotPassword(db DataBase, args martini.Params, mail MailHtmlSender, adapt
 			Url  string
 			User *User
 		}
-		u.Prepare(adapter, db, false, AaAac)
+		u.Prepare(context)
 		data := Data{"http://poputchiki.ru/api/auth/reset/" + confTok.Token, u}
 		if err := mail.Send("password.html", u.Id, "Восстановление пароля", data); err != nil {
 			log.Println("[email]", err)
@@ -1862,53 +1793,42 @@ func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, ada
 	return Render(video)
 }
 
-func GetUserVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func GetUserVideo(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	v, err := db.GetUserVideo(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	VideoSlice(v).Prepare(adapter, webp, video, audio)
-	return Render(v)
+	return context.Render(VideoSlice(v))
 }
 
-func GetUserMedia(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func GetUserMedia(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	v, err := db.GetUserVideo(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	VideoSlice(v).Prepare(adapter, webp, video, audio)
+	VideoSlice(v).Prepare(context)
 	p, err := db.GetUserPhoto(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	PhotoSlice(p).Prepare(adapter, webp, video, audio)
-	return Render(MakeMediaSlice(p, v))
+	PhotoSlice(p).Prepare(context)
+	return context.Render(MakeMediaSlice(p, v))
 }
 
-func GetVideo(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func GetVideo(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	v := db.GetVideo(id)
 	if v == nil {
 		return Render(ErrorObjectNotFound)
 	}
-	if err := v.Prepare(adapter, webp, video, audio); err != nil {
-		log.Println(err)
-	}
-	return Render(v)
+	return context.Render(v)
 }
 
-func GetPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, webp WebpAccept) (int, []byte) {
+func GetPhoto(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	p, err := db.GetPhoto(id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	var (
-		video VideoAccept
-		audio AudioAccept
-	)
-	if err := p.Prepare(adapter, webp, video, audio); err != nil {
-		return Render(ErrorBackend)
-	}
-	return Render(p)
+	return context.Render(p)
 }
 
 func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
@@ -1951,8 +1871,8 @@ func GetCounters(db DataBase, t *gotok.Token) (int, []byte) {
 	return Render(counters)
 }
 
-func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *http.Request, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
-	t := req.URL.Query().Get("type")
+func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, context Context) (int, []byte) {
+	t := context.Request.URL.Query().Get("type")
 	if t == "" {
 		return Render(ValidationError(errors.New("Blank type")))
 	}
@@ -1964,11 +1884,11 @@ func GetUpdates(db DataBase, token *gotok.Token, pagination Pagination, req *htt
 		return Render(BackendError(err))
 	}
 	for _, u := range updates {
-		if err := u.Prepare(db, adapter, webp, video, audio); err != nil {
+		if err := u.Prepare(context); err != nil {
 			log.Println(err)
 		}
 	}
-	return Render(updates)
+	return context.Render(updates)
 }
 
 func sendCounters(db DataBase, token *gotok.Token, realtime RealtimeInterface) error {

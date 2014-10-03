@@ -89,7 +89,10 @@ func chackOrigin(r *http.Request) bool {
 	return true
 }
 
-func (realtime *RealtimeRedis) RealtimeHandler(admin models.IsAdmin, w http.ResponseWriter, r *http.Request, db DataBase, t *gotok.Token, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept, video VideoAccept) (int, []byte) {
+func (realtime *RealtimeRedis) RealtimeHandler(w http.ResponseWriter, context Context) (int, []byte) {
+	r := context.Request
+	t := context.Token
+	admin := context.IsAdmin
 	u := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: chackOrigin}
 	_, ok := w.(http.Hijacker)
 	if !ok {
@@ -156,7 +159,7 @@ func (realtime *RealtimeRedis) RealtimeHandler(admin models.IsAdmin, w http.Resp
 	process := func(event models.Update) error {
 		log.Println("[realtime] recieved event for", event.Destination.Hex())
 		log.Printf("%+v", event)
-		if err := event.Prepare(db, adapter, webp, video, audio); err != nil {
+		if err := event.Prepare(context); err != nil {
 			return err
 		}
 		if err := conn.WriteJSON(event); err != nil {
@@ -287,7 +290,10 @@ func (e *PushNotificationsUpdater) Push(update models.Update) error {
 	u.Scheme = "https"
 	u.Path = fmt.Sprintf("/%s/push", "poputchiki")
 	q := u.Query()
-	if err := update.Prepare(e.db, e.adapter, false, VaWebm, AaOgg); err != nil {
+	context := Context{}
+	context.DB = e.db
+	context.Storage = e.adapter
+	if err := update.Prepare(context); err != nil {
 		log.Println("[email]", err)
 	}
 	q.Add("message", update.Theme())
@@ -317,8 +323,11 @@ func (e *EmailUpdater) GetTemplate(update models.Update) (template string, err e
 func (e *EmailUpdater) Push(update models.Update) error {
 	log.Println("[email]", "pushing")
 	u := e.db.Get(update.Destination)
-	u.Prepare(e.adapter, e.db, false, AaOgg)
-	if err := update.Prepare(e.db, e.adapter, false, VaWebm, AaOgg); err != nil {
+	context := Context{}
+	context.DB = e.db
+	context.Storage = e.adapter
+	u.Prepare(context)
+	if err := update.Prepare(context); err != nil {
 		log.Println("[email]", err)
 	}
 	template, err := e.GetTemplate(update)

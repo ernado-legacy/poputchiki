@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
@@ -17,15 +16,15 @@ type Status struct {
 	LikedUsers []bson.ObjectId `json:"liked_users"      bson:"liked_users"`
 }
 
-func (u *Status) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, audio AudioAccept) (err error) {
+func (u *Status) Prepare(context Context) (err error) {
 	if len(u.LikedUsers) == 0 {
 		u.LikedUsers = []bson.ObjectId{}
 	}
 	if u.UserObject == nil {
-		u.UserObject = db.Get(u.User)
+		u.UserObject = context.DB.Get(u.User)
 	}
 
-	u.UserObject.Prepare(adapter, db, webp, audio)
+	u.UserObject.Prepare(context)
 	u.UserObject.CleanPrivate()
 	u.ImageUrl = u.UserObject.AvatarUrl
 

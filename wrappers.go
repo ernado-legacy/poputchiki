@@ -35,7 +35,7 @@ func JsonEncoder(c martini.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func addStatus(value interface{}, status int) []byte {
-	j, err := json.Marshal(Response{status, value})
+	j, err := json.Marshal(models.Response{status, value})
 	if err != nil {
 		log.Println(string(j), err)
 		panic(err)
@@ -43,24 +43,19 @@ func addStatus(value interface{}, status int) []byte {
 	return j
 }
 
-type Response struct {
-	Status   int         `json:"status"`
-	Response interface{} `json:"response"`
-}
-
 func Render(value interface{}) (int, []byte) {
 	// trying to marshal to json
 	j, err := json.Marshal(value)
 	if err != nil {
-		j, err = json.Marshal(ErrorMarshal)
+		j, err = json.Marshal(models.ErrorMarshal)
 		if err != nil {
 			log.Println(err)
 			panic(err)
 		}
-		return ErrorMarshal.Code, j
+		return models.ErrorMarshal.Code, j
 	}
 	switch v := value.(type) {
-	case Error:
+	case models.Error:
 		if v.Code == http.StatusInternalServerError {
 			log.Println(v)
 			debug.PrintStack()
@@ -116,7 +111,7 @@ func TokenWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w ht
 	}
 	token, err := tokens.Get(hexToken)
 	if err != nil {
-		code, data := Render(BackendError(err))
+		code, data := Render(models.BackendError(err))
 		http.Error(w, string(data), code)
 		return
 	}
@@ -129,7 +124,7 @@ func IdEqualityRequired(w http.ResponseWriter, id bson.ObjectId, t *gotok.Token,
 	}
 	if t.Id != id {
 		log.Println(t.Id.Hex(), id)
-		code, data := Render(ErrorNotAllowed)
+		code, data := Render(models.ErrorNotAllowed)
 		http.Error(w, string(data), code) // todo: set content-type
 		return
 	}
@@ -200,7 +195,7 @@ func JsonEncoderWrapper(r *http.Request, c martini.Context) {
 func IdWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w http.ResponseWriter, parms martini.Params) {
 	hexId := parms["id"]
 	if !bson.IsObjectIdHex(hexId) {
-		code, data := Render(ErrorBadId)
+		code, data := Render(models.ErrorBadId)
 		http.Error(w, string(data), code) // todo: set content-type
 		return
 	}
@@ -209,7 +204,7 @@ func IdWrapper(c martini.Context, r *http.Request, tokens gotok.Storage, w http.
 
 func NeedAuth(res http.ResponseWriter, t *gotok.Token) {
 	if t == nil {
-		code, resp := Render(ErrorAuth)
+		code, resp := Render(models.ErrorAuth)
 		res.WriteHeader(code)
 		res.Write(resp)
 	}
@@ -217,7 +212,7 @@ func NeedAuth(res http.ResponseWriter, t *gotok.Token) {
 
 func NeedAdmin(w http.ResponseWriter, isAdmin models.IsAdmin) {
 	if !isAdmin {
-		code, data := Render(ErrorAuth)
+		code, data := Render(models.ErrorAuth)
 		http.Error(w, string(data), code)
 		return
 	}

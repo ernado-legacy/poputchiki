@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
@@ -29,21 +28,20 @@ func convert(input interface{}, output interface{}) error {
 	return bson.Unmarshal(data, output)
 }
 
-func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
-	// log.Printf("%+v", stripe)
+func (stripe *StripeItem) Prepare(context Context) error {
 
 	var err error
-	if webp {
-		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageWebp)
-	} else {
-		stripe.ImageUrl, err = adapter.GetUrl(stripe.ImageJpeg)
+	if len(stripe.ImageJpeg) > 0 {
+		stripe.ImageUrl, err = context.Storage.URL(stripe.ImageJpeg)
+		if context.WebP {
+			stripe.ImageUrl, err = context.Storage.URL(stripe.ImageWebp)
+		}
+		if err != nil {
+			log.Println(err)
+		}
 	}
-	if err != nil {
-		// log.Println(err)
-		// return err
-	}
-	stripe.UserObject = db.Get(stripe.User)
-	stripe.UserObject.Prepare(adapter, db, webp, audio)
+	stripe.UserObject = context.DB.Get(stripe.User)
+	stripe.UserObject.Prepare(context)
 	stripe.Age = stripe.UserObject.Age
 	stripe.Name = stripe.UserObject.Name
 	stripe.UserObject.CleanPrivate()
@@ -67,9 +65,8 @@ func (stripe *StripeItem) Prepare(db DataBase, adapter *weed.Adapter, webp WebpA
 		return errors.New("bad type")
 	}
 
-	if err := media.Prepare(adapter, webp, video, audio); err != nil {
+	if err := media.Prepare(context); err != nil {
 		log.Println(err)
-		// return err
 	}
 	stripe.Url = media.Url()
 	return nil

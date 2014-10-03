@@ -1,9 +1,7 @@
 package models
 
 import (
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
-	// "log"
 	"time"
 )
 
@@ -30,20 +28,20 @@ type Photo struct {
 	Time          time.Time       `json:"time"                  bson:"time"`
 }
 
-func (p *Photo) Prepare(adapter *weed.Adapter, webp WebpAccept, _ VideoAccept, _ AudioAccept) error {
+func (p *Photo) Prepare(context Context) error {
 	var err error
-	if webp {
-		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailWebp)
+	if context.WebP {
+		p.ThumbnailUrl, err = context.Storage.URL(p.ThumbnailWebp)
 		if err != nil {
 			return err
 		}
-		p.ImageUrl, err = adapter.GetUrl(p.ImageWebp)
+		p.ImageUrl, err = context.Storage.URL(p.ImageWebp)
 	} else {
-		p.ThumbnailUrl, err = adapter.GetUrl(p.ThumbnailJpeg)
+		p.ThumbnailUrl, err = context.Storage.URL(p.ThumbnailJpeg)
 		if err != nil {
 			return err
 		}
-		p.ImageUrl, err = adapter.GetUrl(p.ImageJpeg)
+		p.ImageUrl, err = context.Storage.URL(p.ImageJpeg)
 	}
 	if len(p.LikedUsers) == 0 {
 		p.LikedUsers = []bson.ObjectId{}

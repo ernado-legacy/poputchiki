@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/ernado/weed"
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"reflect"
@@ -97,19 +96,19 @@ func GetEventType(updateType string, media interface{}) string {
 	return fmt.Sprintf("%s_%s", updateType, strings.ToLower(reflect.TypeOf(media).Elem().Name()))
 }
 
-func (stripe *Update) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccept, video VideoAccept, audio AudioAccept) error {
+func (stripe *Update) Prepare(context Context) error {
 	log.Println("[prepare]", "preparing update")
 	var media PrepareInterface
 	var hasMedia bool = false
 
-	if webp {
-		stripe.ImageUrl, _ = adapter.GetUrl(stripe.ImageWebp)
+	if context.WebP {
+		stripe.ImageUrl, _ = context.Storage.URL(stripe.ImageWebp)
 	} else {
-		stripe.ImageUrl, _ = adapter.GetUrl(stripe.ImageJpeg)
+		stripe.ImageUrl, _ = context.Storage.URL(stripe.ImageJpeg)
 	}
 
-	stripe.UserObject = db.Get(stripe.User)
-	stripe.UserObject.Prepare(adapter, db, webp, audio)
+	stripe.UserObject = context.DB.Get(stripe.User)
+	stripe.UserObject.Prepare(context)
 	stripe.UserObject.CleanPrivate()
 
 	switch stripe.Type {
@@ -125,7 +124,7 @@ func (stripe *Update) Prepare(db DataBase, adapter *weed.Adapter, webp WebpAccep
 		hasMedia = false
 	}
 	if hasMedia {
-		if err := media.Prepare(adapter, webp, video, audio); err != nil {
+		if err := media.Prepare(context); err != nil {
 			log.Println(err)
 		}
 		stripe.Url = media.Url()

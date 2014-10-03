@@ -190,6 +190,7 @@ func NewApp() *Application {
 	staticOptions := martini.StaticOptions{Prefix: "/api/static/"}
 	m.Use(martini.Static("static", staticOptions))
 	m.Use(AdminWrapper)
+	m.Use(models.ContextWrapper)
 
 	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)
@@ -569,7 +570,7 @@ func (a *Application) SendJSON(method, url string, input, output interface{}) er
 	a.m.ServeHTTP(res, req)
 	decoder := json.NewDecoder(res.Body)
 	if res.Code != http.StatusOK {
-		result := new(Error)
+		result := new(models.Error)
 		result.Code = 500
 		result.Text = "panic"
 		decoder.Decode(result)
@@ -607,7 +608,7 @@ func (a *Application) Process(token *gotok.Token, method, url string, input, out
 	a.m.ServeHTTP(res, req)
 	decoder := json.NewDecoder(res.Body)
 	if res.Code != http.StatusOK {
-		result := new(Error)
+		result := new(models.Error)
 		result.Code = 500
 		result.Text = "panic"
 		decoder.Decode(result)
