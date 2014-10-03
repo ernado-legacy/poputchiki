@@ -967,6 +967,7 @@ func SearchPhoto(db DataBase, pagination Pagination, r *http.Request, t *gotok.T
 	}
 
 	for key, _ := range result {
+		result[key].Prepare(context)
 		if result[key].UserObject != nil {
 			result[key].UserObject.Prepare(context)
 		}
