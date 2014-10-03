@@ -21,6 +21,18 @@ type Message struct {
 	LastMessage bson.ObjectId `json:"last_message,omitempty" bson:"-"`
 }
 
+func (m *Message) Prepare(context Context) error {
+	if len(m.PhotoUrl) == 0 {
+		return nil
+	}
+	url, err := context.Storage.URL(m.Photo)
+	if err != nil {
+		return err
+	}
+	m.PhotoUrl = url
+	return nil
+}
+
 type Broadcast struct {
 	Text string `json:"text" bson:"text"`
 }

@@ -66,17 +66,25 @@ type Preparable interface {
 }
 
 func (renderer ContextRenderer) Render(value interface{}) (int, []byte) {
-	var mobile bool
+	var mobile, ok bool
+
+	start := time.Now()
+	defer func() {
+		log.Printf("[render] mobile=%v preparable=%v | %v\n", mobile, ok, time.Now().Sub(start))
+	}()
 
 	if strings.Contains(renderer.context.Request.URL.Path, "/api/mobile") {
 		mobile = true
 	}
 
 	preparable, ok := value.(Preparable)
+
 	if ok {
+		prepareStart := time.Now()
 		if err := preparable.Prepare(renderer.context); err != nil {
 			log.Println("[prepare]", err)
 		}
+		log.Println("[render] [prepare]", time.Now().Sub(prepareStart))
 	}
 
 	j, err := json.Marshal(value)

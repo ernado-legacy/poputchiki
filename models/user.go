@@ -222,14 +222,16 @@ func (u *User) SetIsBlacklisted(context Context) {
 
 type Users []*User
 
-func (u Users) Prepare(context Context) {
+func (u Users) Prepare(context Context) error {
 	for _, v := range u {
 		v.Prepare(context)
 		v.CleanPrivate()
 	}
+
+	return nil
 }
 
-func (u *User) Prepare(context Context) {
+func (u *User) Prepare(context Context) error {
 	u.Password = ""
 	u.SetAvatarUrl(context)
 
@@ -259,4 +261,6 @@ func (u *User) Prepare(context Context) {
 
 	u.SetIsBlacklisted(context)
 	u.SetIsFavorite(context)
+
+	return nil
 }

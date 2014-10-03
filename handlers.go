@@ -106,7 +106,6 @@ func GetUser(db DataBase, t *gotok.Token, id bson.ObjectId, context Context, u U
 			u.Push(NewUpdate(id, t.Id, UpdateGuests, user))
 		}()
 	}
-	user.Prepare(context)
 	return context.Render(user)
 }
 
@@ -226,7 +225,6 @@ func GetFavorites(db DataBase, id bson.ObjectId, context Context) (int, []byte) 
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
-	Users(favorites).Prepare(context)
 	return context.Render(Users(favorites))
 }
 
@@ -240,7 +238,6 @@ func GetFollowers(db DataBase, id bson.ObjectId, context Context) (int, []byte) 
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
-	Users(favorites).Prepare(context)
 	return context.Render(Users(favorites))
 }
 
@@ -251,7 +248,6 @@ func GetBlacklisted(db DataBase, id bson.ObjectId, context Context) (int, []byte
 	if blacklisted == nil {
 		return Render([]interface{}{})
 	}
-	Users(blacklisted).Prepare(context)
 	return context.Render(Users(blacklisted))
 }
 
@@ -377,10 +373,9 @@ func Register(db DataBase, r *http.Request, w http.ResponseWriter, tokens gotok.
 }
 
 // Update updates user information with provided key-value document
-func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, context Context) (int, []byte) {
+func UpdateUser(db DataBase, id bson.ObjectId, parser Parser, context Context) (int, []byte) {
 	user := new(User)
 	query, err := parser.Query(user)
-	log.Println(query)
 
 	if err != nil {
 		log.Println("parser error", err)
@@ -415,7 +410,7 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, c
 	}
 
 	if user.Password != "" {
-		user.Password = getHash(user.Password, db.Salt())
+		user.Password = getHash(user.Password, context.DB.Salt())
 	}
 
 	// encoding back to query object
@@ -441,12 +436,12 @@ func UpdateUser(db DataBase, r *http.Request, id bson.ObjectId, parser Parser, c
 		}
 	}
 	// updating user
-	_, err = db.Update(id, newQuery)
+	_, err = context.DB.Update(id, newQuery)
 	if err != nil {
 		return context.Render(BackendError(err))
 	}
 	// returning updated user
-	updated := db.Get(id)
+	updated := context.DB.Get(id)
 	return context.Render(updated)
 }
 
