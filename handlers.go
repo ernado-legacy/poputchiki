@@ -226,6 +226,7 @@ func GetFavorites(db DataBase, id bson.ObjectId, context Context) (int, []byte) 
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
+	Users(favorites).Prepare(context)
 	return context.Render(Users(favorites))
 }
 
@@ -239,6 +240,7 @@ func GetFollowers(db DataBase, id bson.ObjectId, context Context) (int, []byte) 
 	if favorites == nil {
 		return Render([]interface{}{})
 	}
+	Users(favorites).Prepare(context)
 	return context.Render(Users(favorites))
 }
 
@@ -249,6 +251,7 @@ func GetBlacklisted(db DataBase, id bson.ObjectId, context Context) (int, []byte
 	if blacklisted == nil {
 		return Render([]interface{}{})
 	}
+	Users(blacklisted).Prepare(context)
 	return context.Render(Users(blacklisted))
 }
 
@@ -261,6 +264,9 @@ func GetGuests(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	// check for existance
 	if guests == nil {
 		return Render([]interface{}{})
+	}
+	for _, u := range guests {
+		u.Prepare(context)
 	}
 	return context.Render(guests)
 }
