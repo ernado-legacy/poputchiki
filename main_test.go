@@ -167,13 +167,16 @@ func TestTemplates(t *testing.T) {
 	a := NewTestApp()
 	defer a.Close()
 	Convey("Templates", t, func() {
+		userId := bson.NewObjectId()
 		user := new(User)
 		avatarUrl := "http://avatar-url.ru"
+		goUrl := "http://poputchiki.ru/user/" + userId.Hex()
 		name := "Username"
 		user.Name = name
 		user.AvatarUrl = avatarUrl
 		update := NewUpdate(bson.NewObjectId(), bson.NewObjectId(), "guests", user)
 		update.UserObject = user
+		update.User = userId
 		src, err := a.emailUpdater.GetTemplate(update)
 		So(err, ShouldBeNil)
 		t, err := template.New("template").Parse(src)
@@ -183,6 +186,7 @@ func TestTemplates(t *testing.T) {
 		s := buff.String()
 		So(s, ShouldContainSubstring, avatarUrl)
 		So(s, ShouldContainSubstring, name)
+		So(s, ShouldContainSubstring, goUrl)
 	})
 }
 
