@@ -1363,13 +1363,24 @@ func RemoveVideo(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
 	return Render("ok")
 }
 
+func RemoveAudio(t *gotok.Token, id bson.ObjectId, db DataBase) (int, []byte) {
+	err := db.RemoveAudioSecure(t.Id, id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrorObjectNotFound)
+	}
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	return Render("ok")
+}
+
 func GetLikersPhoto(id bson.ObjectId, db DataBase, context Context) (int, []byte) {
 	likers := db.GetLikesPhoto(id)
 	// check for existance
 	if likers == nil {
 		return Render([]interface{}{})
 	}
-	return context.Render(likers)
+	return context.Render(Users(likers))
 }
 
 func LikeStatus(t *gotok.Token, id bson.ObjectId, db DataBase, u Updater) (int, []byte) {

@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -149,7 +150,9 @@ func (q *SearchQuery) ToBson() bson.M {
 	}
 
 	if q.Text != "" {
-		textQuery := bson.M{"$text": bson.M{"$search": q.Text}}
+		s := q.Text
+		search := []string{strings.ToLower(s), strings.ToTitle(s), strings.ToUpper(s)}
+		textQuery := bson.M{"$text": bson.M{"$search": strings.Join(search, " ")}}
 		query = append(query, textQuery)
 	}
 

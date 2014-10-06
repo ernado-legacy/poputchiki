@@ -38,6 +38,14 @@ func (db *DB) UpdateAudioOGG(id bson.ObjectId, fid string) error {
 	return err
 }
 
+func (db *DB) RemoveAudioSecure(user, id bson.ObjectId) error {
+	_, err := db.users.UpdateAll(bson.M{"audio": id, "_id": user}, bson.M{"$set": bson.M{"audio": ""}})
+	if err != nil {
+		return err
+	}
+	return db.audio.Remove(bson.M{"_id": id, "user": user})
+}
+
 func (db *DB) RemoveAudio(id bson.ObjectId) error {
 	_, err := db.users.UpdateAll(bson.M{"audio": id}, bson.M{"$set": bson.M{"audio": ""}})
 	if err != nil {

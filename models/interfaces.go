@@ -242,6 +242,7 @@ type DataBase interface {
 	UpdateAudioAAC(id bson.ObjectId, fid string) error
 	UpdateAudioOGG(id bson.ObjectId, fid string) error
 	RemoveAudio(id bson.ObjectId) error
+	RemoveAudioSecure(user, id bson.ObjectId) error
 
 	AddStripeItem(i *StripeItem, media interface{}) (*StripeItem, error)
 	GetStripeItem(id bson.ObjectId) (*StripeItem, error)
