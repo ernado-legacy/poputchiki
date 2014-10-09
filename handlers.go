@@ -2214,6 +2214,8 @@ Sitemap: http://poputchiki.ru/sitemap.xml
 func Sitemap(db DataBase) string {
 	items := []SitemapItem{}
 	users := db.AllUsers()
+	items = append(items, SitemapItem{"http://poputchiki.ru/"})
+	items = append(items, SitemapItem{"http://poputchiki.ru/register"})
 	for _, user := range users {
 		items = append(items, SitemapItem{"http://poputchiki.ru/user/" + user.Id.Hex()})
 	}
