@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode"
 )
 
 const (
@@ -68,6 +69,12 @@ func (s *SearchQuery) Validate(db DataBase) error {
 		}
 	}
 	return nil
+}
+
+func toTitle(s string) string {
+	a := []rune(s)
+	a[0] = unicode.ToLower(a[0])
+	return string(a)
 }
 
 // ToBson generates mongo query from SearchQuery
@@ -151,7 +158,7 @@ func (q *SearchQuery) ToBson() bson.M {
 
 	if q.Text != "" {
 		s := q.Text
-		search := []string{strings.ToLower(s), strings.ToTitle(s), strings.ToUpper(s), s}
+		search := []string{strings.ToLower(s), toTitle(s), strings.ToUpper(s), s}
 		textQuery := bson.M{"$text": bson.M{"$search": strings.Join(search, " ")}}
 		query = append(query, textQuery)
 	}
