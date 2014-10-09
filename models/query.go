@@ -151,8 +151,8 @@ func (q *SearchQuery) ToBson() bson.M {
 
 	if q.Text != "" {
 		s := q.Text
-		search := []string{strings.ToLower(s), strings.ToTitle(s), strings.ToUpper(s)}
-		textQuery := bson.M{"$text": bson.M{"$search": strings.Join(search, "|")}}
+		search := []string{strings.ToLower(s), strings.ToTitle(s), strings.ToUpper(s), s}
+		textQuery := bson.M{"$text": bson.M{"$search": strings.Join(search, " ")}}
 		query = append(query, textQuery)
 	}
 
