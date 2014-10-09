@@ -152,6 +152,7 @@ type SearchResult struct {
 
 type DataBase interface {
 	// GetAll() []*User
+	AllUsers() []*User
 	GetUsername(username string) *User
 	Get(id bson.ObjectId) *User
 	Add(u *User) error

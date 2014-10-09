@@ -2195,6 +2195,35 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 	return Render(data)
 }
 
+func Robots() (robots string) {
+	robots = `User-agent: *
+Disallow: /*openstat*
+Disallow: /*utm*
+Disallow: /*from*
+Disallow: /*gclid*
+Disallow: /register
+Disallow: /login
+Disallow: /search
+
+Host: poputchiki.ru
+Sitemap: http://poputchiki.ru/sitemap.xml
+	`
+	return robots
+}
+
+func Sitemap(db DataBase) string {
+	items := []SitemapItem{}
+	users := db.AllUsers()
+	for _, user := range users {
+		items = append(items, SitemapItem{"http://poputchiki.ru/user/" + user.Id.Hex()})
+	}
+	sitemap, err := SitemapStr(items)
+	if err != nil {
+		return err.Error()
+	}
+	return sitemap
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

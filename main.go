@@ -192,6 +192,9 @@ func NewApp() *Application {
 	m.Use(AdminWrapper)
 	m.Use(models.ContextWrapper)
 
+	m.Get("/robots.txt", Robots)
+	m.Get("/sitemap.xml", Sitemap)
+
 	m.Group(root+"/auth", func(r martini.Router) {
 		r.Post("/register", Register)
 		r.Post("/login", Login)

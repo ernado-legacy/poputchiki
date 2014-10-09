@@ -22,6 +22,12 @@ func (db *DB) Update(id bson.ObjectId, update bson.M) (*User, error) {
 	return u, err
 }
 
+func (db *DB) AllUsers() []*User {
+	list := []*User{}
+	db.users.Find(nil).All(&list)
+	return list
+}
+
 func (db *DB) SetVip(id bson.ObjectId, vip bool) error {
 	return db.users.Update(bson.M{"_id": id}, bson.M{"$set": bson.M{"vip": vip}})
 }
