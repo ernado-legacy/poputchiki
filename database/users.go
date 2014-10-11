@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
+	"math/rand"
 	"sort"
 	"time"
 )
@@ -296,6 +297,17 @@ func (db *DB) Search(q *SearchQuery, pagination Pagination) ([]*User, int, error
 		return u, 0, err
 	}
 	return u, count, db.users.Find(query).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&u)
+}
+
+func (db *DB) RandomUser() (*User, error) {
+	query := bson.M{"avatar": bson.M{"$exists": true}}
+	count, err := db.users.Find(query).Count()
+	if err != nil {
+		return nil, err
+	}
+	offset := rand.Intn(count + 1)
+	user := new(User)
+	return user, db.users.Find(query).Skip(offset).Limit(1).One(user)
 }
 
 func (db *DB) UpdateAllStatuses() (*mgo.ChangeInfo, error) {

@@ -152,6 +152,7 @@ type SearchResult struct {
 
 type DataBase interface {
 	// GetAll() []*User
+	RandomUser() (*User, error)
 	AllUsers() []*User
 	GetUsername(username string) *User
 	Get(id bson.ObjectId) *User

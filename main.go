@@ -415,6 +415,11 @@ func (a *Application) RatingDegradatingCycle() {
 
 var redisQueryRespKey = fmt.Sprintf("%s:conventer:resp", projectName)
 
+func (a *Application) PromoCycle() {
+	client := &RandomCycle{a.p, a.db}
+	client.Cycle()
+}
+
 func (a *Application) ConvertResultListener() {
 	db := a.db
 	log.Println("Started conventer", *redisQueryKey, "->", redisQueryRespKey)
@@ -514,6 +519,7 @@ func (a *Application) Run() {
 	go a.ConvertResultListener()
 	go a.RatingDegradatingCycle()
 	go a.NormalizeRatingCycle()
+	go a.PromoCycle()
 	a.m.Run()
 }
 

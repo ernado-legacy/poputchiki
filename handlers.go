@@ -16,6 +16,7 @@ import (
 	"github.com/ernado/poputchiki/activities"
 	. "github.com/ernado/poputchiki/models"
 	"github.com/ernado/weed"
+	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
 	"gopkg.in/mgo.v2"
@@ -67,7 +68,8 @@ const (
 )
 
 var (
-	ErrBadRequest = errors.New("bad request") // internal bad request error
+	ErrBadRequest     = errors.New("bad request") // internal bad request error
+	ErrObjectNotFound = errors.New("Object not found")
 )
 
 // simple handler for testing the api from cyvisor
@@ -993,28 +995,116 @@ func GetUserPhoto(db DataBase, id bson.ObjectId, context Context) (int, []byte) 
 	return Render(photo)
 }
 
-func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, pagination Pagination, context Context) (int, []byte) {
-	var media interface{}
-	user := db.Get(t.Id)
-	request := new(StripeItemRequest)
-	if err := parser.Parse(request); err != nil {
-		return Render(ValidationError(err))
+type RandomCycle struct {
+	pool *redis.Pool
+	db   DataBase
+}
+
+const (
+	redisCycle    = "promo-cycle"
+	cycleDuration = time.Second * 5
+)
+
+func (client *RandomCycle) Cycle() {
+	log.Println("[random promo]", "started")
+	defer func() {
+		recover()
+		log.Println("[random promo]", "finished")
+	}()
+	key := strings.Join([]string{redisName, redisCycle}, REDIS_SEPARATOR)
+	type Data struct {
+		Time time.Time `json:"time"`
 	}
-	i := new(StripeItem)
-	i.Id = bson.NewObjectId()
-	i.User = t.Id
-	if !*development {
-		err := db.DecBalance(t.Id, PromoCost)
+	var (
+		last    time.Time
+		fromNow time.Duration
+	)
+	now := time.Now()
+	last = now.Add(-time.Hour)
+	v := new(Data)
+	conn := client.pool.Get()
+	data, err := redis.Bytes(conn.Do("GET", key))
+	if err != nil && err != redis.ErrNil {
+		log.Println("[random promo]", err)
+		conn.Close()
+		return
+	}
+
+	if err := json.Unmarshal(data, v); err == nil {
+		last = v.Time
+		fromNow = now.Sub(last)
+		log.Println("[random promo]", "found last time", fromNow, "ago")
+	}
+	conn.Close()
+	tick := func() error {
+		now := time.Now()
+		log.Println("[random promo]", "tick initiated")
+		defer func() {
+			log.Println("[random promo]", "processed", time.Now().Sub(now))
+		}()
+		conn = client.pool.Get()
+		defer conn.Close()
+		if err := RandomPromo(client.db); err != nil {
+			log.Println("[random promo]", "database error")
+			return err
+		}
+		last = now
+		v.Time = last
+		data, err = json.Marshal(v)
 		if err != nil {
-			return Render(ErrorInsufficentFunds)
+			return err
+		}
+		if _, err := conn.Do("SET", key, data); err != nil {
+			return err
+		}
+		return nil
+	}
+	ticker := time.NewTicker(cycleDuration)
+	if fromNow < cycleDuration {
+		log.Println("[random promo]", "forcing sleep")
+		time.Sleep(cycleDuration - fromNow)
+	}
+	if err := tick(); err != nil {
+		log.Println("[random promo]", err)
+		return
+	}
+	for _ = range ticker.C {
+		if err := tick(); err != nil {
+			log.Println("[random promo]", err)
+			return
 		}
 	}
+}
+
+func RandomPromo(db DataBase) error {
+	log.Println("[random promo]", "processing")
+	user, err := db.RandomUser()
+	if err != nil {
+		return err
+	}
+	log.Println("[random promo] selectel user", user.Id.Hex(), user.Name)
+	request := &StripeItemRequest{Type: "photo", Id: user.Avatar}
+	s, err := addStripeItem(db, request, user)
+	if err != nil {
+		return err
+	}
+	log.Println("[random promo]", "added stripe item", s.Id.Hex())
+	return nil
+}
+
+func addStripeItem(db DataBase, request *StripeItemRequest, user *User) (*StripeItem, error) {
+	var media interface{}
+
+	i := new(StripeItem)
+	i.Id = bson.NewObjectId()
+	i.User = user.Id
 	i.Type = request.Type
+
 	switch request.Type {
 	case "video":
 		video := db.GetVideo(request.Id)
 		if video == nil {
-			return Render(ErrorObjectNotFound)
+			return nil, ErrObjectNotFound
 		}
 		i.ImageJpeg = video.ThumbnailJpeg
 		i.ImageWebp = video.ThumbnailWebp
@@ -1025,7 +1115,7 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 			audio = db.GetAudio(user.Audio)
 		}
 		if audio == nil {
-			return Render(ErrorObjectNotFound)
+			return nil, ErrObjectNotFound
 		}
 		i.ImageJpeg = user.AvatarJpeg
 		i.ImageWebp = user.AvatarWebp
@@ -1033,21 +1123,37 @@ func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parse
 	case "photo":
 		p, err := db.GetPhoto(request.Id)
 		if err != nil && err != mgo.ErrNotFound {
-			return Render(BackendError(err))
+			return nil, err
 		}
 		if p == nil {
-			return Render(ErrorObjectNotFound)
+			return nil, ErrObjectNotFound
 		}
 		i.ImageJpeg = p.ThumbnailJpeg
 		i.ImageWebp = p.ThumbnailWebp
 		media = p
 	default:
-		return Render(ValidationError(errors.New("Bad type")))
+		return nil, ErrObjectNotFound
 	}
 	if media == nil {
+		return nil, ErrObjectNotFound
+	}
+	return db.AddStripeItem(i, media)
+}
+
+func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, context Context) (int, []byte) {
+	if !*development {
+		if db.DecBalance(context.Token.Id, PromoCost) != nil {
+			return Render(ErrorInsufficentFunds)
+		}
+	}
+	request := new(StripeItemRequest)
+	if err := parser.Parse(request); err != nil {
+		return Render(ValidationError(err))
+	}
+	s, err := addStripeItem(db, request, context.User)
+	if err == ErrObjectNotFound {
 		return Render(ErrorObjectNotFound)
 	}
-	s, err := db.AddStripeItem(i, media)
 	if err != nil {
 		return Render(BackendError(err))
 	}
