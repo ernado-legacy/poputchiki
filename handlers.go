@@ -1002,7 +1002,7 @@ type RandomCycle struct {
 
 const (
 	redisCycle    = "promo-cycle"
-	cycleDuration = time.Second * 5
+	cycleDuration = time.Minute * 10
 )
 
 func (client *RandomCycle) Cycle() {
