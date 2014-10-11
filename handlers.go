@@ -1029,7 +1029,7 @@ func (client *RandomCycle) Cycle() {
 		conn.Close()
 		return
 	}
-
+	fromNow = cycleDuration
 	if err := json.Unmarshal(data, v); err == nil {
 		last = v.Time
 		fromNow = now.Sub(last)
