@@ -813,6 +813,10 @@ func AddStatus(db DataBase, r *http.Request, t *gotok.Token, parser Parser, engi
 		return Render(ValidationError(err))
 	}
 
+	if len(status.Text) == 0 {
+		return Render(ValidationError(errors.New("Отправлен пустой статус")))
+	}
+
 	count, err := db.GetLastDayStatusesAmount(t.Id)
 	if err != nil {
 		return context.Render(BackendError(err))
