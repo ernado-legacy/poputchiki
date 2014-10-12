@@ -772,7 +772,7 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, erro
 	}
 
 	c := func(input *photo.File) File {
@@ -1006,7 +1006,7 @@ type RandomCycle struct {
 
 const (
 	redisCycle    = "promo-cycle"
-	cycleDuration = time.Minute * 10
+	cycleDuration = time.Minute * 3
 )
 
 func (client *RandomCycle) Cycle() {
