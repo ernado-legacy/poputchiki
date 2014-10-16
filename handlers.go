@@ -476,8 +476,23 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		log.Println("administrative message forced origin", origin.Hex())
 	}
 
-	if text == "" {
+	if text == "" && len(photo) == 0 {
 		return Render(ValidationError(errors.New("Blank text")))
+	}
+
+	if len(photo) != 0 && bson.IsObjectIdHex(photo) {
+		if !bson.IsObjectIdHex(photo) {
+			return Render(ValidationError(errors.New("Invalid photo id")))
+		}
+		photoId := bson.ObjectIdHex(photo)
+		p, err := db.GetPhoto(photoId)
+		if err == mgo.ErrNotFound {
+			Render(ValidationError(fmt.Errorf("Photo %s not found", photoId.Hex())))
+		}
+		if err != nil {
+			Render(BackendError(err))
+		}
+		photo = p.ImageJpeg
 	}
 
 	m1, m2 := NewMessagePair(db, origin, destination, photo, text)
