@@ -32,6 +32,7 @@ func (messages Messages) Prepare(context Context) error {
 	return nil
 }
 
+// Prepare sets the url for attachment photo
 func (m *Message) Prepare(context Context) error {
 	if len(m.Photo) == 0 {
 		return nil
