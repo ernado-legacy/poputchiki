@@ -460,7 +460,7 @@ type MessageText struct {
 	Photo   string        `json:"photo"`
 }
 
-func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater, admin IsAdmin) (int, []byte) {
+func SendMessage(context Context, db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater, admin IsAdmin) (int, []byte) {
 	message := &MessageText{}
 	err := parser.Parse(message)
 	if err != nil {
@@ -528,7 +528,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	if err := db.AddMessage(m2); err != nil {
 		Render(BackendError(err))
 	}
-	return Render(m1)
+	return context.Render(m1)
 }
 
 func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
