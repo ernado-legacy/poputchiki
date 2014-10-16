@@ -33,7 +33,7 @@ func (messages Messages) Prepare(context Context) error {
 }
 
 func (m *Message) Prepare(context Context) error {
-	if len(m.PhotoUrl) == 0 {
+	if len(m.Photo) == 0 {
 		return nil
 	}
 	url, err := context.Storage.URL(m.Photo)
