@@ -16,7 +16,7 @@ RUN cd $ROOT && go get -u -v .
 
 # update
 RUN cd $ROOT && version=VERSION git pull
-RUN cd $ROOT && go build
+RUN cd $ROOT && go get .
 
 WORKDIR /go/src/github.com/ernado/poputchiki
 
