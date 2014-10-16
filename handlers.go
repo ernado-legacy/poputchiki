@@ -570,24 +570,25 @@ func GetUnreadCount(db DataBase, t *gotok.Token) (int, []byte) {
 	return Render(UnreadCount{n})
 }
 
-func GetMessagesFromUser(db DataBase, origin bson.ObjectId, r *http.Request, t *gotok.Token, pagination Pagination, realtime RealtimeInterface) (int, []byte) {
-	messages, err := db.GetMessagesFromUser(t.Id, origin, pagination)
+func GetMessagesFromUser(origin bson.ObjectId, context Context, pagination Pagination, realtime RealtimeInterface) (int, []byte) {
+	db := context.DB
+	messages, err := db.GetMessagesFromUser(context.User.Id, origin, pagination)
 	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))
 	}
 	if messages == nil {
 		return Render([]interface{}{})
 	}
-	if err := db.SetReadMessagesFromUser(t.Id, origin); err != nil {
+	if err := db.SetReadMessagesFromUser(context.User.Id, origin); err != nil {
 		return Render(BackendError(err))
 	}
-	if err := sendCounters(db, t, realtime); err != nil {
+	if err := sendCounters(db, context.Token, realtime); err != nil {
 		return Render(BackendError(err))
 	}
-	return Render(messages)
+	return context.Render(messages)
 }
 
-func GetChat(db DataBase, pagination Pagination, parms martini.Params) (int, []byte) {
+func GetChat(db DataBase, pagination Pagination, context Context, parms martini.Params) (int, []byte) {
 	if !bson.IsObjectIdHex(parms["user"]) {
 		return Render(ErrorBadId)
 	}
@@ -605,7 +606,7 @@ func GetChat(db DataBase, pagination Pagination, parms martini.Params) (int, []b
 	if err = db.SetReadMessagesFromUser(user, chat); err != nil {
 		log.Println("SetReadMessagesFromUser", err)
 	}
-	return Render(messages)
+	return context.Render(messages)
 }
 
 func RemoveChat(db DataBase, origin bson.ObjectId, t *gotok.Token) (int, []byte) {
