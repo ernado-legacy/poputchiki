@@ -70,7 +70,7 @@ func (renderer ContextRenderer) Render(value interface{}) (int, []byte) {
 
 	start := time.Now()
 	defer func() {
-		log.Printf("[render] mobile=%v preparable=%v | %v\n", mobile, ok, time.Now().Sub(start))
+		log.Printf("[render] %T mobile=%v preparable=%v | %v\n", value, mobile, ok, time.Now().Sub(start))
 	}()
 
 	if strings.Contains(renderer.context.Request.URL.Path, "/api/mobile") {
