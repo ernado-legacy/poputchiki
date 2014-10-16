@@ -545,7 +545,7 @@ func SendInvite(db DataBase, parser Parser, engine activities.Handler, destinati
 			return Render(ErrorBlacklisted)
 		}
 	}
-	Must(realtime.Push(origin, toOrigin))
+	// Must(realtime.Push(origin, toOrigin))
 	Must(realtime.Push(destination, toDestination))
 
 	Must(db.AddInvite(toOrigin))
