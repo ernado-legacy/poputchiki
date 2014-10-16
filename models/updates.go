@@ -98,7 +98,7 @@ func GetEventType(updateType string, media interface{}) string {
 
 func (stripe *Update) Prepare(context Context) error {
 	log.Println("[prepare]", "preparing update")
-	var media PrepareInterface
+	var media Preparable
 	var hasMedia bool = false
 
 	if context.WebP {
@@ -120,6 +120,10 @@ func (stripe *Update) Prepare(context Context) error {
 		v := new(Photo)
 		convert(stripe.Target, v)
 		media = v
+	case "message":
+		v := new(Message)
+		convert(stripe.Target, v)
+		media = v
 	default:
 		hasMedia = false
 	}
@@ -127,7 +131,10 @@ func (stripe *Update) Prepare(context Context) error {
 		if err := media.Prepare(context); err != nil {
 			log.Println(err)
 		}
-		stripe.Url = media.Url()
+		m, ok := media.(PrepareInterface)
+		if ok {
+			stripe.Url = m.Url()
+		}
 	}
 	log.Println("[prepare]", "prepared")
 	return nil
