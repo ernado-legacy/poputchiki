@@ -501,6 +501,7 @@ func TestMethods(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			req, err := http.NewRequest("POST", reqUrl, bytes.NewReader(body))
+			req.Header.Add(ContentTypeHeader, "application/json")
 			a.ServeHTTP(res, req)
 			a.DropDatabase()
 			So(res.Code, ShouldEqual, http.StatusOK)

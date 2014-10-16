@@ -21,8 +21,8 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 	return p, err
 }
 
-// AddPhoto add new photo to database with provided image and thumbnail
-func (db *DB) AddHiddenPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
+// AddPhotoHidden adds new hidden photo to database with provided image and thumbnail
+func (db *DB) AddPhotoHidden(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
 	// creating photo
 	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid,
 		Time: time.Now(), Description: desctiption, ThumbnailJpeg: thumbnailJpeg.Fid, ThumbnailWebp: thumbnailWebp.Fid}
@@ -86,7 +86,7 @@ func (db *DB) SearchAllPhoto(pagination Pagination) ([]*Photo, int, error) {
 	count, _ := db.photo.Count()
 	sorting := "-time"
 	photos := []*Photo{}
-	err := db.photo.Find(nil).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&photos)
+	err := db.photo.Find(bson.M{"hidden": bson.M{"$ne": true}}).Sort(sorting).Skip(pagination.Offset).Limit(pagination.Count).All(&photos)
 	if err != nil {
 		return photos, count, err
 	}
@@ -116,6 +116,7 @@ func (db *DB) SearchPhoto(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 
 	photos := []*Photo{}
 	query := q.ToBson()
+
 	u := []*User{}
 	if err := db.users.Find(query).Sort("-rating").Skip(pagination.Offset).Limit(pagination.Count).All(&u); err != nil {
 		return photos, err
@@ -153,7 +154,7 @@ func (db *DB) SearchMedia(q *SearchQuery, pagination Pagination) ([]*Photo, erro
 		users[i] = user.Id
 		usersMap[user.Id] = user
 	}
-	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}, "hidden": false}).Sort("-time").All(&photos); err != nil {
+	if err := db.photo.Find(bson.M{"user": bson.M{"$in": users}, "hidden": bson.M{"$ne": true}}).Sort("-time").All(&photos); err != nil {
 		return photos, err
 	}
 	for _, photo := range photos {

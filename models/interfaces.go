@@ -172,7 +172,7 @@ type DataBase interface {
 
 	AddMessage(m *Message) error
 	AddInvite(i *Invite) error
-	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, paginaton Pagination) ([]*Message, error)
+	GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, paginaton Pagination) (messages Messages, err error)
 	GetMessage(id bson.ObjectId) (message *Message, err error)
 	RemoveMessage(id bson.ObjectId) error
 	GetChats(id bson.ObjectId) ([]*Dialog, error)
@@ -215,6 +215,7 @@ type DataBase interface {
 	// api/status/:id/comment/:id
 
 	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
+	AddPhotoHidden(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
 
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)

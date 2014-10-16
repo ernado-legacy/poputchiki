@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, pagination models.Pagination) (messages []*models.Message, err error) {
+func (db *DB) GetMessagesFromUser(userReciever bson.ObjectId, userOrigin bson.ObjectId, pagination models.Pagination) (messages models.Messages, err error) {
 	err = db.messages.Find(bson.M{"user": userReciever, "chat": userOrigin}).Sort("time").Skip(pagination.Offset).Limit(pagination.Count).All(&messages)
 	return messages, err
 }

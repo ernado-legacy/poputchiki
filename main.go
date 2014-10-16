@@ -87,12 +87,13 @@ func getHash(password string, s string) string {
 }
 
 type Application struct {
-	session      *mgo.Session
-	p            *redis.Pool
-	m            *martini.ClassicMartini
-	db           models.DataBase
-	adapter      *weed.Adapter
-	updater      models.Updater
+	session *mgo.Session
+	p       *redis.Pool
+	m       *martini.ClassicMartini
+	db      models.DataBase
+	adapter *weed.Adapter
+	updater models.Updater
+
 	emailUpdater *EmailUpdater
 }
 
@@ -321,6 +322,7 @@ func NewApp() *Application {
 		r.Get("/video/:id", IdWrapper, GetVideo)
 		r.Get("/photo/:id", IdWrapper, GetPhoto)
 		r.Post("/photo", UploadPhoto)
+		r.Post("/photo-hidden", UploadPhotoHidden)
 		r.Get("/realtime", realtime.RealtimeHandler)
 		r.Get("/search", SearchPeople)
 		r.Get("/photo", SearchPhoto)

@@ -21,6 +21,17 @@ type Message struct {
 	LastMessage bson.ObjectId `json:"last_message,omitempty" bson:"-"`
 }
 
+type Messages []*Message
+
+func (messages Messages) Prepare(context Context) error {
+	for _, message := range messages {
+		if err := message.Prepare(context); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Message) Prepare(context Context) error {
 	if len(m.PhotoUrl) == 0 {
 		return nil
@@ -40,17 +51,17 @@ type Broadcast struct {
 type Invite Message
 
 func NewInvites(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Invite) {
-	m1, m2 := newMessagePair(db, origin, destination, text, true)
+	m1, m2 := newMessagePair(db, origin, destination, "", text, true)
 	atoOrigin := Invite(*m1)
 	atoDestination := Invite(*m2)
 	return &atoOrigin, &atoDestination
 }
 
-func NewMessagePair(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Message) {
-	return newMessagePair(db, origin, destination, text, false)
+func NewMessagePair(db DataBase, origin, destination bson.ObjectId, photo, text string) (toOrigin, toDestination *Message) {
+	return newMessagePair(db, origin, destination, photo, text, false)
 }
 
-func newMessagePair(db DataBase, origin, destination bson.ObjectId, text string, invite bool) (toOrigin, toDestination *Message) {
+func newMessagePair(db DataBase, origin, destination bson.ObjectId, photo, text string, invite bool) (toOrigin, toDestination *Message) {
 	toOrigin = new(Message)
 	toDestination = new(Message)
 	toOrigin.Id = bson.NewObjectId()
@@ -68,6 +79,8 @@ func newMessagePair(db DataBase, origin, destination bson.ObjectId, text string,
 	toOrigin.Text = text
 	toDestination.Text = text
 	toOrigin.Read = false
+	toOrigin.Photo = photo
+	toDestination.Photo = photo
 
 	lastOrigin, err := db.GetLastMessageIdFromUser(origin, destination)
 	if err != nil {

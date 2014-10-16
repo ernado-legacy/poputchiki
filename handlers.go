@@ -457,6 +457,7 @@ type MessageText struct {
 	Text    string        `json:"text"`
 	Origin  bson.ObjectId `json:"origin,omitempty"`
 	ImageId bson.ObjectId `json:"image,omitempty"`
+	Photo   string        `json:"photo"`
 }
 
 func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater, admin IsAdmin) (int, []byte) {
@@ -468,6 +469,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 
 	text := message.Text
 	origin := t.Id
+	photo := message.Photo
 
 	if len(message.Origin.Hex()) > 0 && admin {
 		origin = message.Origin
@@ -478,7 +480,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 		return Render(ValidationError(errors.New("Blank text")))
 	}
 
-	m1, m2 := NewMessagePair(db, origin, destination, text)
+	m1, m2 := NewMessagePair(db, origin, destination, photo, text)
 	if len(message.ImageId.Hex()) > 0 {
 		p, err := db.GetPhoto(message.ImageId)
 		if err != nil {
@@ -772,7 +774,7 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 
 	if err != nil {
 		log.Println(err)
-		return nil, erro
+		return nil, err
 	}
 
 	c := func(input *photo.File) File {
@@ -784,7 +786,7 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 		return *output
 	}
 
-	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
+	newPhoto, err := db.AddPhotoHidden(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
 	newPhoto.ImageUrl = p.ImageJpeg.Url
 	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
 
@@ -804,6 +806,17 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 		return context.Render(BackendError(err))
 	}
 	engine.Handle(activities.Photo)
+	return context.Render(photo)
+}
+
+func UploadPhotoHidden(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+	photo, err := uploadPhotoHidden(r, t, realtime, db, webp, adapter)
+	if err == ErrBadRequest {
+		return context.Render(ValidationError(err))
+	}
+	if err != nil {
+		return context.Render(BackendError(err))
+	}
 	return context.Render(photo)
 }
 
