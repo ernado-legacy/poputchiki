@@ -477,7 +477,7 @@ func SendMessage(db DataBase, parser Parser, destination bson.ObjectId, r *http.
 	}
 
 	if text == "" && len(photo) == 0 {
-		return Render(ValidationError(errors.New("Blank text")))
+		return Render(ValidationError(errors.New("Blank text provided")))
 	}
 
 	if len(photo) != 0 && bson.IsObjectIdHex(photo) {
