@@ -37,6 +37,7 @@ var (
 	premiumTime                    = time.Hour * 24 * 30
 	vipWeek                        = 400
 	vipMonth                       = 1000
+	adCost                    uint = 500
 	ratingDegradationDuration      = time.Hour * 24 * 2
 	ratingUpdateDelta              = time.Second * 3
 	statusUpdateTime               = time.Hour * 24
@@ -290,6 +291,10 @@ func NewApp() *Application {
 
 		r.Post("/stripe", AddStripeItem)
 		r.Put("/stripe", AddStripeItem)
+
+		r.Get("/ads", PaginationWrapper, AdvGet)
+		r.Post("/ads", AdvAdd)
+		r.Delete("/ads/:id", Idwrapper, AdvRemove)
 
 		r.Get("/updates/counters", GetCounters)
 		r.Get("/updates", GetUpdates)

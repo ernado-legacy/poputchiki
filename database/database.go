@@ -30,6 +30,7 @@ var (
 	updatesCollection       = "updates"
 	activitiesCollection    = "activities"
 	presentsCollection      = "presents"
+	adsCollection           = "advertisements"
 	presentEventsCollection = "present_events"
 )
 
@@ -51,6 +52,7 @@ type DB struct {
 	updates        *mgo.Collection
 	presents       *mgo.Collection
 	presentEvents  *mgo.Collection
+	advertisements *mgo.Collection
 	salt           string
 	offlineTimeout time.Duration
 }
@@ -66,7 +68,7 @@ func TestDatabase() *DB {
 // Drop all collections of database
 func (db *DB) Drop() {
 	collections := []*mgo.Collection{db.users, db.guests, db.messages, db.statuses, db.photo,
-		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities, db.updates, db.presents, db.presentEvents}
+		db.files, db.video, db.audio, db.stripe, db.conftokens, db.activities, db.updates, db.presents, db.presentEvents, db.advertisements}
 
 	for k := range collections {
 		collections[k].DropCollection()
@@ -162,6 +164,7 @@ func New(name, salt string, timeout time.Duration, session *mgo.Session) *DB {
 	database.cities = cityDB.C(citiesCollection)
 	database.presents = db.C(presentsCollection)
 	database.presentEvents = db.C(presentEventsCollection)
+	database.advertisements = db.C(adsCollection)
 	database.Init()
 	return database
 }

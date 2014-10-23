@@ -2365,6 +2365,49 @@ func Sitemap(db DataBase) string {
 	return sitemap
 }
 
+func AdvAdd(c Context) (int, []byte) {
+	var (
+		item    = new(StripeItem)
+		request = new(StripeItemRequest)
+		media   interface{}
+	)
+	if err := c.Parse(request); err != nil {
+		return Render(ValidationError(err))
+	}
+	if len(request.Id.Hex()) != 0 {
+		p, err := c.DB.GetPhoto(request.Id)
+		if err == mgo.ErrNotFound {
+			return Render(ErrObjectNotFound)
+		}
+		media = p
+	}
+	if err := c.DB.DecBalance(c.User.Id, adCost); err != nil {
+		return Render(ErrorInsufficentFunds)
+	}
+	ad, err := c.DB.AddAdvertisement(item, media)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	return c.Render(ad)
+}
+
+func AdvRemove(c Context, id bson.ObjectId) (int, []byte) {
+	err := c.DB.RemoveAdvertisment(c.User.Id, id)
+	if err == mgo.ErrNotFound {
+		return Render(ErrObjectNotFound)
+	}
+
+	return Render("Removed")
+}
+
+func AdvGet(c Context, pagination Pagination) (int, []byte) {
+	ads, err := c.DB.GetAds(pagination.Count, pagination.Offset)
+	if err != nil {
+		return Render(BackendError(err))
+	}
+	return c.Render(ads)
+}
+
 // init for random
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())

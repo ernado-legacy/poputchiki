@@ -81,7 +81,7 @@ func TestStripeUpdate(t *testing.T) {
 			})
 
 			Convey("Stipe add", func() {
-				sreq := &StripeItemRequest{image.Id, image.Id, "photo"}
+				sreq := &StripeItemRequest{image.Id, image.Id, "photo", ""}
 				j, err := json.Marshal(sreq)
 				So(err, ShouldBeNil)
 				res := httptest.NewRecorder()
@@ -324,7 +324,7 @@ func TestUpload(t *testing.T) {
 				So(res.StatusCode, ShouldEqual, http.StatusOK)
 			})
 			Convey("Stipe", func() {
-				So(a.Process(token, "POST", "/api/stripe", StripeItemRequest{image.Id, image.Id, "photo"}, nil), ShouldBeNil)
+				So(a.Process(token, "POST", "/api/stripe", StripeItemRequest{image.Id, image.Id, "photo", ""}, nil), ShouldBeNil)
 			})
 		})
 	})

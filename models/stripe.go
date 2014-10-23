@@ -21,6 +21,18 @@ type StripeItem struct {
 	Media      interface{}   `json:"-"                     bson:"media"`
 	Countries  []string      `json:"countries,omitempty"   bson:"countries,omitempty"`
 	Time       time.Time     `json:"time"                  bson:"time"`
+	Text       string        `json:"text,omitempty" bson:"text,omitempty"`
+}
+
+type Stripe []*StripeItem
+
+func (s Stripe) Prepare(context Context) error {
+	for _, elem := range s {
+		if err := elem.Prepare(context); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func convert(input interface{}, output interface{}) error {
@@ -29,7 +41,6 @@ func convert(input interface{}, output interface{}) error {
 }
 
 func (stripe *StripeItem) Prepare(context Context) error {
-
 	var err error
 	if len(stripe.ImageJpeg) > 0 {
 		stripe.ImageUrl, err = context.Storage.URL(stripe.ImageJpeg)
@@ -76,4 +87,5 @@ type StripeItemRequest struct {
 	Id    bson.ObjectId `json:"id"`
 	Photo bson.ObjectId `json:"photo,omitempty"`
 	Type  string        `json:"type"`
+	Text  string        `json:"text"`
 }

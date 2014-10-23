@@ -43,6 +43,7 @@ type Context struct {
 	Request  *http.Request
 	User     *User
 	Renderer Renderer
+	Parser   Parser
 }
 
 type ContextRenderer struct {
@@ -59,6 +60,10 @@ func addStatus(value interface{}, status int) []byte {
 }
 func (context Context) Render(value interface{}) (int, []byte) {
 	return context.Renderer.Render(value)
+}
+
+func (context Context) Parse(v interface{}) error {
+	return context.Parser.Parse(v)
 }
 
 type Preparable interface {
@@ -118,7 +123,7 @@ type Renderer interface {
 	Render(value interface{}) (int, []byte)
 }
 
-func ContextWrapper(context martini.Context, t *gotok.Token, webp WebpAccept, video VideoAccept, audio AudioAccept, admin IsAdmin, db DataBase, request *http.Request, weed *weed.Adapter) {
+func ContextWrapper(context martini.Context, parser Parser, t *gotok.Token, webp WebpAccept, video VideoAccept, audio AudioAccept, admin IsAdmin, db DataBase, request *http.Request, weed *weed.Adapter) {
 	c := Context{}
 	c.Storage = weed
 	c.Request = request
@@ -128,6 +133,7 @@ func ContextWrapper(context martini.Context, t *gotok.Token, webp WebpAccept, vi
 	c.Video = video
 	c.DB = db
 	c.WebP = webp
+	c.Parser = parser
 	if t != nil {
 		c.User = c.DB.Get(t.Id)
 	}
@@ -303,6 +309,11 @@ type DataBase interface {
 	GetUserPresents(destination bson.ObjectId) ([]*PresentEvent, error)
 	GetPresent(id bson.ObjectId) (*Present, error)
 	UpdatePresent(id bson.ObjectId, present *Present) (*Present, error)
+
+	GetAds(count, offset int) (Stripe, error)
+	GetAdvertisment(id bson.ObjectId) (*StripeItem, error)
+	AddAdvertisement(i *StripeItem, media interface{}) (*StripeItem, error)
+	RemoveAdvertisment(user, id bson.ObjectId) error
 }
 
 type RealtimeInterface interface {
