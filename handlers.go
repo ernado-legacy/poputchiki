@@ -2332,8 +2332,8 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 	data.Online = db.Online()
 	data.RegisteredDay = db.RegisteredCount(time.Hour * 24)
 	data.RegisteredWeek = db.RegisteredCount(time.Hour * 24 * 7)
-	data.RegisteredMonth = db.RegisteredCount(time.Month)
-	data.RegisteredYear = db.RegisteredCount(time.Month * 12)
+	data.RegisteredMonth = db.RegisteredCount(time.Hour * 24 * 30)
+	data.RegisteredYear = db.RegisteredCount(time.Hour * 24 * 30 * 12)
 	return Render(data)
 }
 
