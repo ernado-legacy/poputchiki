@@ -2311,13 +2311,15 @@ func FormatBytes(i uint64) (result string) {
 
 func GetSystemStatus(db DataBase) (int, []byte) {
 	type System struct {
-		Goroutines     int    `json:"goroutines"`
-		Allocated      string `json:"allocated"`
-		AllocatedHeap  string `json:"allocated_heap"`
-		AllocatedTotal string `json:"allocated_total"`
-		Online         int    `json:"online"`
-		RegisteredDay  int    `json:"registered_day"`
-		RegisteredWeek int    `json:"registered_week"`
+		Goroutines      int    `json:"goroutines"`
+		Allocated       string `json:"allocated"`
+		AllocatedHeap   string `json:"allocated_heap"`
+		AllocatedTotal  string `json:"allocated_total"`
+		Online          int    `json:"online"`
+		RegisteredDay   int    `json:"registered_day"`
+		RegisteredWeek  int    `json:"registered_week"`
+		RegisteredMonth int    `json:"registered_month"`
+		RegisteredYear  int    `json:"registered_year"`
 	}
 
 	data := new(System)
@@ -2330,7 +2332,8 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 	data.Online = db.Online()
 	data.RegisteredDay = db.RegisteredCount(time.Hour * 24)
 	data.RegisteredWeek = db.RegisteredCount(time.Hour * 24 * 7)
-
+	data.RegisteredMonth = db.RegisteredCount(time.Month)
+	data.RegisteredYear = db.RegisteredCount(time.Month * 12)
 	return Render(data)
 }
 
