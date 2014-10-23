@@ -294,7 +294,7 @@ func NewApp() *Application {
 
 		r.Get("/ads", PaginationWrapper, AdvGet)
 		r.Post("/ads", AdvAdd)
-		r.Delete("/ads/:id", Idwrapper, AdvRemove)
+		r.Delete("/ads/:id", IdWrapper, AdvRemove)
 
 		r.Get("/updates/counters", GetCounters)
 		r.Get("/updates", GetUpdates)
