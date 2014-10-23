@@ -318,7 +318,7 @@ type DataBase interface {
 	ActiveCount(duration time.Duration) int
 }
 
-type RealtimeInterface interface {''
+type RealtimeInterface interface {
 	Updater
 	RealtimeHandler(w http.ResponseWriter, context Context) (int, []byte)
 	// PushAll(update Update) error
