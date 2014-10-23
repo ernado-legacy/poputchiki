@@ -314,9 +314,11 @@ type DataBase interface {
 	GetAdvertisment(id bson.ObjectId) (*StripeItem, error)
 	AddAdvertisement(i *StripeItem, media interface{}) (*StripeItem, error)
 	RemoveAdvertisment(user, id bson.ObjectId) error
+
+	ActiveCount(duration time.Duration) int
 }
 
-type RealtimeInterface interface {
+type RealtimeInterface interface {''
 	Updater
 	RealtimeHandler(w http.ResponseWriter, context Context) (int, []byte)
 	// PushAll(update Update) error

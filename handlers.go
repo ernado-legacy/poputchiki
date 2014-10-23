@@ -2320,6 +2320,9 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 		RegisteredWeek  int    `json:"registered_week"`
 		RegisteredMonth int    `json:"registered_month"`
 		RegisteredYear  int    `json:"registered_year"`
+		ActiveHour      int    `json:"active_hour`
+		ActiveDay       int    `json:"active_day`
+		ActiveWeek      int    `json:"active_week`
 	}
 
 	data := new(System)
@@ -2334,6 +2337,9 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 	data.RegisteredWeek = db.RegisteredCount(time.Hour * 24 * 7)
 	data.RegisteredMonth = db.RegisteredCount(time.Hour * 24 * 30)
 	data.RegisteredYear = db.RegisteredCount(time.Hour * 24 * 30 * 12)
+	data.ActiveHour = db.ActiveCount(time.Hour)
+	data.ActiveDay = db.ActiveCount(time.Hour * 24)
+	data.ActiveWeek = db.ActiveCount(time.Hour * 24 * 7)
 	return Render(data)
 }
 

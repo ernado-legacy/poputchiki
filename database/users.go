@@ -82,6 +82,13 @@ func (db *DB) RegisteredCount(duration time.Duration) int {
 	return n
 }
 
+func (db *DB) ActiveCount(duration time.Duration) int {
+	now := time.Now()
+	from := now.Add(-duration)
+	n, _ := db.users.Find(bson.M{"last_action": bson.M{"$gte": from}}).Count()
+	return n
+}
+
 func (db *DB) Get(id bson.ObjectId) *User {
 	var u User
 	err := db.users.FindId(id).One(&u)
