@@ -2320,9 +2320,9 @@ func GetSystemStatus(db DataBase) (int, []byte) {
 		RegisteredWeek  int    `json:"registered_week"`
 		RegisteredMonth int    `json:"registered_month"`
 		RegisteredYear  int    `json:"registered_year"`
-		ActiveHour      int    `json:"active_hour`
-		ActiveDay       int    `json:"active_day`
-		ActiveWeek      int    `json:"active_week`
+		ActiveHour      int    `json:"active_hour"`
+		ActiveDay       int    `json:"active_day"`
+		ActiveWeek      int    `json:"active_week"`
 	}
 
 	data := new(System)
