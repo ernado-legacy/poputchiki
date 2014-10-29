@@ -53,3 +53,8 @@ func (db *DB) RemoveAudio(id bson.ObjectId) error {
 	}
 	return db.audio.RemoveId(id)
 }
+
+func (db *DB) GetAllAudio() ([]*models.Audio, error) {
+	audio := []*models.Audio{}
+	return audio, db.audio.Find(nil).All(&audio)
+}

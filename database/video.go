@@ -34,6 +34,11 @@ func (db *DB) GetUserVideo(id bson.ObjectId) ([]*models.Video, error) {
 	return v, db.video.Find(bson.M{"user": id}).Sort("-time").All(&v)
 }
 
+func (db *DB) GetAllVideo() ([]*models.Video, error) {
+	v := []*models.Video{}
+	return v, db.video.Find(nil).All(&v)
+}
+
 func (db *DB) AddVideo(video *models.Video) (*models.Video, error) {
 	return video, db.video.Insert(video)
 }

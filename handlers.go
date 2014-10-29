@@ -15,7 +15,6 @@ import (
 	"github.com/ernado/govkauth"
 	"github.com/ernado/poputchiki/activities"
 	. "github.com/ernado/poputchiki/models"
-	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
 	"github.com/rainycape/magick"
@@ -657,13 +656,12 @@ func GetChats(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 }
 
 // reads data from io.Reader, uploads it with type/format and returs fid, purl and error
-func uploadToWeed(adapter *weed.Adapter, reader io.Reader, t, format string) (string, string, int64, error) {
-	fid, size, err := adapter.Client().AssignUpload(t+"."+format, t+"/"+format, reader)
+func uploadToWeed(adapter StorageAdapter, reader io.Reader, t, format string) (string, string, int64, error) {
+	fid, purl, size, err := adapter.Upload(reader, t, format)
 	if err != nil {
 		log.Println(t, format, err)
 		return "", "", size, err
 	}
-	purl, err := adapter.GetUrl(fid)
 	if err != nil {
 		log.Println(err)
 		return "", "", size, err
@@ -672,7 +670,7 @@ func uploadToWeed(adapter *weed.Adapter, reader io.Reader, t, format string) (st
 	return fid, purl, size, nil
 }
 
-func uploadImageToWeed(adapter *weed.Adapter, image *magick.Image, format string) (string, string, int64, error) {
+func uploadImageToWeed(adapter StorageAdapter, image *magick.Image, format string) (string, string, int64, error) {
 	encodeReader, encodeWriter := io.Pipe()
 	go func() {
 		defer encodeWriter.Close()
@@ -721,7 +719,7 @@ func convert(input interface{}, output interface{}) error {
 	return json.Unmarshal(inputJson, output)
 }
 
-func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
+func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter StorageAdapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -767,7 +765,7 @@ func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataB
 	return newPhoto, err
 }
 
-func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter *weed.Adapter) (*Photo, error) {
+func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter StorageAdapter) (*Photo, error) {
 	f, _, err := r.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
@@ -813,7 +811,7 @@ func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db
 	return newPhoto, err
 }
 
-func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter StorageAdapter) (int, []byte) {
 	photo, err := uploadPhoto(r, t, realtime, db, webp, adapter)
 	if err == ErrBadRequest {
 		return context.Render(ValidationError(err))
@@ -825,7 +823,7 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 	return context.Render(photo)
 }
 
-func UploadPhotoHidden(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter *weed.Adapter) (int, []byte) {
+func UploadPhotoHidden(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter StorageAdapter) (int, []byte) {
 	photo, err := uploadPhotoHidden(r, t, realtime, db, webp, adapter)
 	if err == ErrBadRequest {
 		return context.Render(ValidationError(err))
@@ -1664,7 +1662,7 @@ func FacebookAuthStart(r *http.Request, w http.ResponseWriter, client *gofbauth.
 	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
 }
 
-func ExportPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, url string) *Photo {
+func ExportPhoto(db DataBase, id bson.ObjectId, adapter StorageAdapter, url string) *Photo {
 	res, err := http.Get(url)
 	f := res.Body
 	if err != nil {
@@ -1705,7 +1703,7 @@ func ExportPhoto(db DataBase, id bson.ObjectId, adapter *weed.Adapter, url strin
 	return newPhoto
 }
 
-func ExportThumbnail(adapter *weed.Adapter, fid string) (thumbnailJpeg, thumbnailWebp string, err error) {
+func ExportThumbnail(adapter StorageAdapter, fid string) (thumbnailJpeg, thumbnailWebp string, err error) {
 	url, err := adapter.GetUrl(fid)
 	if err != nil {
 		return
@@ -1742,7 +1740,7 @@ func ExportThumbnail(adapter *weed.Adapter, fid string) (thumbnailJpeg, thumbnai
 	return p.ThumbnailJpeg.Fid, p.ThumbnailWebp.Fid, nil
 }
 
-func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, adapter *weed.Adapter, tokens gotok.Storage, client *govkauth.Client) {
+func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, adapter StorageAdapter, tokens gotok.Storage, client *govkauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1797,7 +1795,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func FacebookAuthRedirect(db DataBase, r *http.Request, adapter *weed.Adapter, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
+func FacebookAuthRedirect(db DataBase, r *http.Request, adapter StorageAdapter, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1896,7 +1894,7 @@ func AdminLogin(id bson.ObjectId, t *gotok.Token, db DataBase, w http.ResponseWr
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
+func UploadVideoFile(r *http.Request, client query.QueryClient, db DataBase, adapter StorageAdapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
 	video := &Video{Id: id, User: t.Id, Time: time.Now()}
 	f, _, err := r.FormFile(FORM_FILE)
@@ -1983,7 +1981,7 @@ func GetPhoto(db DataBase, id bson.ObjectId, context Context) (int, []byte) {
 	return context.Render(p)
 }
 
-func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter *weed.Adapter, t *gotok.Token) (int, []byte) {
+func UploadAudio(r *http.Request, client query.QueryClient, db DataBase, adapter StorageAdapter, t *gotok.Token) (int, []byte) {
 	id := bson.NewObjectId()
 	audio := &Audio{Id: id, User: t.Id, Time: time.Now()}
 
@@ -2160,7 +2158,7 @@ func RemoveToken(db DataBase, parm martini.Params, t *gotok.Token) (int, []byte)
 	return Render(token)
 }
 
-func AddPresent(db DataBase, adapter *weed.Adapter, req *http.Request, parser Parser) (int, []byte) {
+func AddPresent(db DataBase, adapter StorageAdapter, req *http.Request, parser Parser, context Context) (int, []byte) {
 	f, h, err := req.FormFile(FORM_FILE)
 	type Data struct {
 		Cost  int    `json:"cost"`
@@ -2193,21 +2191,15 @@ func AddPresent(db DataBase, adapter *weed.Adapter, req *http.Request, parser Pa
 	if err := db.AddPresent(present); err != nil {
 		return Render(BackendError(err))
 	}
-	if err := present.Prepare(adapter); err != nil {
-		return Render(BackendError(err))
-	}
-	return Render(present)
+	return context.Render(present)
 }
 
-func GetAllPresents(db DataBase, adapter *weed.Adapter) (int, []byte) {
+func GetAllPresents(db DataBase, context Context) (int, []byte) {
 	presents, err := db.GetAllPresents()
 	if err != nil {
 		return Render(BackendError(err))
 	}
-	if err := Presents(presents).Prepare(adapter); err != nil {
-		return Render(BackendError(err))
-	}
-	return Render(presents)
+	return context.Render(Presents(presents))
 }
 
 func RemovePresent(db DataBase, id bson.ObjectId) (int, []byte) {
@@ -2225,7 +2217,7 @@ func AdminPresents(w http.ResponseWriter) (int, []byte) {
 	return http.StatusOK, data
 }
 
-func UpdatePresent(db DataBase, id bson.ObjectId, parser Parser, req *http.Request, adapter *weed.Adapter) (int, []byte) {
+func UpdatePresent(db DataBase, id bson.ObjectId, parser Parser, req *http.Request, adapter StorageAdapter, context Context) (int, []byte) {
 	present := new(Present)
 	f, h, ferr := req.FormFile(FORM_FILE)
 	log.Println(req.Form, req.PostForm)
@@ -2255,13 +2247,10 @@ func UpdatePresent(db DataBase, id bson.ObjectId, parser Parser, req *http.Reque
 	if err != nil {
 		return Render(err)
 	}
-	if err := p.Prepare(adapter); err != nil {
-		return Render(BackendError(err))
-	}
-	return Render(p)
+	return context.Render(p)
 }
 
-func SendPresent(db DataBase, id bson.ObjectId, parm martini.Params, adapter *weed.Adapter, parser Parser, token *gotok.Token) (int, []byte) {
+func SendPresent(db DataBase, id bson.ObjectId, parm martini.Params, adapter StorageAdapter, parser Parser, token *gotok.Token) (int, []byte) {
 	t := parm["title"]
 	type Data struct {
 		Text string `json:"text"`
@@ -2279,7 +2268,7 @@ func SendPresent(db DataBase, id bson.ObjectId, parm martini.Params, adapter *we
 	return Render(present)
 }
 
-func GetUserPresents(db DataBase, id bson.ObjectId, adapter *weed.Adapter, token *gotok.Token) (int, []byte) {
+func GetUserPresents(db DataBase, id bson.ObjectId, adapter StorageAdapter, token *gotok.Token) (int, []byte) {
 	presents, err := db.GetUserPresents(id)
 	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))

@@ -9,6 +9,7 @@ import (
 	"github.com/go-martini/martini"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -30,6 +31,11 @@ type AudioAccept string
 
 type Storage interface {
 	URL(string) (string, error)
+}
+
+type StorageAdapter interface {
+	GetUrl(fid string) (url string, err error)
+	Upload(reader io.Reader, t, format string) (fid string, purl string, size int64, err error)
 }
 
 type Context struct {
@@ -316,6 +322,10 @@ type DataBase interface {
 	RemoveAdvertisment(user, id bson.ObjectId) error
 
 	ActiveCount(duration time.Duration) int
+
+	// all
+	GetAllAudio() ([]*Audio, error)
+	GetAllVideo() ([]*Video, error)
 }
 
 type RealtimeInterface interface {

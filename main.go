@@ -178,7 +178,10 @@ func NewApp() *Application {
 	m.Use(ParserWrapper)
 	m.Map(tokenStorage)
 	weedAdapter := weed.NewAdapter(weedUrl)
+	var adapter models.StorageAdapter
+	adapter = weedAdapter
 	m.Map(weedAdapter)
+	m.Map(adapter)
 	m.Map(realtime)
 	m.Use(AutoUpdaterWrapper)
 	emailUpdater := &EmailUpdater{db, mailgunClient, templates, weedAdapter}
