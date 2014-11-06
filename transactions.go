@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/ernado/gorobokassa"
 	"github.com/ernado/poputchiki/models"
-	"github.com/ernado/rediscover"
+	"github.com/garyburd/redigo/redis"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
