@@ -4,6 +4,7 @@ import (
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"testing"
 	"time"
 )
@@ -13,7 +14,8 @@ func TestUsers(t *testing.T) {
 	Convey("Users", t, func() {
 		Reset(db.Drop)
 		id := bson.NewObjectId()
-		u := &models.User{Id: id, Email: "Keks", Name: "Lalka", Sex: models.SexMale, Rating: 100.0}
+		birthday := time.Date(1994, 10, 10, 13, 15, 27, 0, time.Local)
+		u := &models.User{Id: id, Email: "Keks", Name: "Lalka", Sex: models.SexMale, Rating: 100.0, Birthday: birthday}
 		Convey("Null get", func() {
 			So(db.Get(bson.NewObjectId()), ShouldBeNil)
 			So(db.GetUsername("asdasdasasd"), ShouldBeNil)
@@ -43,14 +45,29 @@ func TestUsers(t *testing.T) {
 				})
 			})
 			Convey("Search", func() {
-				q := new(models.SearchQuery)
-				q.Sex = models.SexMale
-				users, count, err := db.Search(q, models.Pagination{})
-				So(err, ShouldBeNil)
-				So(len(users), ShouldEqual, 1)
-				So(count, ShouldEqual, 1)
-				So(users[0].Name, ShouldEqual, u.Name)
+				Convey("Search simple", func() {
+					q := new(models.SearchQuery)
+					q.Sex = models.SexMale
+					users, count, err := db.Search(q, models.Pagination{})
+					So(err, ShouldBeNil)
+					So(len(users), ShouldEqual, 1)
+					So(count, ShouldEqual, 1)
+					So(users[0].Name, ShouldEqual, u.Name)
+				})
+				Convey("Search date", func() {
+					log.Println("birthday", birthday)
+					q := new(models.SearchQuery)
+					q.Sex = models.SexMale
+					q.AgeMax = 20
+					q.AgeMin = 20
+					users, count, err := db.Search(q, models.Pagination{})
+					So(err, ShouldBeNil)
+					So(len(users), ShouldEqual, 1)
+					So(count, ShouldEqual, 1)
+					So(users[0].Name, ShouldEqual, u.Name)
+				})
 			})
+
 			Convey("Update", func() {
 				Convey("Name", func() {
 					u.Name = "Alex"

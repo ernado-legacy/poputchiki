@@ -109,9 +109,10 @@ func (q *SearchQuery) ToBson() bson.M {
 
 	if q.AgeMin != ageMin || q.AgeMax != ageMax {
 		now := time.Now()
-		tMax := now.AddDate(-q.AgeMax, 0, 0)
-		tMin := now.AddDate(-q.AgeMin, 0, 0)
-		query = append(query, bson.M{"birthday": bson.M{"$gte": tMax, "$lte": tMin}})
+		tMin := now.AddDate(-(q.AgeMax + 1), 0, 0)
+		tMax := now.AddDate(-q.AgeMin, 0, 0)
+		query = append(query, bson.M{"birthday": bson.M{"$gte": tMin, "$lte": tMax}})
+		// log.Printf("[%d;%d] %v -> %v", q.AgeMin, q.AgeMax, tMin.Truncate(time.Hour*24), tMax.Truncate(time.Hour*24))
 	}
 
 	if q.GrowthMax == 0 {
