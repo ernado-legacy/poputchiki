@@ -128,7 +128,7 @@ func (db *DB) RemoveFromFavorites(id bson.ObjectId, favId bson.ObjectId) error {
 
 func (db *DB) AvatarRemove(user, id bson.ObjectId) error {
 	selector := bson.M{"_id": user, "avatar": id}
-	update := bson.M{"$unser": "avatar"}
+	update := bson.M{"$unset": "avatar"}
 	return db.users.Update(selector, update)
 }
 

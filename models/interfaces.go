@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/ernado/gotok"
-	"github.com/ernado/weed"
 	"github.com/go-martini/martini"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -34,6 +33,7 @@ type Storage interface {
 }
 
 type StorageAdapter interface {
+	Storage
 	GetUrl(fid string) (url string, err error)
 	Upload(reader io.Reader, t, format string) (fid string, purl string, size int64, err error)
 }
@@ -129,9 +129,9 @@ type Renderer interface {
 	Render(value interface{}) (int, []byte)
 }
 
-func ContextWrapper(context martini.Context, parser Parser, t *gotok.Token, webp WebpAccept, video VideoAccept, audio AudioAccept, admin IsAdmin, db DataBase, request *http.Request, weed *weed.Adapter) {
+func ContextWrapper(context martini.Context, parser Parser, t *gotok.Token, webp WebpAccept, video VideoAccept, audio AudioAccept, admin IsAdmin, db DataBase, request *http.Request, storage StorageAdapter) {
 	c := Context{}
-	c.Storage = weed
+	c.Storage = storage
 	c.Request = request
 	c.IsAdmin = admin
 	c.Token = t

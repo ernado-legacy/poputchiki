@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/GeertJohan/go.rice"
+	mmodels "github.com/ernado/cymedia/mediad/models"
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/gofbauth"
 	"github.com/ernado/gosmsru"
@@ -17,9 +18,11 @@ import (
 	"github.com/ernado/poputchiki/activities"
 	"github.com/ernado/poputchiki/database"
 	"github.com/ernado/poputchiki/models"
+	"github.com/ernado/selectel/storage"
 	"github.com/ernado/weed"
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
+	"github.com/rakyll/globalconf"
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -49,6 +52,10 @@ var (
 	dbCity                         = "countries"
 	tokenCollection                = "tokens"
 	mongoHost                      = "localhost"
+	selectelUser                   = "7345"
+	selectel                       = false
+	selectelKey                    = "TYl2XjMw"
+	selectelContainer              = projectName
 	robokassaLogin                 = "poputchiki.ru"
 	robokassaPassword1             = "pcZKT5Qm84MJAIudLAbR"
 	robokassaPassword2             = "8x3cVXUt08Uc9TV70mx3"
@@ -60,6 +67,7 @@ var (
 	redisQueryKey                  = flag.String("query.key", "poputchiki:conventer:query", "Convertation query key")
 	mailKey                        = "key-7520cy18i2ebmrrbs1bz4ivhua-ujtb6"
 	mailDomain                     = "mg.cydev.ru"
+	etcdHost                       = "http://127.0.0.1:4001"
 	smsKey                         = "nil"
 	weedHost                       = "127.0.0.1"
 	weedPort                       = 9333
@@ -88,14 +96,14 @@ func getHash(password string, s string) string {
 }
 
 type Application struct {
-	session *mgo.Session
-	p       *redis.Pool
-	m       *martini.ClassicMartini
-	db      models.DataBase
-	adapter *weed.Adapter
-	updater models.Updater
-
+	session      *mgo.Session
+	p            *redis.Pool
+	m            *martini.ClassicMartini
+	db           models.DataBase
+	adapter      *weed.Adapter
+	updater      models.Updater
 	emailUpdater *EmailUpdater
+	done         chan bool
 }
 
 func newPool() *redis.Pool {
@@ -125,6 +133,33 @@ func NewTestApp() *Application {
 	redisName = "poputchiki-test"
 	dbName = "poputchiki-test"
 	return NewApp()
+}
+
+type selectelAdapter struct {
+	api storage.ContainerAPI
+}
+
+func (s selectelAdapter) GetUrl(name string) (string, error) {
+	return s.api.URL(name), nil
+}
+
+func (s selectelAdapter) URL(name string) (string, error) {
+	return s.GetUrl(name)
+}
+
+func (s selectelAdapter) Upload(reader io.Reader, t, format string) (fid string, purl string, size int64, err error) {
+	fid = bson.NewObjectId().Hex()
+	err = s.api.Upload(reader, fid, t+"/"+format)
+	purl = s.api.URL(fid)
+	return
+}
+
+func GetAdapter(api storage.API) models.StorageAdapter {
+	container, err := api.CreateContainer(selectelContainer, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return selectelAdapter{container}
 }
 
 func NewApp() *Application {
@@ -180,7 +215,15 @@ func NewApp() *Application {
 	weedAdapter := weed.NewAdapter(weedUrl)
 	var adapter models.StorageAdapter
 	adapter = weedAdapter
-	m.Map(weedAdapter)
+	if selectel {
+		log.Println("[selectel]", "using selectel adapter")
+		selectelApi, err := storage.New(selectelUser, selectelKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		adapter = GetAdapter(selectelApi)
+	}
+	// m.Map(weedAdapter)
 	m.Map(adapter)
 	m.Map(realtime)
 	m.Use(AutoUpdaterWrapper)
@@ -341,7 +384,7 @@ func NewApp() *Application {
 		r.Delete("/photo/:id", IdWrapper, RemovePhoto)
 	}, NeedAuth, SetOnlineWrapper)
 
-	a := &Application{session, p, m, db, weedAdapter, updater, emailUpdater}
+	a := &Application{session, p, m, db, weedAdapter, updater, emailUpdater, make(chan bool)}
 	a.InitDatabase()
 	return a
 }
@@ -350,11 +393,34 @@ func (a *Application) Close() {
 	a.p.Close()
 }
 
-func (a *Application) StatusCycle() {
-	log.Println("[status]", "starting status cycle")
-	ticker := time.NewTicker(OfflineUpdateTick)
+func (a *Application) newCycle(name string, d time.Duration, callback func(chan bool)) {
+	log.Printf("[cycle] starting %s with duration %v\n", name, d)
+	defer log.Printf("[cycle] %s stopped\n", name)
+	ticker := time.NewTicker(d)
+	stop := make(chan bool)
+	defer ticker.Stop()
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Printf("[cycle] %s %s\n", name, r)
+		}
+	}()
+	for {
+		select {
+		case <-ticker.C:
+			callback(stop)
+		case <-stop:
+			log.Printf("[cycle] %s got local stop signal\n", name)
+			return
+		case <-a.done:
+			log.Printf("[cycle] %s got global done signal\n", name)
+			return
+		}
+	}
+}
 
-	for _ = range ticker.C {
+func (a *Application) StatusCycle() {
+	callback := func(_ chan bool) {
 		i, err := a.db.UpdateAllStatuses()
 		if err != nil {
 			log.Println("[status]", "status update error", err)
@@ -365,12 +431,11 @@ func (a *Application) StatusCycle() {
 			}
 		}
 	}
+	a.newCycle("status", OfflineUpdateTick, callback)
 }
 
 func (a *Application) VipCycle() {
-	log.Println("[updater]", "starting vip update cycle")
-	ticker := time.NewTicker(OfflineUpdateTick)
-	for _ = range ticker.C {
+	callback := func(_ chan bool) {
 		i, err := a.db.UpdateAllVip()
 		if err != nil {
 			log.Println("[updater]", "vip update error", err)
@@ -381,34 +446,30 @@ func (a *Application) VipCycle() {
 			}
 		}
 	}
+	a.newCycle("vip updater", OfflineUpdateTick, callback)
 }
 
 func (a *Application) NormalizeRatingCycle() {
-	log.Println("[rating]", "starting rating normalization cycle")
-	ticker := time.NewTicker(OfflineUpdateTick)
-	for _ = range ticker.C {
+	a.newCycle("rating", OfflineUpdateTick, func(_ chan bool) {
 		i, err := a.db.NormalizeRating()
 		if err != nil {
 			log.Println("[rating]", "error", err)
-		} else {
-			if i.Updated != 0 {
-				log.Println("[rating]", "normalized: ", i.Updated)
-			}
+			return
 		}
-	}
+		if i.Updated != 0 {
+			log.Println("[rating]", "normalized: ", i.Updated)
+		}
+	})
 }
 
 func (a *Application) RatingDegradatingCycle() {
-	log.Println("[rating]", "starting rating update cycle")
 	fullRating := 100.0
 	deltaTime := float64(ratingUpdateDelta.Nanoseconds())
 	fullTime := float64(ratingDegradationDuration.Nanoseconds())
 	rate := fullRating * deltaTime / fullTime
-	log.Println("[rating] rate", rate)
 	lastLog := time.Now()
 	logRate := time.Second * 30
-	ticker := time.NewTicker(ratingUpdateDelta)
-	for _ = range ticker.C {
+	a.newCycle("rating", ratingUpdateDelta, func(_ chan bool) {
 		start := time.Now()
 		i, err := a.db.DegradeRating(rate)
 		duration := time.Now().Sub(start)
@@ -420,7 +481,7 @@ func (a *Application) RatingDegradatingCycle() {
 				lastLog = start
 			}
 		}
-	}
+	})
 }
 
 var redisQueryRespKey = fmt.Sprintf("%s:conventer:resp", projectName)
@@ -430,97 +491,111 @@ func (a *Application) PromoCycle() {
 	client.Cycle()
 }
 
-func (a *Application) ConvertResultListener() {
+func (a *Application) processConvertResult(resp mmodels.Responce) (err error) {
 	db := a.db
-	log.Println("Started conventer", *redisQueryKey, "->", redisQueryRespKey)
-	q, err := query.NewRedisResponceQuery(redisAddr, redisQueryRespKey)
-	if err != nil {
-		log.Println("Unable to create result listener", err)
-		return
+	id := bson.ObjectIdHex(resp.Id)
+	fid := resp.File
+	defer func() {
+		log.Println("[dedicated server] processed")
+		r := recover()
+		if r != nil {
+			log.Println("[dedicated server]", r)
+		}
+	}()
+	if resp.Type == "audio" {
+		audio := db.GetAudio(id)
+		if audio == nil {
+			return errors.New("audio not found")
+		}
+		if resp.Format == "ogg" {
+			err = db.UpdateAudioOGG(id, fid)
+			audio.AudioOgg = fid
+		}
+		if resp.Format == "mp3" {
+			err = db.UpdateAudioAAC(id, fid)
+			audio.AudioAac = fid
+		}
+		if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
+			log.Printf("Sending audio %+v", audio)
+			u := models.NewUpdate(audio.User, audio.User, "audio", audio)
+			if err := a.updater.Push(u); err != nil {
+				return err
+			}
+		}
+		if !resp.Success {
+			db.RemoveAudio(id)
+		}
 	}
-	for {
-		resp, err := q.Pull()
+	if resp.Type == "video" {
+		video := db.GetVideo(id)
+		if video == nil {
+			return errors.New("video not found")
+		}
+		if resp.Format == "webm" {
+			err = db.UpdateVideoWebm(id, fid)
+			video.VideoWebm = fid
+		}
+		if resp.Format == "mp4" {
+			err = db.UpdateVideoMpeg(id, fid)
+			video.VideoMpeg = fid
+		}
+		if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
+			log.Printf("Sending video %+v", video)
+			u := models.NewUpdate(video.User, video.User, "video", video)
+			if err := a.updater.Push(u); err != nil {
+				return err
+			}
+		}
+		if !resp.Success {
+			db.RemoveVideo(id, video.User)
+			return nil
+		}
+	}
+	if resp.Type == "thumbnail" {
+		jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
 		if err != nil {
 			log.Println(err)
-			time.Sleep(1 * time.Second)
+		} else {
+			err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
 		}
-		log.Println("[dedicated conventer]", resp)
-		if !resp.Success {
-			log.Println("convertation error", resp.Id, resp.Error)
-			continue
-		}
-		go func() {
-			defer recover()
-			id := bson.ObjectIdHex(resp.Id)
-			fid := resp.File
-			defer func() {
-				log.Println("[dedicated server] processed")
-			}()
-			log.Println("updating", resp.Type)
-			if resp.Type == "audio" {
-				audio := db.GetAudio(id)
-				if audio == nil {
-					log.Println("audio not found")
-					return
-				}
-				if resp.Format == "ogg" {
-					err = db.UpdateAudioOGG(id, fid)
-					audio.AudioOgg = fid
-				}
-				if resp.Format == "mp3" {
-					err = db.UpdateAudioAAC(id, fid)
-					audio.AudioAac = fid
-				}
-				if !resp.Success || (len(audio.AudioAac) > 0 && len(audio.AudioOgg) > 0) {
-					log.Printf("Sending audio %+v", audio)
-					u := models.NewUpdate(audio.User, audio.User, "audio", audio)
-					if err := a.updater.Push(u); err != nil {
-						log.Println(err)
-					}
-				}
-				if !resp.Success {
-					db.RemoveAudio(id)
-				}
-			}
-			if resp.Type == "video" {
-				video := db.GetVideo(id)
-				if video == nil {
-					log.Println("video not found")
-					return
-				}
-				if resp.Format == "webm" {
-					err = db.UpdateVideoWebm(id, fid)
-					video.VideoWebm = fid
-				}
-				if resp.Format == "mp4" {
-					err = db.UpdateVideoMpeg(id, fid)
-					video.VideoMpeg = fid
-				}
-				if !resp.Success || (len(video.VideoWebm) > 0 && len(video.VideoMpeg) > 0) {
-					log.Printf("Sending video %+v", video)
-					u := models.NewUpdate(video.User, video.User, "video", video)
-					if err := a.updater.Push(u); err != nil {
-						log.Println(err)
-					}
-				}
-				if !resp.Success {
-					db.RemoveVideo(id, video.User)
-					return
-				}
-			}
-			if resp.Type == "thumbnail" {
-				jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
-				if err != nil {
-					log.Println(err)
-				} else {
-					err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
-				}
-			}
-			if err != nil {
-				log.Println(resp.Id, err)
-			}
-		}()
 	}
+	return err
+}
+
+func (a *Application) ConvertResultListener() {
+	log.Println("[conventer] started conventer", *redisQueryKey, "->", redisQueryRespKey)
+	q, err := query.NewRedisResponceQuery(redisAddr, redisQueryRespKey)
+	if err != nil {
+		log.Println("[conventer] unable to create result listener", err)
+		return
+	}
+	results := make(chan mmodels.Responce)
+	go func() {
+		for {
+			r, err := q.Pull()
+			if err != nil {
+				log.Println("[conventer]", err)
+				return
+			}
+			if results == nil {
+				return
+			}
+			results <- r
+		}
+	}()
+	for {
+		select {
+		case r := <-results:
+			if err := a.processConvertResult(r); err != nil {
+				log.Println("[conventer]", err)
+			}
+		case <-a.done:
+			log.Println("[conventer]", "done")
+			close(results)
+			return
+		}
+	}
+	return
 }
 
 func (a *Application) Run() {
@@ -649,8 +724,17 @@ func main() {
 	flag.BoolVar(&production, "production", false, "environment")
 	flag.StringVar(&mailKey, "mail-key", mailKey, "mailgun api key")
 	flag.StringVar(&mailDomain, "mail-domain", mailDomain, "mailgun domain")
+	flag.BoolVar(&selectel, "selectel", false, "use selectel storage")
 	flag.StringVar(&smsKey, "sms-key", "80df3a7d-4c8c-ffb4-b197-4dc850443bba", "sms key")
-	flag.Parse()
+	flag.StringVar(&etcdHost, "etcd", etcdHost, "etcd host")
+	flag.StringVar(&selectelKey, "selectel.key", selectelKey, "Selectel key")
+	flag.StringVar(&selectelUser, "selectel.user", selectelUser, "Selectel user")
+	// flag.Parse()
+	conf, err := globalconf.New("poputchiki")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conf.ParseAll()
 	projectName = *projectNameF
 	dbName = projectName
 	redisName = projectName
