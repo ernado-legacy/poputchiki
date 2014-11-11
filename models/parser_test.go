@@ -2,11 +2,12 @@ package models
 
 import (
 	"bytes"
-	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type TestStruct struct {
@@ -21,6 +22,10 @@ type TestStructStr struct {
 
 type TestStructList struct {
 	World []string `json:"world"`
+}
+
+type TestStructListFloat struct {
+	Value []float64 `json:"value"`
 }
 
 func TestParser(t *testing.T) {
@@ -91,6 +96,13 @@ func TestParser(t *testing.T) {
 				So(v.World[0], ShouldEqual, "world")
 				So(v.World[1], ShouldEqual, "hello")
 				So(v.World[2], ShouldEqual, "kekus")
+			})
+			Convey("Comma-separated float64 array", func() {
+				req, _ := http.NewRequest("GET", "/?value=12.1545,5645.213,55.001", nil)
+				v := new(TestStructListFloat)
+				err := Parse(req, v)
+				So(err, ShouldBeNil)
+				So(len(v.Value), ShouldEqual, 3)
 			})
 			Convey("Comma-separated with escapes to array", func() {
 				req, _ := http.NewRequest("GET", "/?world=\"world,hello\",kekus", nil)

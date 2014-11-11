@@ -1,11 +1,12 @@
 package database
 
 import (
+	"log"
+	"testing"
+
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"log"
-	"testing"
 )
 
 func TestVideo(t *testing.T) {
@@ -59,17 +60,15 @@ func TestVideo(t *testing.T) {
 			Convey("Update", func() {
 				fidMpeg := "1231424123"
 				fidWebm := "j980234089dsf"
-				fidWebp := "j9asdfsd089dsf"
 				fidJpeg := "fdgdfg123213sf"
 				So(db.UpdateVideoMpeg(a.Id, fidMpeg), ShouldBeNil)
 				So(db.UpdateVideoWebm(a.Id, fidWebm), ShouldBeNil)
-				So(db.UpdateVideoThumbnails(a.Id, fidJpeg, fidWebp), ShouldBeNil)
+				So(db.UpdateVideoThumbnail(a.Id, fidJpeg), ShouldBeNil)
 				b := db.GetVideo(a.Id)
 				So(b.User, ShouldEqual, a.User)
 				So(b.VideoMpeg, ShouldEqual, fidMpeg)
 				So(b.VideoWebm, ShouldEqual, fidWebm)
 				So(b.ThumbnailJpeg, ShouldEqual, fidJpeg)
-				So(b.ThumbnailWebp, ShouldEqual, fidWebp)
 			})
 		})
 	})

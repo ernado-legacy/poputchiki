@@ -1,17 +1,18 @@
 package database
 
 import (
+	"time"
+
 	. "github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 // AddPhoto add new photo to database with provided image and thumbnail
-func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
+func (db *DB) AddPhoto(user bson.ObjectId, image, thumbnail string) (*Photo, error) {
 	// creating photo
-	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid,
-		Time: time.Now(), Description: desctiption, ThumbnailJpeg: thumbnailJpeg.Fid, ThumbnailWebp: thumbnailWebp.Fid}
+	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: image,
+		Time: time.Now(), ThumbnailJpeg: thumbnail}
 	err := db.photo.Insert(p)
 
 	if err != nil {
@@ -22,11 +23,10 @@ func (db *DB) AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumb
 }
 
 // AddPhotoHidden adds new hidden photo to database with provided image and thumbnail
-func (db *DB) AddPhotoHidden(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error) {
+func (db *DB) AddPhotoHidden(user bson.ObjectId, image, thumbnail string) (*Photo, error) {
 	// creating photo
-	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: imageJpeg.Fid, ImageWebp: imageWebp.Fid,
-		Time: time.Now(), Description: desctiption, ThumbnailJpeg: thumbnailJpeg.Fid, ThumbnailWebp: thumbnailWebp.Fid}
-	p.Hidden = true
+	p := &Photo{Id: bson.NewObjectId(), User: user, ImageJpeg: image,
+		Time: time.Now(), ThumbnailJpeg: thumbnail, Hidden: true}
 	err := db.photo.Insert(p)
 
 	if err != nil {

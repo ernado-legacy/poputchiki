@@ -51,6 +51,6 @@ func (db *DB) UpdateVideoMpeg(id bson.ObjectId, fid string) error {
 	return db.video.UpdateId(id, bson.M{"$set": bson.M{"video_mpeg": fid}})
 }
 
-func (db *DB) UpdateVideoThumbnails(id bson.ObjectId, tjpeg, twebp string) error {
-	return db.video.UpdateId(id, bson.M{"$set": bson.M{"thumbnail_webp": twebp, "thumbnail_jpeg": tjpeg}})
+func (db *DB) UpdateVideoThumbnail(id bson.ObjectId, t string) error {
+	return db.video.UpdateId(id, bson.M{"$set": bson.M{"thumbnail_jpeg": t}})
 }

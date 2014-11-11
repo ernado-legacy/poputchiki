@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ernado/gotok"
-	. "github.com/ernado/poputchiki/models"
 	"text/template"
 
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/ernado/gotok"
+	. "github.com/ernado/poputchiki/models"
+
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,25 +20,28 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/mgo.v2/bson"
 )
 
-func TestPasswordUpdate(t *testing.T) {
-	username := "test@" + mailDomain
-	a := NewTestApp()
-	defer a.Close()
-	Convey("Registration with unique username and valid password should be successfull", t, func() {
-		Reset(a.Reset)
-		token := new(gotok.Token)
-		So(a.Process(token, "POST", "/api/auth/register", LoginCredentials{username, "test"}, token), ShouldBeNil)
-		Convey("Change", func() {
-			password := "secretsecret"
-			So(a.Process(token, "PATCH", "/api/user/"+token.Id.Hex(), map[string]string{"password": password}, nil), ShouldBeNil)
-			Convey("Login", func() {
-				So(a.Process(nil, "POST", "/api/auth/login", LoginCredentials{username, password}, nil), ShouldBeNil)
-			})
-		})
-	})
-}
+// func TestPasswordUpdate(t *testing.T) {
+// 	username := "test@" + mailDomain
+// 	a := NewTestApp()
+// 	defer a.Close()
+// 	Convey("Registration with unique username and valid password should be successfull", t, func() {
+// 		Reset(a.Reset)
+// 		token := new(gotok.Token)
+// 		So(a.Process(token, "POST", "/api/auth/register", LoginCredentials{username, "test"}, token), ShouldBeNil)
+// 		Convey("Change", func() {
+// 			password := "secretsecret"
+// 			So(a.Process(token, "PATCH", "/api/user/"+token.Id.Hex(), map[string]string{"password": password}, nil), ShouldBeNil)
+// 			Convey("Login", func() {
+// 				So(a.Process(nil, "POST", "/api/auth/login", LoginCredentials{username, password}, nil), ShouldBeNil)
+// 			})
+// 		})
+// 	})
+// }
 
 func TestStripeUpdate(t *testing.T) {
 	a := NewTestApp()

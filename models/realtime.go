@@ -1,9 +1,10 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Message struct {
@@ -51,8 +52,10 @@ type Broadcast struct {
 
 type Invite Message
 
-func NewInvites(db DataBase, origin, destination bson.ObjectId, text string) (toOrigin, toDestination *Invite) {
-	m1, m2 := newMessagePair(db, origin, destination, "", text, true)
+func NewInvites(db DataBase, origin, destination bson.ObjectId, textOrigin, textDestination string) (toOrigin, toDestination *Invite) {
+	m1, m2 := newMessagePair(db, origin, destination, "", "", true)
+	m1.Text = textOrigin
+	m2.Text = textDestination
 	atoOrigin := Invite(*m1)
 	atoDestination := Invite(*m2)
 	return &atoOrigin, &atoDestination

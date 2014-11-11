@@ -1,11 +1,12 @@
 package database
 
 import (
+	"testing"
+
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
 )
 
 func TestAudio(t *testing.T) {
@@ -14,7 +15,7 @@ func TestAudio(t *testing.T) {
 		Reset(db.Drop)
 		u := &models.User{Id: bson.NewObjectId(), Name: "Alex", Email: "test@kek.ru", Sex: models.SexMale}
 		So(db.Add(u), ShouldBeNil)
-		Convey("Integrity", Integrity(db, u))
+		Integrity(db, u)
 		Convey("Add", func() {
 			a := &models.Audio{}
 			a.Id = bson.NewObjectId()
@@ -29,7 +30,7 @@ func TestAudio(t *testing.T) {
 				newUser := db.Get(u.Id)
 				So(newUser.Audio, ShouldEqual, a.Id)
 			})
-			Convey("Integrity", Integrity(db, u))
+			Integrity(db, u)
 			Convey("Update", func() {
 				fidAac := "1231424123"
 				fidOgg := "j980234089dsf"
@@ -39,7 +40,7 @@ func TestAudio(t *testing.T) {
 				So(b.User, ShouldEqual, a.User)
 				So(b.AudioAac, ShouldEqual, fidAac)
 				So(b.AudioOgg, ShouldEqual, fidOgg)
-				Convey("Integrity", Integrity(db, u))
+				Integrity(db, u)
 				Convey("User get", func() {
 					newUser := db.Get(u.Id)
 					So(newUser.Audio, ShouldEqual, a.Id)

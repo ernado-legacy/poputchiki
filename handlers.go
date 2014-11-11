@@ -6,6 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
+	"log"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	conv "github.com/ernado/cymedia/mediad/models"
 	"github.com/ernado/cymedia/mediad/query"
 	"github.com/ernado/cymedia/photo"
@@ -20,16 +31,6 @@ import (
 	"github.com/rainycape/magick"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"html/template"
-	"io"
-	"log"
-	"math/rand"
-	"net/http"
-	"net/url"
-	"runtime"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -531,9 +532,10 @@ func SendMessage(context Context, db DataBase, parser Parser, destination bson.O
 }
 
 func SendInvite(db DataBase, parser Parser, engine activities.Handler, destination bson.ObjectId, r *http.Request, t *gotok.Token, realtime AutoUpdater) (int, []byte) {
-	text := "Вас пригласили в путешествие"
+	textDestination := "Вас пригласили в путешествие"
+	textOrigin := "Вы отправили приглашение в путешествие"
 	origin := t.Id
-	toOrigin, toDestination := NewInvites(db, origin, destination, text)
+	toOrigin, toDestination := NewInvites(db, origin, destination, textOrigin, textDestination)
 	u := db.Get(destination)
 	if u == nil {
 		return Render(ErrorUserNotFound)
@@ -719,100 +721,44 @@ func convert(input interface{}, output interface{}) error {
 	return json.Unmarshal(inputJson, output)
 }
 
-func uploadPhoto(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter StorageAdapter) (*Photo, error) {
-	f, _, err := r.FormFile(FORM_FILE)
+func uploadPhoto(reader io.Reader, context Context) (*Photo, error) {
+	uploader := photo.NewUploader(context.Storage, PHOTO_MAX_SIZE, THUMB_SIZE)
+	result, err := uploader.Upload(reader)
+	if err != nil {
+		return nil, err
+	}
+	newPhoto, err := context.DB.AddPhoto(context.User.Id, result.Image(), result.Thumbnail())
+	return newPhoto, err
+}
+
+func uploadPhotoHidden(context Context) (*Photo, error) {
+	f, _, err := context.Request.FormFile(FORM_FILE)
 	if err != nil {
 		log.Println("unable to read form file", err)
 		return nil, ErrBadRequest
 	}
 
-	length := r.ContentLength
+	length := context.Request.ContentLength
 	if length > 1024*1024*PHOTO_MAX_MEGABYTES {
 		return nil, ErrBadRequest
 	}
 
-	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
-	progress := make(chan float32)
-	go func() {
-		for _ = range progress {
-			continue
-		}
-	}()
-	p, err := uploader.Upload(length, f, progress)
-
+	uploader := photo.NewUploader(context.Storage, PHOTO_MAX_SIZE, THUMB_SIZE)
+	result, err := uploader.Upload(f)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
-	c := func(input *photo.File) File {
-		output := &File{}
-		output.Id = bson.NewObjectId()
-		output.User = t.Id
-		convert(input, output)
-		db.AddFile(output)
-		return *output
-	}
-
-	newPhoto, err := db.AddPhoto(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
-	newPhoto.ImageUrl = p.ImageJpeg.Url
-	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
-
-	if bool(webpAccept) {
-		newPhoto.ImageUrl = p.ImageWebp.Url
-		newPhoto.ThumbnailUrl = p.ThumbnailWebp.Url
-	}
+	newPhoto, err := context.DB.AddPhotoHidden(context.User.Id, result.Image(), result.Thumbnail())
 	return newPhoto, err
 }
 
-func uploadPhotoHidden(r *http.Request, t *gotok.Token, realtime AutoUpdater, db DataBase, webpAccept WebpAccept, adapter StorageAdapter) (*Photo, error) {
-	f, _, err := r.FormFile(FORM_FILE)
+func UploadPhoto(r *http.Request, context Context, engine activities.Handler) (int, []byte) {
+	f, _, err := context.Request.FormFile(FORM_FILE)
 	if err != nil {
-		log.Println("unable to read form file", err)
-		return nil, ErrBadRequest
+		return context.Render(ValidationError(err))
 	}
-
-	length := r.ContentLength
-	if length > 1024*1024*PHOTO_MAX_MEGABYTES {
-		return nil, ErrBadRequest
-	}
-
-	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
-	progress := make(chan float32)
-	go func() {
-		for _ = range progress {
-			continue
-		}
-	}()
-	p, err := uploader.Upload(length, f, progress)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	c := func(input *photo.File) File {
-		output := &File{}
-		output.Id = bson.NewObjectId()
-		output.User = t.Id
-		convert(input, output)
-		db.AddFile(output)
-		return *output
-	}
-
-	newPhoto, err := db.AddPhotoHidden(t.Id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
-	newPhoto.ImageUrl = p.ImageJpeg.Url
-	newPhoto.ThumbnailUrl = p.ThumbnailJpeg.Url
-
-	if bool(webpAccept) {
-		newPhoto.ImageUrl = p.ImageWebp.Url
-		newPhoto.ThumbnailUrl = p.ThumbnailWebp.Url
-	}
-	return newPhoto, err
-}
-
-func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter StorageAdapter) (int, []byte) {
-	photo, err := uploadPhoto(r, t, realtime, db, webp, adapter)
+	photo, err := uploadPhoto(f, context)
 	if err == ErrBadRequest {
 		return context.Render(ValidationError(err))
 	}
@@ -823,8 +769,8 @@ func UploadPhoto(r *http.Request, engine activities.Handler, t *gotok.Token, rea
 	return context.Render(photo)
 }
 
-func UploadPhotoHidden(r *http.Request, engine activities.Handler, t *gotok.Token, realtime AutoUpdater, context Context, db DataBase, webp WebpAccept, adapter StorageAdapter) (int, []byte) {
-	photo, err := uploadPhotoHidden(r, t, realtime, db, webp, adapter)
+func UploadPhotoHidden(r *http.Request, context Context) (int, []byte) {
+	photo, err := uploadPhotoHidden(context)
 	if err == ErrBadRequest {
 		return context.Render(ValidationError(err))
 	}
@@ -1662,85 +1608,37 @@ func FacebookAuthStart(r *http.Request, w http.ResponseWriter, client *gofbauth.
 	http.Redirect(w, r, url.String(), http.StatusTemporaryRedirect)
 }
 
-func ExportPhoto(db DataBase, id bson.ObjectId, adapter StorageAdapter, url string) *Photo {
+func ExportPhoto(context Context, url string) *Photo {
 	res, err := http.Get(url)
-	f := res.Body
 	if err != nil {
-		log.Println("unable to read form file", err)
 		return nil
 	}
-	length := res.ContentLength
-	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
-	progress := make(chan float32)
-	go func() {
-		for _ = range progress {
-			continue
-		}
-	}()
-
-	p, err := uploader.Upload(length, f, progress)
-
-	c := func(input *photo.File) File {
-		output := &File{}
-		output.Id = bson.NewObjectId()
-		output.User = id
-		convert(input, output)
-		db.AddFile(output)
-		return *output
-	}
-
-	defer func() {
-		err := recover()
-		if err != nil {
-			log.Println(err)
-		}
-	}()
-
-	newPhoto, err := db.AddPhoto(id, c(&p.ImageJpeg), c(&p.ImageWebp), c(&p.ThumbnailJpeg), c(&p.ThumbnailWebp), "")
+	p, err := uploadPhoto(res.Body, context)
 	if err != nil {
 		log.Println(err)
 	}
-	return newPhoto
+	return p
 }
 
-func ExportThumbnail(adapter StorageAdapter, fid string) (thumbnailJpeg, thumbnailWebp string, err error) {
+func ExportThumbnail(adapter StorageAdapter, fid string) (thumbnail string, err error) {
 	url, err := adapter.GetUrl(fid)
 	if err != nil {
 		return
 	}
 	res, err := http.Get(url)
 	if err != nil {
-		log.Println("unable to read form file", err)
 		return
 	}
-	f := res.Body
-	length := res.ContentLength
+
 	uploader := photo.NewUploader(adapter, PHOTO_MAX_SIZE, THUMB_SIZE)
-	progress := make(chan float32)
-	go func() {
-		for _ = range progress {
-			continue
-		}
-	}()
-
-	p, err := uploader.Upload(length, f, progress)
-
+	p, err := uploader.Upload(res.Body)
 	if err != nil {
 		return
 	}
-
-	defer func() {
-		rerr := recover()
-		if rerr != nil {
-			err = errors.New("export failed")
-			return
-		}
-	}()
-
-	return p.ThumbnailJpeg.Fid, p.ThumbnailWebp.Fid, nil
+	return p.Thumbnail(), nil
 }
 
-func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, adapter StorageAdapter, tokens gotok.Storage, client *govkauth.Client) {
+func VkontakteAuthRedirect(context Context, db DataBase, r *http.Request, w http.ResponseWriter, adapter StorageAdapter, tokens gotok.Storage, client *govkauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1770,7 +1668,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 		u = db.GetUsername(token.Email)
 
 		if user.Photo != "" {
-			p := ExportPhoto(db, u.Id, adapter, user.Photo)
+			p := ExportPhoto(context, user.Photo)
 			if p != nil {
 				db.SetAvatar(u.Id, p.Id)
 			} else {
@@ -1795,7 +1693,7 @@ func VkontakteAuthRedirect(db DataBase, r *http.Request, w http.ResponseWriter, 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func FacebookAuthRedirect(db DataBase, r *http.Request, adapter StorageAdapter, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
+func FacebookAuthRedirect(context Context, db DataBase, r *http.Request, adapter StorageAdapter, w http.ResponseWriter, tokens gotok.Storage, client *gofbauth.Client) {
 	token, err := client.GetAccessToken(r)
 	if err != nil {
 		code, _ := Render(ErrorBadRequest)
@@ -1828,7 +1726,7 @@ func FacebookAuthRedirect(db DataBase, r *http.Request, adapter StorageAdapter, 
 		}
 		u = db.GetUsername(fbUser.Email)
 		if fbUser.Photo != "" {
-			p := ExportPhoto(db, u.Id, adapter, fbUser.Photo)
+			p := ExportPhoto(context, fbUser.Photo)
 			if p != nil {
 				db.SetAvatar(u.Id, p.Id)
 			} else {

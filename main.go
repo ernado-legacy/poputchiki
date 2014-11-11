@@ -8,6 +8,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"runtime"
+	"time"
+
 	"github.com/GeertJohan/go.rice"
 	mmodels "github.com/ernado/cymedia/mediad/models"
 	"github.com/ernado/cymedia/mediad/query"
@@ -26,12 +33,6 @@ import (
 	"github.com/riobard/go-mailgun"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"io"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"runtime"
-	"time"
 )
 
 var (
@@ -552,11 +553,11 @@ func (a *Application) processConvertResult(resp mmodels.Responce) (err error) {
 		}
 	}
 	if resp.Type == "thumbnail" {
-		jpegUrl, webpUrl, err := ExportThumbnail(a.adapter, resp.File)
+		thumbnail, err := ExportThumbnail(a.adapter, resp.File)
 		if err != nil {
 			log.Println(err)
 		} else {
-			err = db.UpdateVideoThumbnails(id, jpegUrl, webpUrl)
+			err = db.UpdateVideoThumbnail(id, thumbnail)
 		}
 	}
 	return err

@@ -1,10 +1,11 @@
 package database
 
 import (
+	"testing"
+
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
 )
 
 func TestUpdates(t *testing.T) {
@@ -18,15 +19,15 @@ func TestUpdates(t *testing.T) {
 			uDestination := &models.User{Id: destination, Name: "Petya"}
 			So(db.Add(uOrigin), ShouldBeNil)
 			So(db.Add(uDestination), ShouldBeNil)
-			Convey("Integrity", Integrity(db, uOrigin))
-			Convey("Integrity", Integrity(db, uDestination))
+			Integrity(db, uOrigin)
+			Integrity(db, uDestination)
 			Convey("Add update", func() {
 				t := models.UpdateGuests
 				u, err := db.AddUpdate(destination, origin, t, nil)
 				So(err, ShouldBeNil)
 				So(u, ShouldNotBeNil)
-				Convey("Integrity", Integrity(db, uOrigin))
-				Convey("Integrity", Integrity(db, uDestination))
+				Integrity(db, uOrigin)
+				Integrity(db, uDestination)
 				Convey("Get updates", func() {
 					Convey("All", func() {
 						updates, err := db.GetUpdates(destination, t, models.Pagination{})
@@ -46,8 +47,8 @@ func TestUpdates(t *testing.T) {
 				})
 				Convey("Set read", func() {
 					So(db.SetUpdateRead(destination, u.Id), ShouldBeNil)
-					Convey("Integrity", Integrity(db, uOrigin))
-					Convey("Integrity", Integrity(db, uDestination))
+					Integrity(db, uOrigin)
+					Integrity(db, uDestination)
 					Convey("Get updates", func() {
 						Convey("All", func() {
 							updates, err := db.GetUpdates(destination, t, models.Pagination{})

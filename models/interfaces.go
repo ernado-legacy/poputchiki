@@ -4,10 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ernado/gotok"
-	"github.com/go-martini/martini"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +11,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/ernado/gotok"
+	"github.com/go-martini/martini"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // webp accept flag
@@ -39,7 +40,7 @@ type StorageAdapter interface {
 }
 
 type Context struct {
-	Storage  Storage
+	Storage  StorageAdapter
 	Token    *gotok.Token
 	Video    VideoAccept
 	Audio    AudioAccept
@@ -226,8 +227,8 @@ type DataBase interface {
 	GetLastDayStatusesAmount(id bson.ObjectId) (int, error)
 	// api/status/:id/comment/:id
 
-	AddPhoto(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
-	AddPhotoHidden(user bson.ObjectId, imageJpeg File, imageWebp File, thumbnailJpeg File, thumbnailWebp File, desctiption string) (*Photo, error)
+	AddPhoto(user bson.ObjectId, image, thumbnail string) (*Photo, error)
+	AddPhotoHidden(user bson.ObjectId, image, thumbnail string) (*Photo, error)
 
 	// api/photo/:id
 	GetPhoto(photo bson.ObjectId) (*Photo, error)
@@ -249,7 +250,7 @@ type DataBase interface {
 	GetLikesVideo(id bson.ObjectId) []*User
 	UpdateVideoWebm(id bson.ObjectId, fid string) error
 	UpdateVideoMpeg(id bson.ObjectId, fid string) error
-	UpdateVideoThumbnails(id bson.ObjectId, tjpeg, twebp string) error
+	UpdateVideoThumbnail(id bson.ObjectId, thumbnail string) error
 	RemoveVideo(user bson.ObjectId, id bson.ObjectId) error
 
 	AddAudio(audio *Audio) (*Audio, error)

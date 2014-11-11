@@ -5,13 +5,14 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -54,7 +55,21 @@ func mapToStruct(q url.Values, val interface{}) (bson.M, error) {
 			if err != nil {
 				return nQ, err
 			}
-			nQ[key] = record
+			if field.Type.Elem().Name() == "string" {
+				nQ[key] = record
+				continue
+			}
+			if field.Type.Elem().Name() == "float64" {
+				var slice []float64
+				for _, elem := range record {
+					f, err := strconv.ParseFloat(elem, 64)
+					if err != nil {
+						return nQ, err
+					}
+					slice = append(slice, f)
+				}
+				nQ[key] = slice
+			}
 			continue
 		}
 		if len(value) == 1 {

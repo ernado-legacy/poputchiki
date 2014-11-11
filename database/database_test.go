@@ -1,11 +1,12 @@
 package database
 
 import (
+	"testing"
+	"time"
+
 	. "github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
-	"time"
 )
 
 var (
@@ -267,8 +268,7 @@ func TestDBMethods(t *testing.T) {
 
 			})
 			Convey("Add photo", func() {
-				i := File{Id: bson.NewObjectId(), User: id}
-				p, err := db.AddPhoto(id, i, i, i, i, "test")
+				p, err := db.AddPhoto(id, "", "")
 				So(err, ShouldBeNil)
 				Convey("Remove", func() {
 					err := db.RemovePhoto(id, p.Id)

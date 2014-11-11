@@ -1,11 +1,12 @@
 package database
 
 import (
+	"log"
+	"testing"
+
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"log"
-	"testing"
 )
 
 func TestMessages(t *testing.T) {
@@ -21,16 +22,16 @@ func TestMessages(t *testing.T) {
 		uDestination := &models.User{Id: destination, Name: "Petya"}
 		So(db.Add(uOrigin), ShouldBeNil)
 		So(db.Add(uDestination), ShouldBeNil)
-		Convey("Integrity", Integrity(db, uOrigin))
-		Convey("Integrity", Integrity(db, uDestination))
+		Integrity(db, uOrigin)
+		Integrity(db, uDestination)
 		Convey("Add message", func() {
 			mOrigin, mDestination := models.NewMessagePair(db, origin, destination, photo, text)
 			idOrigin := mOrigin.Id
 			idDestination := mDestination.Id
 			So(db.AddMessage(mOrigin), ShouldBeNil)
 			So(db.AddMessage(mDestination), ShouldBeNil)
-			Convey("Integrity", Integrity(db, uOrigin))
-			Convey("Integrity", Integrity(db, uDestination))
+			Integrity(db, uOrigin)
+			Integrity(db, uDestination)
 			Convey("Add notification", func() {
 				_, err := db.AddUpdate(destination, origin, "messages", mDestination)
 				So(err, ShouldBeNil)
@@ -99,12 +100,12 @@ func TestMessages(t *testing.T) {
 				mOrigin, mDestination := models.NewMessagePair(db, origin, destination, photo, text2)
 				So(db.AddMessage(mOrigin), ShouldBeNil)
 				So(db.AddMessage(mDestination), ShouldBeNil)
-				Convey("Integrity", Integrity(db, uOrigin))
-				Convey("Integrity", Integrity(db, uDestination))
+				Integrity(db, uOrigin)
+				Integrity(db, uDestination)
 				Convey("Set read origin", func() {
 					So(db.SetReadMessagesFromUser(destination, origin), ShouldBeNil)
-					Convey("Integrity", Integrity(db, uOrigin))
-					Convey("Integrity", Integrity(db, uDestination))
+					Integrity(db, uOrigin)
+					Integrity(db, uDestination)
 					Convey("Destination has no new messages", func() {
 						n, err := db.GetUnreadCount(destination)
 						So(n, ShouldEqual, 0)
@@ -113,8 +114,8 @@ func TestMessages(t *testing.T) {
 				})
 				Convey("Remove", func() {
 					So(db.RemoveMessage(idOrigin), ShouldBeNil)
-					Convey("Integrity", Integrity(db, uOrigin))
-					Convey("Integrity", Integrity(db, uDestination))
+					Integrity(db, uOrigin)
+					Integrity(db, uDestination)
 					Convey("Destination chats", func() {
 						chats, err := db.GetChats(destination)
 						So(err, ShouldBeNil)
@@ -166,8 +167,8 @@ func TestMessages(t *testing.T) {
 					mOrigin, mDestination := models.NewMessagePair(db, origin, destination, photo, text3)
 					So(db.AddMessage(mOrigin), ShouldBeNil)
 					So(db.AddMessage(mDestination), ShouldBeNil)
-					Convey("Integrity", Integrity(db, uOrigin))
-					Convey("Integrity", Integrity(db, uDestination))
+					Integrity(db, uOrigin)
+					Integrity(db, uDestination)
 					Convey("Destination chats", func() {
 						chats, err := db.GetChats(destination)
 						So(err, ShouldBeNil)
@@ -222,8 +223,8 @@ func TestMessages(t *testing.T) {
 				m, err = db.GetMessage(idOrigin)
 				So(err, ShouldBeNil)
 				So(m.Read, ShouldBeTrue)
-				Convey("Integrity", Integrity(db, uOrigin))
-				Convey("Integrity", Integrity(db, uDestination))
+				Integrity(db, uOrigin)
+				Integrity(db, uDestination)
 				Convey("Destination has no new messages", func() {
 					n, err := db.GetUnreadCount(destination)
 					So(n, ShouldEqual, 0)

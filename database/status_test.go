@@ -1,25 +1,24 @@
 package database
 
 import (
+	"testing"
+	"time"
+
 	"github.com/ernado/poputchiki/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
-	"time"
 )
 
-func Integrity(db models.DataBase, u *models.User) func() {
-	return func() {
-		dbu := db.Get(u.Id)
-		So(dbu, ShouldNotBeNil)
-		So(dbu.Email, ShouldEqual, u.Email)
-		So(dbu.Name, ShouldEqual, u.Name)
-		So(dbu.Sex, ShouldEqual, u.Sex)
-		So(dbu.Phone, ShouldEqual, u.Phone)
-		So(dbu.Rating, ShouldAlmostEqual, u.Rating)
-		So(dbu.Vip, ShouldEqual, u.Vip)
-		So(dbu.LastAction.Unix(), ShouldEqual, u.LastAction.Unix())
-	}
+func Integrity(db models.DataBase, u *models.User) {
+	dbu := db.Get(u.Id)
+	So(dbu, ShouldNotBeNil)
+	So(dbu.Email, ShouldEqual, u.Email)
+	So(dbu.Name, ShouldEqual, u.Name)
+	So(dbu.Sex, ShouldEqual, u.Sex)
+	So(dbu.Phone, ShouldEqual, u.Phone)
+	So(dbu.Rating, ShouldAlmostEqual, u.Rating)
+	So(dbu.Vip, ShouldEqual, u.Vip)
+	So(dbu.LastAction.Unix(), ShouldEqual, u.LastAction.Unix())
 }
 
 func TestStatus(t *testing.T) {
@@ -36,7 +35,7 @@ func TestStatus(t *testing.T) {
 				s, err := db.AddStatus(u.Id, text)
 				So(err, ShouldBeNil)
 				So(s.Text, ShouldEqual, text)
-				Convey("Integrity", Integrity(db, u))
+				Integrity(db, u)
 				Convey("Last day statuses", func() {
 					count, err := db.GetLastDayStatusesAmount(id)
 					So(err, ShouldBeNil)
@@ -51,7 +50,7 @@ func TestStatus(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(status.Likes, ShouldEqual, 1)
 						So(status.LikedUsers[0], ShouldEqual, newUser.Id)
-						Convey("Integrity", Integrity(db, u))
+						Integrity(db, u)
 						Convey("Search", func() {
 							statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 							So(err, ShouldBeNil)
@@ -82,7 +81,7 @@ func TestStatus(t *testing.T) {
 							So(err, ShouldBeNil)
 							So(status.Likes, ShouldEqual, 0)
 							So(len(status.LikedUsers), ShouldEqual, 0)
-							Convey("Integrity", Integrity(db, u))
+							Integrity(db, u)
 							Convey("Search", func() {
 								statuses, err := db.SearchStatuses(new(models.SearchQuery), models.Pagination{})
 								So(err, ShouldBeNil)
@@ -134,7 +133,7 @@ func TestStatus(t *testing.T) {
 					s, err = db.GetStatus(s.Id)
 					So(err, ShouldBeNil)
 					So(s.Text, ShouldEqual, newtext)
-					Convey("Integrity", Integrity(db, u))
+					Integrity(db, u)
 					Convey("User status updated", func() {
 						user := db.Get(id)
 						So(user, ShouldNotBeNil)
@@ -158,7 +157,7 @@ func TestStatus(t *testing.T) {
 					s, err := db.AddStatus(u.Id, text)
 					So(err, ShouldBeNil)
 					So(s.Text, ShouldEqual, text)
-					Convey("Integrity", Integrity(db, u))
+					Integrity(db, u)
 					Convey("Last day statuses", func() {
 						count, err := db.GetLastDayStatusesAmount(id)
 						So(err, ShouldBeNil)
@@ -194,7 +193,7 @@ func TestStatus(t *testing.T) {
 						s, err = db.GetStatus(s.Id)
 						So(err, ShouldBeNil)
 						So(s.Text, ShouldEqual, newtext)
-						Convey("Integrity", Integrity(db, u))
+						Integrity(db, u)
 						Convey("User status updated", func() {
 							user := db.Get(id)
 							So(user, ShouldNotBeNil)
