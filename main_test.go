@@ -259,6 +259,27 @@ func TestUpdates(t *testing.T) {
 				}
 			})
 		})
+
+		Convey("Messages", func() {
+			// /api/user/%s/messages/
+			link := fmt.Sprintf("/api/user/%s/messages/?text=hello", token1.Id.Hex())
+			So(a.Process(token2, "PUT", link, nil, nil), ShouldBeNil)
+			So(a.Process(token3, "PUT", link, nil, nil), ShouldBeNil)
+			Convey("Counters", func() {
+				counters := Counters{}
+				So(a.Process(token1, "GET", "/api/updates/counters", nil, &counters), ShouldBeNil)
+				So(len(counters), ShouldEqual, 2)
+				found := false
+				for _, counter := range counters {
+					if counter.Type == "messages" {
+						found = true
+						So(counter.Count, ShouldEqual, 2)
+					}
+				}
+				So(found, ShouldBeTrue)
+			})
+		})
+
 		Convey("Invites", func() {
 			link := fmt.Sprintf("/api/user/%s/invite", token1.Id.Hex())
 			So(a.Process(token2, "POST", link, nil, nil), ShouldBeNil)

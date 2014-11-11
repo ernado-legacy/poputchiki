@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -704,10 +705,15 @@ func (a *Application) Process(token *gotok.Token, method, url string, input, out
 	a.m.ServeHTTP(res, req)
 	decoder := json.NewDecoder(res.Body)
 	if res.Code != http.StatusOK {
+		log.Println("http", res.Code)
 		result := new(models.Error)
-		result.Code = 500
-		result.Text = "panic"
-		decoder.Decode(result)
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		result.Code = res.Code
+		result.Text = string(b)
+		json.Unmarshal(b, result)
 		return result
 	}
 	if output != nil {
