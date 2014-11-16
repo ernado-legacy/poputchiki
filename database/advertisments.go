@@ -1,12 +1,13 @@
 package database
 
 import (
+	"time"
+
 	"github.com/ernado/poputchiki/models"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
-func (db *DB) AddAdvertisement(i *models.StripeItem, media interface{}) (*models.StripeItem, error) {
+func (db *DB) AddAdvertisement(user bson.ObjectId, i *models.StripeItem, media interface{}) (*models.StripeItem, error) {
 	i.Media = media
 	if len(i.Id.Hex()) == 0 {
 		i.Id = bson.NewObjectId()
@@ -17,6 +18,7 @@ func (db *DB) AddAdvertisement(i *models.StripeItem, media interface{}) (*models
 		i.Type = "photo"
 	}
 	i.Time = time.Now()
+	i.User = user
 	return i, db.advertisements.Insert(i)
 }
 

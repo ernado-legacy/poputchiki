@@ -16,6 +16,11 @@ func TestAudio(t *testing.T) {
 		u := &models.User{Id: bson.NewObjectId(), Name: "Alex", Email: "test@kek.ru", Sex: models.SexMale}
 		So(db.Add(u), ShouldBeNil)
 		Integrity(db, u)
+		Convey("Add error", func() {
+			a := &models.Audio{}
+			_, err := db.AddAudio(a)
+			So(err, ShouldNotBeNil)
+		})
 		Convey("Add", func() {
 			a := &models.Audio{}
 			a.Id = bson.NewObjectId()
@@ -25,10 +30,33 @@ func TestAudio(t *testing.T) {
 			Convey("Get", func() {
 				b := db.GetAudio(a.Id)
 				So(b.User, ShouldEqual, a.User)
+				Integrity(db, u)
+			})
+			Convey("Get all", func() {
+				audios, err := db.GetAllAudio()
+				So(err, ShouldBeNil)
+				So(len(audios), ShouldEqual, 1)
+				Integrity(db, u)
 			})
 			Convey("User get", func() {
 				newUser := db.Get(u.Id)
 				So(newUser.Audio, ShouldEqual, a.Id)
+				Integrity(db, u)
+			})
+			Convey("Remove", func() {
+				So(db.RemoveAudio(a.Id), ShouldBeNil)
+				So(db.GetAudio(a.Id), ShouldBeNil)
+				Integrity(db, u)
+			})
+			Convey("Remove secure", func() {
+				So(db.RemoveAudioSecure(a.User, a.Id), ShouldBeNil)
+				So(db.GetAudio(a.Id), ShouldBeNil)
+				Integrity(db, u)
+			})
+			Convey("Remove secure bad", func() {
+				So(db.RemoveAudioSecure(bson.NewObjectId(), a.Id), ShouldNotBeNil)
+				So(db.GetAudio(a.Id), ShouldNotBeNil)
+				Integrity(db, u)
 			})
 			Integrity(db, u)
 			Convey("Update", func() {

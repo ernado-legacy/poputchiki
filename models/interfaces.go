@@ -319,7 +319,7 @@ type DataBase interface {
 
 	GetAds(count, offset int) (Stripe, error)
 	GetAdvertisment(id bson.ObjectId) (*StripeItem, error)
-	AddAdvertisement(i *StripeItem, media interface{}) (*StripeItem, error)
+	AddAdvertisement(user bson.ObjectId, i *StripeItem, media interface{}) (*StripeItem, error)
 	RemoveAdvertisment(user, id bson.ObjectId) error
 
 	ActiveCount(duration time.Duration) int

@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Image struct {
@@ -30,19 +31,11 @@ type Photo struct {
 
 func (p *Photo) Prepare(context Context) error {
 	var err error
-	if context.WebP {
-		p.ThumbnailUrl, err = context.Storage.URL(p.ThumbnailWebp)
-		if err != nil {
-			return err
-		}
-		p.ImageUrl, err = context.Storage.URL(p.ImageWebp)
-	} else {
-		p.ThumbnailUrl, err = context.Storage.URL(p.ThumbnailJpeg)
-		if err != nil {
-			return err
-		}
-		p.ImageUrl, err = context.Storage.URL(p.ImageJpeg)
+	p.ThumbnailUrl, err = context.Storage.URL(p.ThumbnailJpeg)
+	if err != nil {
+		return err
 	}
+	p.ImageUrl, err = context.Storage.URL(p.ImageJpeg)
 	if len(p.LikedUsers) == 0 {
 		p.LikedUsers = []bson.ObjectId{}
 	}

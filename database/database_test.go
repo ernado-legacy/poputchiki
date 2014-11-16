@@ -257,11 +257,10 @@ func TestDBMethods(t *testing.T) {
 					newText := "status actual"
 					_, err := db.AddStatus(id, newText)
 					So(err, ShouldBeNil)
-					time.Sleep(20 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)
 					s2, err := db.GetCurrentStatus(id)
 					So(err, ShouldBeNil)
 					So(s2.Text, ShouldEqual, newText)
-
 					statuses, err := db.GetLastStatuses(10)
 					So(err, ShouldBeNil)
 					So(statuses[0].Text, ShouldEqual, newText)

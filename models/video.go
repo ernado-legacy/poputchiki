@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Video struct {
@@ -30,11 +31,7 @@ func (v *Video) Prepare(context Context) error {
 	if err != nil {
 		return err
 	}
-	if context.WebP {
-		v.ThumbnailUrl, err = context.Storage.URL(v.ThumbnailWebp)
-	} else {
-		v.ThumbnailUrl, err = context.Storage.URL(v.ThumbnailJpeg)
-	}
+	v.ThumbnailUrl, err = context.Storage.URL(v.ThumbnailJpeg)
 	if len(v.LikedUsers) == 0 {
 		v.LikedUsers = []bson.ObjectId{}
 	}

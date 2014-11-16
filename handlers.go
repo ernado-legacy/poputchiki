@@ -1118,16 +1118,19 @@ func addStripeItem(db DataBase, request *StripeItemRequest, user *User) (*Stripe
 }
 
 func AddStripeItem(engine activities.Handler, db DataBase, t *gotok.Token, parser Parser, context Context) (int, []byte) {
+	request := new(StripeItemRequest)
+	if err := parser.Parse(request); err != nil {
+		return Render(ValidationError(err))
+	}
 	if !*development {
 		if db.DecBalance(context.Token.Id, PromoCost) != nil {
 			return Render(ErrorInsufficentFunds)
 		}
 	}
-	request := new(StripeItemRequest)
-	if err := parser.Parse(request); err != nil {
-		return Render(ValidationError(err))
-	}
 	s, err := addStripeItem(db, request, context.User)
+	if err != nil {
+		db.IncBalance(context.Token.Id, PromoCost)
+	}
 	if err == ErrObjectNotFound {
 		return Render(ErrorObjectNotFound)
 	}
@@ -2282,8 +2285,9 @@ func AdvAdd(c Context) (int, []byte) {
 	if err := c.DB.DecBalance(c.User.Id, adCost); err != nil {
 		return Render(ErrorInsufficentFunds)
 	}
-	ad, err := c.DB.AddAdvertisement(item, media)
+	ad, err := c.DB.AddAdvertisement(c.User.Id, item, media)
 	if err != nil {
+		c.DB.IncBalance(c.User.Id, adCost)
 		return Render(BackendError(err))
 	}
 	return c.Render(ad)
@@ -2293,6 +2297,9 @@ func AdvRemove(c Context, id bson.ObjectId) (int, []byte) {
 	err := c.DB.RemoveAdvertisment(c.User.Id, id)
 	if err == mgo.ErrNotFound {
 		return Render(ErrObjectNotFound)
+	}
+	if err != nil {
+		return Render(BackendError(err))
 	}
 
 	return Render("Removed")
