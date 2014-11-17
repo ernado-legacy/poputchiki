@@ -606,7 +606,7 @@ func (a *Application) Run() {
 	go a.ConvertResultListener()
 	go a.RatingDegradatingCycle()
 	go a.NormalizeRatingCycle()
-	go a.PromoCycle()
+	# go a.PromoCycle()
 	a.m.Run()
 }
 
