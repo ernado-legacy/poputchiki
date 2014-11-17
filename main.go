@@ -49,7 +49,7 @@ var (
 	dbName                         = projectName
 	statusesPerDay                 = 1
 	statusesPerDayVip              = 3
-	startCapital              uint = 50
+	startCapital              uint = 0
 	AllTemplates              *rice.Box
 	dbCity                         = "countries"
 	tokenCollection                = "tokens"
