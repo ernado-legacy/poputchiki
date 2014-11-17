@@ -286,7 +286,7 @@ func NewApp() *Application {
 				d.Post("", UpdateUser)
 
 				d.Post("/fav", AddToFavorites)
-				d.Post("/present/:type", SendPresent)
+				d.Post("/present/:title", SendPresent)
 				d.Put("/fav", AddToFavorites)
 				d.Delete("/fav", RemoveFromFavorites)
 				d.Get("/fav", GetFavorites)
