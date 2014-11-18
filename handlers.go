@@ -2253,11 +2253,11 @@ func Sitemap(db DataBase) string {
 	items := []SitemapItem{}
 	users := db.AllUsers()
 	items = append(items, SitemapItem{"http://poputchiki.ru/"})
-	items = append(items, SitemapItem{"http://poputchiki.ru/contacts"})
-	items = append(items, SitemapItem{"http://poputchiki.ru/terms"})
-	items = append(items, SitemapItem{"http://poputchiki.ru/about"})
+	items = append(items, SitemapItem{"http://poputchiki.ru/contacts/"})
+	items = append(items, SitemapItem{"http://poputchiki.ru/terms/"})
+	items = append(items, SitemapItem{"http://poputchiki.ru/about/"})
 	for _, user := range users {
-		items = append(items, SitemapItem{"http://poputchiki.ru/user/" + user.Id.Hex()})
+		items = append(items, SitemapItem{"http://poputchiki.ru/user/" + user.Id.Hex() + "/"})
 	}
 	sitemap, err := SitemapStr(items)
 	if err != nil {
