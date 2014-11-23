@@ -54,6 +54,7 @@ func TestMessages(t *testing.T) {
 					for _, v := range counters {
 						if v.Type == "messages" {
 							found = true
+							So(v.Count, ShouldEqual, 0)
 						}
 					}
 					updates, err := db.GetUpdates(destination, "messages", models.Pagination{})

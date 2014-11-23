@@ -2169,7 +2169,7 @@ func SendPresent(db DataBase, id bson.ObjectId, parm martini.Params, adapter Sto
 	return Render(present)
 }
 
-func GetUserPresents(db DataBase, id bson.ObjectId, adapter StorageAdapter, token *gotok.Token) (int, []byte) {
+func GetUserPresents(db DataBase, id bson.ObjectId, adapter StorageAdapter, token *gotok.Token, context Context) (int, []byte) {
 	presents, err := db.GetUserPresents(id)
 	if err != nil && err != mgo.ErrNotFound {
 		return Render(BackendError(err))
@@ -2178,7 +2178,7 @@ func GetUserPresents(db DataBase, id bson.ObjectId, adapter StorageAdapter, toke
 		return Render([]interface{}{})
 	}
 
-	return Render(presents)
+	return context.Render(PresentEvents(presents))
 }
 
 // Convert bytes to human readable string. Like a 2 MB, 64.2 KB, 52 B
