@@ -41,12 +41,15 @@ func (events PresentEvents) Prepare(context Context) (err error) {
 	if err != nil {
 		return err
 	}
+	if err = Presents(presents).Prepare(context); err != nil {
+		return err
+	}
 	for _, p := range events {
 		if err := p.PrepareContext(context, presents); err != nil {
 			return err
 		}
 	}
-	return nil	
+	return nil
 }
 
 func (p *Present) Prepare(context Context) (err error) {
