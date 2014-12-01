@@ -12,7 +12,7 @@ type Status struct {
 	Time       time.Time       `json:"time,omitempty"   bson:"time"`
 	Text       string          `json:"text"             bson:"text"`
 	ImageUrl   string          `json:"url,omitempty"    bson:"-"`
-	Likes      int             `json:"likes,omitempty"  bson:"likes"`
+	Likes      int             `json:"likes"            bson:"likes"`
 	LikedUsers []bson.ObjectId `json:"liked_users"      bson:"liked_users"`
 }
 
@@ -20,6 +20,7 @@ func (u *Status) Prepare(context Context) (err error) {
 	if len(u.LikedUsers) == 0 {
 		u.LikedUsers = []bson.ObjectId{}
 	}
+	u.Likes = len(u.LikedUsers)
 	if u.UserObject == nil {
 		u.UserObject = context.DB.Get(u.User)
 	}

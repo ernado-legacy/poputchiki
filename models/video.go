@@ -35,6 +35,7 @@ func (v *Video) Prepare(context Context) error {
 	if len(v.LikedUsers) == 0 {
 		v.LikedUsers = []bson.ObjectId{}
 	}
+	v.Likes = len(v.LikedUsers)
 	return err
 }
 
