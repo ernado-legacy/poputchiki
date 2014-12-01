@@ -39,6 +39,7 @@ func (p *Photo) Prepare(context Context) error {
 	if len(p.LikedUsers) == 0 {
 		p.LikedUsers = []bson.ObjectId{}
 	}
+	p.Likes = len(p.LikedUsers)
 	return err
 }
 
